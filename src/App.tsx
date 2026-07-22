@@ -23,7 +23,6 @@ import {
   Info,
   Sun,
   Moon,
-  Lock,
   ShoppingCart,
   FolderLock,
   HeartPulse,
@@ -70,7 +69,6 @@ import { FabProvider } from "./components/FabHost.js";
 import { Settings } from "./components/Settings.js";
 import { ServerMonitor } from "./components/ServerMonitor.js";
 import { GlobalSearch } from "./components/GlobalSearch.js";
-import { FancySelect } from "./components/FancySelect.js";
 import { useModalA11y } from "./hooks/useModalA11y.js";
 import { reloadOnce, scheduleReloadFallback } from "./utils/appReload.js";
 import { DEFAULT_VN_LOCATION, findVnLocation } from "./utils/vnLocations.js";
@@ -373,12 +371,6 @@ export default function App() {
   // Notifications modal control
   const [notifOpen, setNotifOpen] = useState(false);
 
-  // Password-gated account switch modal
-  const [switchTargetId, setSwitchTargetId] = useState<string | null>(null);
-  const [switchPassword, setSwitchPassword] = useState("");
-  const [switchError, setSwitchError] = useState("");
-  const [switchLoading, setSwitchLoading] = useState(false);
-
   // Server-Sent Events (SSE) reference
   const sseRef = useRef<EventSource | null>(null);
 
@@ -386,7 +378,6 @@ export default function App() {
   const notifRef = useRef<HTMLDivElement | null>(null);
 
   // Dialog containers (focus trap)
-  const switchModalRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Authentication persistence check
@@ -869,35 +860,6 @@ export default function App() {
     setMobileMenuOpen(false);
     if (tab === "backups" || tab === "logs") {
       fetchBackupsAndLogs();
-    }
-  };
-
-  // Account switch now requires the target account's password (no more passwordless jump)
-  const handleConfirmSwitch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!switchTargetId) return;
-    const target = users.find(u => u.id === switchTargetId);
-    if (!target) return;
-
-    setSwitchError("");
-    setSwitchLoading(true);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: target.username, password: switchPassword })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Mật khẩu không chính xác!");
-      }
-      handleLoginSuccess(data.user, data.token);
-      setSwitchTargetId(null);
-      setSwitchPassword("");
-    } catch (err: any) {
-      setSwitchError(err.message || "Không thể chuyển tài khoản");
-    } finally {
-      setSwitchLoading(false);
     }
   };
 
@@ -1566,9 +1528,7 @@ export default function App() {
   };
 
   // Escape-to-close + background scroll lock for overlay surfaces
-  const closeSwitchModal = useCallback(() => setSwitchTargetId(null), []);
   const closeMobileMenu = useCallback(() => setMobileMenuOpen(false), []);
-  useModalA11y(!!switchTargetId, closeSwitchModal, switchModalRef);
   useModalA11y(mobileMenuOpen, closeMobileMenu, mobileMenuRef);
 
   // Dismiss the notification popover when clicking outside of it
@@ -1750,26 +1710,6 @@ export default function App() {
 
             {/* Tìm kiếm toàn cục (⌘K) — gộp tasks/lịch/ghi chú/thu chi/giấy tờ */}
             <GlobalSearch getAuthHeader={getAuthHeader} onNavigate={tab => setActiveTab(tab)} />
-
-            {/* Bộ chọn tài khoản đang dùng — dùng FancySelect (dropdown chuẩn hệ thiết kế:
-                portal, theme-aware, bàn phím); avatar hiện trong trigger qua prop leading. */}
-            {/* Màn điện thoại dọc (hẹp) ẩn ô chọn tài khoản cho header gọn; hiện lại từ sm+ */}
-            <div className="hidden sm:block w-[150px] md:w-[188px]">
-              <FancySelect
-                value={currentUser.id}
-                ariaLabel="Chuyển tài khoản"
-                onChange={(id) => {
-                  if (id && id !== currentUser.id) {
-                    setSwitchTargetId(id);
-                    setSwitchPassword("");
-                    setSwitchError("");
-                  }
-                }}
-                options={users.map(u => ({ value: u.id, label: u.fullName }))}
-                leading={<Avatar user={currentUser} className="w-6 h-6 rounded-lg text-[10px]" extraClass="shrink-0" />}
-                className="text-xs font-semibold"
-              />
-            </div>
 
             {/* Theme Toggle Button */}
             <button
@@ -2125,78 +2065,6 @@ export default function App() {
       )}
 
       <Assistant currentUser={currentUser} authHeaders={getAuthHeader()} />
-
-      {/* PASSWORD-GATED ACCOUNT SWITCH MODAL */}
-      {switchTargetId && (() => {
-        const target = users.find(u => u.id === switchTargetId);
-        if (!target) return null;
-        return (
-          <div
-            onClick={() => setSwitchTargetId(null)}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4"
-          >
-            <motion.div
-              ref={switchModalRef}
-              tabIndex={-1}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto outline-none"
-            >
-              <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
-                <Avatar user={target} className="w-10 h-10 rounded-xl text-base" extraClass="shrink-0" />
-                <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-100 truncate">Chuyển sang {target.fullName}</h3>
-                  <p className="text-[11px] text-slate-500 font-mono truncate">@{target.username}</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleConfirmSwitch} className="space-y-3 text-xs">
-                {switchError && (
-                  <div className="p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl font-medium flex items-center gap-2">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    <span>{switchError}</span>
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <label className="text-slate-400 block font-semibold">Nhập mật khẩu của tài khoản này</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-3 w-4 h-4 text-slate-500" />
-                    <input
-                      autoFocus
-                      type="password"
-                      value={switchPassword}
-                      onChange={(e) => setSwitchPassword(e.target.value)}
-                      placeholder="Mật khẩu..."
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-end gap-2.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => setSwitchTargetId(null)}
-                    className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
-                  >
-                    Hủy bỏ
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={switchLoading}
-                    className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {switchLoading ? "Đang xác thực..." : "Xác nhận chuyển"}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
-          </div>
-        );
-      })()}
     </div>
     </FabProvider>
   );
