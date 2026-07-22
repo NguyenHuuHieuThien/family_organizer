@@ -21,7 +21,9 @@ import {
   Share2,
   Pencil,
   CheckSquare,
-  Gift
+  Gift,
+  Star,
+  Sparkles
 } from "lucide-react";
 import { Task, TaskStatus, TaskPriority, User, UserRole, RewardPointEntry, RewardItem, RecurrenceType, isLimitedViewer, isAdultRole } from "../types.js";
 import { motion, AnimatePresence } from "motion/react";
@@ -726,16 +728,53 @@ export function Tasks({
         </div>
       </Reveal>
 
-      {childUsers.length > 0 && (
+      {childUsers.length > 0 && (<>
         <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4" id="child-reward-panel">
           <ShimmerLine accent="amber" />
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-bold text-slate-200">Điểm thưởng cho trẻ</h3>
-              <p className="text-[11px] text-slate-500">Task có điểm sẽ tự cộng khi trẻ hoàn thành. Có thể cộng/trừ thủ công khi cần.</p>
-            </div>
-            {isAdultRole(currentUser.role) && (
-              <form onSubmit={handleManualReward} className="grid grid-cols-1 sm:grid-cols-[160px_100px_1fr_auto] gap-2 text-xs">
+          <div>
+            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+              <Star className="w-4 h-4 text-amber-400" /> Điểm thưởng cho trẻ
+            </h3>
+            <p className="text-[11px] text-slate-500">Task có điểm sẽ tự cộng khi trẻ hoàn thành. Có thể cộng/trừ thủ công khi cần.</p>
+          </div>
+
+          {/* Thẻ điểm từng bé — avatar + sao cho thân thiện, dễ nhận diện */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 md:gap-5">
+            {childUsers.map(child => {
+              const recent = rewardEntries.filter(e => e.userId === child.id).slice(0, 3);
+              return (
+                <div key={child.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-center gap-3">
+                    <Avatar user={child} className="w-10 h-10 rounded-xl text-sm" extraClass="shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-bold text-slate-200 block truncate">{child.fullName}</span>
+                      <span className="text-[10px] text-slate-500">Điểm tích luỹ</span>
+                    </div>
+                    <span className="flex items-center gap-1 text-lg font-extrabold text-amber-400 shrink-0">
+                      <Star className="w-4 h-4 fill-amber-400" />{rewardTotals[child.id] || 0}
+                    </span>
+                  </div>
+                  <div className="space-y-1 border-t border-slate-800/60 pt-2">
+                    {recent.length === 0 ? (
+                      <p className="text-[10px] text-slate-500">Chưa có lịch sử điểm.</p>
+                    ) : recent.map(entry => (
+                      <p key={entry.id} className="text-[10px] text-slate-500 truncate">
+                        <span className={`font-bold ${entry.points > 0 ? "text-emerald-400" : "text-rose-400"}`}>{entry.points > 0 ? "+" : ""}{entry.points}</span> • {entry.reason}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Cộng / trừ điểm thủ công — panel riêng có nhãn rõ ràng thay vì nhét trên tiêu đề */}
+          {isAdultRole(currentUser.role) && (
+            <div className="bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
+              <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Cộng / trừ điểm thủ công
+              </p>
+              <form onSubmit={handleManualReward} className="grid grid-cols-1 sm:grid-cols-[minmax(150px,1fr)_110px_minmax(160px,1.6fr)_auto] gap-2 text-xs">
                 <FancySelect
                   value={manualRewardUser}
                   onChange={setManualRewardUser}
@@ -747,52 +786,33 @@ export function Tasks({
                   ]}
                 />
                 <input type="number" value={manualRewardPoints || ""} onChange={(e) => setManualRewardPoints(Number(e.target.value))} placeholder="+/- điểm" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-                <input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder="Lý do" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-                <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl px-3 py-2 font-bold">Cập nhật</button>
+                <input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder="Lý do (vd: dọn phòng)" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+                <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl px-4 py-2 font-bold cursor-pointer">Cập nhật</button>
               </form>
-            )}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
-            {childUsers.map(child => {
-              const recent = rewardEntries.filter(e => e.userId === child.id).slice(0, 3);
-              return (
-                <div key={child.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-4 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-200">{child.fullName}</span>
-                    <span className="text-lg font-extrabold text-amber-400">{rewardTotals[child.id] || 0}</span>
-                  </div>
-                  <div className="space-y-1">
-                    {recent.length === 0 ? (
-                      <p className="text-[10px] text-slate-500">Chưa có lịch sử điểm.</p>
-                    ) : recent.map(entry => (
-                      <p key={entry.id} className="text-[10px] text-slate-500 truncate">
-                        {entry.points > 0 ? "+" : ""}{entry.points} • {entry.reason}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+            </div>
+          )}
+        </Reveal>
 
-          {/* ─── Cửa hàng đổi thưởng: điểm đổi thành quà thật ─── */}
-          <div className="border-t border-slate-800 pt-4 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                <Gift className="w-4 h-4 text-pink-400" /> Cửa hàng đổi thưởng
-              </h4>
-              <div className="flex items-center gap-2">
-                {/* Người lớn chọn bé nhận quà; trẻ luôn đổi cho chính mình */}
-                {!isChildAccount && childUsers.length > 1 && (
-                  <div className="w-36">
-                    <FancySelect
-                      value={shopTargetId}
-                      onChange={setShopChildId}
-                      ariaLabel="Chọn bé nhận quà"
-                      options={childUsers.map(u => ({ value: u.id, label: u.fullName }))}
-                    />
-                  </div>
-                )}
+        {/* ─── CARD RIÊNG: Cửa hàng đổi thưởng (điểm đổi thành quà thật) ─── */}
+        <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-3" id="reward-store">
+          <ShimmerLine accent="pink" />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+              <Gift className="w-4 h-4 text-pink-400" /> Cửa hàng đổi thưởng
+            </h3>
+            <div className="flex items-center gap-2">
+              {/* Người lớn chọn bé nhận quà; trẻ luôn đổi cho chính mình. Ô rộng để hiện đủ tên bé. */}
+              {!isChildAccount && childUsers.length > 1 && (
+                <div className="w-full sm:w-56">
+                  <FancySelect
+                    value={shopTargetId}
+                    onChange={setShopChildId}
+                    ariaLabel="Chọn bé nhận quà"
+                    leading={(() => { const c = childUsers.find(u => u.id === shopTargetId); return c ? <Avatar user={c} className="w-5 h-5 rounded-md text-[9px]" extraClass="shrink-0" /> : null; })()}
+                    options={childUsers.map(u => ({ value: u.id, label: u.fullName }))}
+                  />
+                </div>
+              )}
                 {isAdultRole(currentUser.role) && (
                   <button
                     type="button"
@@ -909,8 +929,8 @@ export function Tasks({
                 })()}
               </div>
             )}
-          </div>
         </Reveal>
+        </>
       )}
 
       {/* Tasks List Grid */}
