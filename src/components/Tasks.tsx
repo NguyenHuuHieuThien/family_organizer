@@ -961,51 +961,55 @@ export function Tasks({
       ) : (
         <>
           <div className="space-y-4" id="tasks-kanban-board">
-            <Reveal delay={0.1} className="relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-900 neu-raised rounded-2xl p-4">
+            <Reveal delay={0.1} className="relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-900 neu-raised rounded-2xl p-4">
               <ShimmerLine accent="sky" />
-              <div className="flex items-center gap-2.5">
+              {/* Trái: tiêu đề bảng */}
+              <div className="flex items-center gap-2.5 min-w-0">
                 <IconChip accent="sky"><Layers className="w-4 h-4" /></IconChip>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-100 text-balance">Bảng công việc gia đình</h3>
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold text-slate-100">Bảng công việc gia đình</h3>
                   <p className="text-[11px] text-slate-500 text-pretty">Sắp xếp theo trạng thái, ưu tiên và hạn xử lý để cả nhà nhìn là biết việc nào cần làm trước.</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
-                  <span className="block text-slate-500">Tổng</span>
-                  <span className="font-extrabold text-slate-100 tabular-nums">{boardStats.total}</span>
+
+              {/* Phải: cụm thống kê + bộ lọc thời gian gộp chung, căn phải cho cân đối */}
+              <div className="flex flex-col sm:flex-row sm:items-end gap-3 shrink-0">
+                <div className="grid grid-cols-4 gap-2 text-center">
+                  <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
+                    <span className="block text-lg font-extrabold text-slate-100 tabular-nums leading-tight">{boardStats.total}</span>
+                    <span className="block text-[10px] text-slate-500">Tổng</span>
+                  </div>
+                  <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
+                    <span className="block text-lg font-extrabold text-sky-400 tabular-nums leading-tight">{boardStats.active}</span>
+                    <span className="block text-[10px] text-slate-500">Đang mở</span>
+                  </div>
+                  <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
+                    <span className="block text-lg font-extrabold text-rose-400 tabular-nums leading-tight">{boardStats.high}</span>
+                    <span className="block text-[10px] text-slate-500">Khẩn cấp</span>
+                  </div>
+                  <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
+                    <span className="block text-lg font-extrabold text-amber-400 tabular-nums leading-tight">{boardStats.unassigned}</span>
+                    <span className="block text-[10px] text-slate-500">Chưa giao</span>
+                  </div>
                 </div>
-                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
-                  <span className="block text-slate-500">Đang mở</span>
-                  <span className="font-extrabold text-sky-400 tabular-nums">{boardStats.active}</span>
+                <div className="w-full sm:w-[168px] shrink-0">
+                  <label htmlFor="completed-window-filter" className="block text-[10px] text-slate-500 mb-1">Việc hoàn thành</label>
+                  <FancySelect
+                    id="completed-window-filter"
+                    value={completedWindowDays}
+                    onChange={(v) => setCompletedWindowDays(v as "7" | "30" | "90" | "all")}
+                    ariaLabel="Khoảng thời gian hoàn thành"
+                    options={[
+                      { value: "7", label: "7 ngày gần nhất" },
+                      { value: "30", label: "30 ngày gần nhất" },
+                      { value: "90", label: "90 ngày gần nhất" },
+                      { value: "all", label: "Tất cả" }
+                    ]}
+                  />
+                  {hiddenCompletedCount > 0 && (
+                    <p className="mt-1 text-[10px] text-slate-500 tabular-nums">Đang ẩn {hiddenCompletedCount} task cũ.</p>
+                  )}
                 </div>
-                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
-                  <span className="block text-slate-500">Khẩn cấp</span>
-                  <span className="font-extrabold text-rose-400 tabular-nums">{boardStats.high}</span>
-                </div>
-                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
-                  <span className="block text-slate-500">Chưa giao</span>
-                  <span className="font-extrabold text-amber-400 tabular-nums">{boardStats.unassigned}</span>
-                </div>
-              </div>
-              <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-[11px] min-w-[180px]">
-                <label htmlFor="completed-window-filter" className="block text-slate-500 mb-1">Hoàn thành</label>
-                <FancySelect
-                  id="completed-window-filter"
-                  value={completedWindowDays}
-                  onChange={(v) => setCompletedWindowDays(v as "7" | "30" | "90" | "all")}
-                  ariaLabel="Khoảng thời gian hoàn thành"
-                  className="bg-slate-900"
-                  options={[
-                    { value: "7", label: "7 ngày gần nhất" },
-                    { value: "30", label: "30 ngày gần nhất" },
-                    { value: "90", label: "90 ngày gần nhất" },
-                    { value: "all", label: "Tất cả" }
-                  ]}
-                />
-                {hiddenCompletedCount > 0 && (
-                  <p className="mt-1 text-[10px] text-slate-500 tabular-nums">Đang ẩn {hiddenCompletedCount} task cũ.</p>
-                )}
               </div>
             </Reveal>
 
