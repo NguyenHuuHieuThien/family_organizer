@@ -351,6 +351,16 @@ app.post("/api/uploads", requireAuth, (req: AuthRequest, res: Response) => {
   }
 });
 
+// --- FEATURE FLAGS (family-level) ---
+// Điểm thưởng cho trẻ: mặc định BẬT nếu gia đình có tài khoản Trẻ (Con); admin
+// bật/tắt thủ công trong Thiết lập sẽ ghi đè mặc định (lưu trong app_settings).
+function rewardsFeatureEnabled(): boolean {
+  const v = getAppSettings().rewardsEnabled;
+  if (v === "1") return true;
+  if (v === "0") return false;
+  return FamilyDB.getUsers().some(u => u.role === UserRole.CHILD);
+}
+
 // --- VERSION & SELF-UPDATE ---
 
 app.get("/api/version", requireAuth, (_req: AuthRequest, res: Response) => {
@@ -360,7 +370,8 @@ app.get("/api/version", requireAuth, (_req: AuthRequest, res: Response) => {
     shortCommit: GIT_SHA ? GIT_SHA.slice(0, 7) : "",
     buildTime: BUILD_TIME,
     canAutoUpdate: Boolean(WATCHTOWER_URL && WATCHTOWER_TOKEN),
-    aiEnabled: Boolean(getGeminiKey())
+    aiEnabled: Boolean(getGeminiKey()),
+    rewardsEnabled: rewardsFeatureEnabled()
   });
 });
 
@@ -694,6 +705,15 @@ app.post("/api/settings/ai", requireAuth, requireRole([UserRole.ADMIN]), async (
 
   setAppSetting("geminiApiKey", apiKey);
   res.json({ ...aiStatus(), message: "Đã lưu Gemini API key. Tính năng AI đã sẵn sàng." });
+});
+
+// --- FEATURE TOGGLES (admin only) ---
+// Bật/tắt tính năng "Điểm thưởng cho trẻ" cho cả nhà. Gửi { rewards: boolean }.
+app.post("/api/settings/features", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+  const { rewards } = req.body || {};
+  if (rewards !== undefined) setAppSetting("rewardsEnabled", rewards ? "1" : "0");
+  broadcastSyncEvent("SETTINGS_UPDATE");
+  res.json({ rewardsEnabled: rewardsFeatureEnabled() });
 });
 
 // --- TELEGRAM BACKUP SETTINGS (admin only) ---

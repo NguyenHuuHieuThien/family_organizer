@@ -70,6 +70,8 @@ interface TasksProps {
   onSaveTask: (task: Partial<Task>) => Promise<any>;
   onDeleteTask: (id: string) => Promise<any>;
   onAddComment: (taskId: string, content: string) => Promise<any>;
+  /** Tính năng Điểm thưởng cho trẻ đang bật (cấu hình trong Thiết lập). */
+  rewardsEnabled: boolean;
 }
 
 export function Tasks({
@@ -87,7 +89,8 @@ export function Tasks({
   onRedeemRewardItem,
   onSaveTask,
   onDeleteTask,
-  onAddComment
+  onAddComment,
+  rewardsEnabled
 }: TasksProps) {
   // Query Filters State
   const [searchTerm, setSearchTerm] = useState("");
@@ -728,7 +731,24 @@ export function Tasks({
         </div>
       </Reveal>
 
-      {childUsers.length > 0 && (<>
+      {/* Tính năng bật nhưng chưa có tài khoản Trẻ → gợi ý thêm thành viên */}
+      {rewardsEnabled && childUsers.length === 0 && (
+        <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5" id="child-reward-empty">
+          <ShimmerLine accent="amber" />
+          <div className="flex items-start gap-3">
+            <span className="text-2xl leading-none">⭐</span>
+            <div className="space-y-0.5">
+              <h3 className="text-sm font-bold text-slate-200">Điểm thưởng cho trẻ đang bật</h3>
+              <p className="text-[11px] text-slate-500">
+                Chưa có tài khoản Trẻ em nào. Thêm thành viên với vai trò <b className="text-slate-300">Con (Trẻ em)</b> trong
+                <b className="text-slate-300"> Thiết lập → Thành viên</b> để bắt đầu tích điểm và đổi quà.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+      )}
+
+      {rewardsEnabled && childUsers.length > 0 && (<>
         <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4" id="child-reward-panel">
           <ShimmerLine accent="amber" />
           <div>

@@ -367,6 +367,9 @@ export default function App() {
   const [widgets, setWidgets] = useState<any>(null);
   const [weatherLoc, setWeatherLoc] = useState<string>(DEFAULT_VN_LOCATION.code);
   const [appVersion, setAppVersion] = useState<string>("");
+  // Tính năng "Điểm thưởng cho trẻ" bật/tắt cấp gia đình (admin đổi trong Thiết lập).
+  // Mặc định server bật nếu có tài khoản Trẻ. Khởi tạo true để tránh nháy ẩn/hiện.
+  const [rewardsEnabled, setRewardsEnabled] = useState<boolean>(true);
 
   // Notifications modal control
   const [notifOpen, setNotifOpen] = useState(false);
@@ -657,6 +660,22 @@ export default function App() {
     }
   };
 
+  // Admin bật/tắt tính năng Điểm thưởng cho trẻ (cấp gia đình). Server broadcast
+  // SETTINGS_UPDATE để các máy khác đồng bộ.
+  const handleSetRewardsEnabled = async (enabled: boolean) => {
+    const res = await fetch("/api/settings/features", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeader() },
+      body: JSON.stringify({ rewards: enabled })
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error || "Không đổi được cài đặt.");
+    }
+    const d = await res.json();
+    setRewardsEnabled(Boolean(d.rewardsEnabled));
+  };
+
   // Người dùng đổi địa phương thời tiết: lưu riêng theo user + lấy lại widget ngay.
   const handleChangeWeatherLoc = (code: string) => {
     if (!currentUser) return;
@@ -691,6 +710,7 @@ export default function App() {
       if (!res.ok) return;
       const d = await res.json();
       setAppVersion(d.shortCommit || d.version || "");
+      if (typeof d.rewardsEnabled === "boolean") setRewardsEnabled(d.rewardsEnabled);
       const commit: string = d.commit || "";
       if (!commit) return; // dev/local build → can't compare reliably
       if (bootCommitRef.current === null) {
@@ -811,6 +831,9 @@ export default function App() {
             break;
           case "BACKUPS_UPDATE":
             fetchBackupsAndLogs();
+            break;
+          case "SETTINGS_UPDATE":
+            fetchAppVersion(); // đồng bộ cờ tính năng (vd: bật/tắt Điểm thưởng)
             break;
           case "RESTORE_COMPLETED":
             // Critical: full server reboot sync
@@ -1833,6 +1856,7 @@ export default function App() {
                   onSaveTask={handleSaveTask}
                   onDeleteTask={handleDeleteTask}
                   onAddComment={handleAddCommentToTask}
+                  rewardsEnabled={rewardsEnabled}
                 />
               )}
 
@@ -1961,6 +1985,8 @@ export default function App() {
                   onDeleteBackup={handleDeleteBackup}
                   weatherLoc={weatherLoc}
                   onChangeWeatherLoc={handleChangeWeatherLoc}
+                  rewardsEnabled={rewardsEnabled}
+                  onSetRewardsEnabled={handleSetRewardsEnabled}
                 />
               )}
             </motion.div>

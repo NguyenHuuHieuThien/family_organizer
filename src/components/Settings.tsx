@@ -94,6 +94,8 @@ interface SettingsProps {
   onDeleteBackup: (id: string) => Promise<any>;
   weatherLoc: string;
   onChangeWeatherLoc: (code: string) => void;
+  rewardsEnabled: boolean;
+  onSetRewardsEnabled: (enabled: boolean) => Promise<void>;
 }
 
 export function Settings({
@@ -113,7 +115,9 @@ export function Settings({
   onRestoreBackup,
   onDeleteBackup,
   weatherLoc,
-  onChangeWeatherLoc
+  onChangeWeatherLoc,
+  rewardsEnabled,
+  onSetRewardsEnabled
 }: SettingsProps) {
   // In-app confirmation dialog (replaces native browser confirm)
   const { confirm, ConfirmDialog } = useConfirm();
@@ -183,6 +187,21 @@ export function Settings({
   const [updateBusy, setUpdateBusy] = useState<"" | "check" | "apply" | "deploying">("");
   const [updateMsg, setUpdateMsg] = useState("");
   const [updateDone, setUpdateDone] = useState(false);
+
+  // Toggle tính năng Điểm thưởng cho trẻ — admin only
+  const [rewardsBusy, setRewardsBusy] = useState(false);
+  const [rewardsErr, setRewardsErr] = useState("");
+  const toggleRewards = async () => {
+    setRewardsBusy(true);
+    setRewardsErr("");
+    try {
+      await onSetRewardsEnabled(!rewardsEnabled);
+    } catch (e: any) {
+      setRewardsErr(e?.message || "Không đổi được cài đặt.");
+    } finally {
+      setRewardsBusy(false);
+    }
+  };
 
   // AI (Gemini) key config — admin only
   const [aiKeyStatus, setAiKeyStatus] = useState<{ configured: boolean; source: string; masked: string } | null>(null);
@@ -1590,6 +1609,33 @@ export function Settings({
               </div>
             </form>
           </motion.div>
+        </div>
+      )}
+
+      {/* Tính năng "Điểm thưởng cho trẻ" — admin bật/tắt cho cả nhà */}
+      {currentUser.role === UserRole.ADMIN && (
+        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
+              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <span className="text-base leading-none">⭐</span> Điểm thưởng cho trẻ
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Bật khu <b className="text-slate-300">Điểm thưởng cho trẻ</b> và <b className="text-slate-300">Cửa hàng đổi thưởng</b> ở
+                tab Nhiệm vụ. Mặc định bật khi nhà có tài khoản Trẻ em; tắt đi nếu không dùng.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={toggleRewards}
+              disabled={rewardsBusy}
+              title={rewardsEnabled ? "Đang BẬT — bấm để tắt" : "Đang TẮT — bấm để bật"}
+              className={`shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all disabled:opacity-50 ${rewardsEnabled ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-slate-900 text-slate-500 border-slate-800"}`}
+            >
+              {rewardsBusy ? "..." : rewardsEnabled ? "ĐANG BẬT" : "ĐANG TẮT"}
+            </button>
+          </div>
+          {rewardsErr && <p className="text-[11px] text-rose-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {rewardsErr}</p>}
         </div>
       )}
 
