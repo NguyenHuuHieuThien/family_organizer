@@ -132,7 +132,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
       {/* Nút kính lúp trên header — style đồng bộ nút đổi theme */}
       <button
         onClick={() => setOpen(true)}
-        className="p-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 bg-slate-950 border border-slate-850 rounded-xl outline-none leading-none cursor-pointer flex items-center justify-center transition-all"
+        className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none cursor-pointer flex items-center justify-center"
         title="Tìm kiếm toàn cục (Ctrl+K)"
         aria-label="Tìm kiếm toàn cục"
       >
@@ -172,7 +172,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
                 )}
                 <button
                   onClick={close}
-                  className="p-1.5 bg-slate-950 border border-slate-800 rounded-lg text-slate-500 hover:text-slate-200 cursor-pointer shrink-0"
+                  className="p-1.5 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-slate-200 cursor-pointer shrink-0"
                   aria-label="Đóng tìm kiếm"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -227,8 +227,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
 
               {/* Chân modal: gợi ý phím tắt (ẩn trên mobile) */}
               <div className="hidden sm:flex items-center justify-end gap-3 px-4 py-2 border-t border-slate-800 text-[10px] text-slate-500 font-mono">
-                <span><kbd className="px-1 py-0.5 bg-slate-950 border border-slate-800 rounded">Esc</kbd> đóng</span>
-                <span><kbd className="px-1 py-0.5 bg-slate-950 border border-slate-800 rounded">Ctrl K</kbd> mở/đóng</span>
+                <span><kbd className="px-1 py-0.5 bg-slate-950 neu-pressed-sm rounded">Esc</kbd> đóng</span>
+                <span><kbd className="px-1 py-0.5 bg-slate-950 neu-pressed-sm rounded">Ctrl K</kbd> mở/đóng</span>
               </div>
             </motion.div>
           </div>

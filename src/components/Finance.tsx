@@ -939,7 +939,7 @@ export function Finance({
 
   return (
     <div className="space-y-6" id="finance-module">
-      <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-2 shadow-xl flex flex-col sm:flex-row gap-2 text-xs font-bold">
+      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-2 flex flex-col sm:flex-row gap-2 text-xs font-bold">
         <ShimmerLine accent="emerald" />
         <button
           type="button"
@@ -970,10 +970,10 @@ export function Finance({
       ) : (
         <>
       {/* Period control: chọn chế độ kỳ + điều hướng kỳ + bật so sánh */}
-      <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-xl space-y-3" id="finance-period">
+      <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-3 space-y-3" id="finance-period">
         <ShimmerLine accent="sky" />
         <div className="flex items-center gap-2">
-          <div className="flex-1 grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[11px] font-bold">
+          <div className="flex-1 grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl neu-pressed-sm text-[11px] font-bold">
             {(["month", "quarter", "year"] as PeriodMode[]).map(m => (
               <button
                 key={m}
@@ -999,7 +999,7 @@ export function Finance({
           <button
             type="button"
             onClick={() => setAnchor(a => stepAnchor(periodMode, a, -1))}
-            className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 hover:text-sky-400 transition-colors cursor-pointer"
+            className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-300 hover:text-sky-400 transition-colors cursor-pointer"
             title="Kỳ trước"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -1026,7 +1026,7 @@ export function Finance({
             type="button"
             onClick={() => canGoNext && setAnchor(a => stepAnchor(periodMode, a, 1))}
             disabled={!canGoNext}
-            className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 hover:text-sky-400 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-slate-300"
+            className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-300 hover:text-sky-400 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-slate-300"
             title="Kỳ sau"
           >
             <ChevronRight className="w-4 h-4" />
@@ -1035,10 +1035,10 @@ export function Finance({
       </Reveal>
 
       {/* Wallet Cards Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" id="finance-summaries">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-6" id="finance-summaries">
 
         {/* Cân đối trong kỳ (Thu − Chi) */}
-        <Reveal delay={0.1} className="relative overflow-hidden bg-radial from-slate-900 to-slate-950 border border-slate-850 p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+        <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl flex flex-col justify-between">
           <ShimmerLine via={metrics.balance >= 0 ? "via-emerald-500/50" : "via-rose-500/50"} />
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs font-semibold">Cân đối kỳ này</span>
@@ -1055,7 +1055,7 @@ export function Finance({
         </Reveal>
 
         {/* Thu nhập trong kỳ */}
-        <Reveal delay={0.15} className="relative overflow-hidden bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-md flex flex-col justify-between">
+        <Reveal delay={0.15} className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-md flex flex-col justify-between">
           <ShimmerLine accent="emerald" />
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs font-semibold">Nguồn thu trong kỳ</span>
@@ -1072,7 +1072,7 @@ export function Finance({
         </Reveal>
 
         {/* Chi tiêu trong kỳ */}
-        <Reveal delay={0.2} className="relative overflow-hidden bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-md flex flex-col justify-between">
+        <Reveal delay={0.2} className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-md flex flex-col justify-between">
           <ShimmerLine accent="rose" />
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs font-semibold">Chi tiêu trong kỳ</span>
@@ -1090,7 +1090,7 @@ export function Finance({
       </div>
 
       {/* Số dư theo từng ví (tính từ giao dịch) */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3" id="account-balances">
+      <div className="grid grid-cols-3 gap-2.5 sm:gap-4 md:gap-x-6" id="account-balances">
         {[
           { key: "cash", label: "Tiền mặt 💵" },
           { key: "bank", label: "Ngân hàng 💳" },
@@ -1098,7 +1098,7 @@ export function Finance({
         ].map(acc => {
           const v = accountBalances[acc.key] || 0;
           return (
-            <div key={acc.key} className="bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 shadow-md min-w-0">
+            <div key={acc.key} className="bg-slate-900 neu-raised rounded-2xl p-3 sm:p-4 min-w-0">
               <span className="block text-[10px] text-slate-500 font-semibold truncate">{acc.label}</span>
               <span className={`block mt-1 text-[13px] sm:text-lg font-extrabold font-sans tabular-nums leading-tight break-words ${v >= 0 ? "text-slate-100" : "text-rose-400"}`}>
                 {v.toLocaleString()} đ
@@ -1113,7 +1113,7 @@ export function Finance({
       {showCompare && (
         <div className={`grid grid-cols-1 gap-4 ${trendHasData ? "xl:grid-cols-2" : ""}`} id="finance-compare-group">
           {trendHasData && (
-            <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-4 flex flex-col gap-2" id="finance-trend-chart">
+            <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 flex flex-col gap-2" id="finance-trend-chart">
               <ShimmerLine accent="emerald" />
               <div className="flex items-center justify-between gap-2 flex-wrap">
                 <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
@@ -1131,7 +1131,7 @@ export function Finance({
             </div>
           )}
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-4 space-y-2" id="finance-compare">
+          <div className="bg-slate-900 neu-raised rounded-2xl p-4 space-y-2" id="finance-compare">
           <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
             <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
             So sánh: {periodLabel(periodMode, anchor)} ↔ {periodLabel(periodMode, prevAnchor)}
@@ -1196,7 +1196,7 @@ export function Finance({
       )}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" id="finance-planning">
-        <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+        <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
           <ShimmerLine accent="sky" />
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-200">Ngân sách {periodLabel(periodMode, anchor)}</h3>
@@ -1218,7 +1218,7 @@ export function Finance({
                   value={budgetLimit}
                   onChange={setBudgetLimit}
                   placeholder="Hạn mức"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
                 />
                 <button type="submit" className="bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl px-3 py-2 font-bold">
                   Lưu
@@ -1227,7 +1227,7 @@ export function Finance({
               {budgetError && <p className="text-[11px] text-rose-400">{budgetError}</p>}
             </>
           ) : (
-            <p className="text-[11px] text-slate-500 bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2">
+            <p className="text-[11px] text-slate-500 bg-slate-950/60 neu-pressed-sm rounded-xl px-3 py-2">
               Ngân sách đặt theo tháng — đang tổng hợp {periodMonthsList.length} tháng trong kỳ. Chuyển về chế độ <b className="text-slate-300">Tháng</b> để thêm/sửa hạn mức.
             </p>
           )}
@@ -1241,7 +1241,7 @@ export function Finance({
                 const pct = Math.min(100, Math.round((used / b.limit) * 100));
                 const isEditing = editingBudgetId === b.id;
                 return (
-                  <div key={b.id} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+                  <div key={b.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between text-xs gap-2">
                       <span className="font-bold text-slate-200">{translateCategory(b.category)}</span>
                       {isEditing ? (
@@ -1286,7 +1286,7 @@ export function Finance({
                 const used = budgetUsage[b.category] || 0;
                 const pct = Math.min(100, Math.round((used / b.limit) * 100));
                 return (
-                  <div key={b.category} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+                  <div key={b.category} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-200">{translateCategory(b.category)}</span>
                       <span className="text-[10px] text-slate-500 font-mono">gộp {periodMonthsList.length} tháng</span>
@@ -1302,16 +1302,16 @@ export function Finance({
           </div>
         </Reveal>
 
-        <Reveal delay={0.16} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+        <Reveal delay={0.16} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
           <ShimmerLine accent="emerald" />
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-200">Hóa đơn định kỳ</h3>
             <span className="text-[10px] text-slate-500 font-mono">{recurringBills.length} khoản</span>
           </div>
           <form onSubmit={handleCreateBill} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <input value={billTitle} onChange={(e) => setBillTitle(e.target.value)} placeholder="Tên hóa đơn" className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none" />
-            <input type="text" inputMode="numeric" value={formatMoneyInput(billAmount)} onChange={(e) => setBillAmount(parseMoneyInput(e.target.value))} placeholder="Số tiền" className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none" />
-            <DateInputDMY value={billDueDate} onChange={setBillDueDate} className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none font-mono" />
+            <input value={billTitle} onChange={(e) => setBillTitle(e.target.value)} placeholder="Tên hóa đơn" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+            <input type="text" inputMode="numeric" value={formatMoneyInput(billAmount)} onChange={(e) => setBillAmount(parseMoneyInput(e.target.value))} placeholder="Số tiền" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+            <DateInputDMY value={billDueDate} onChange={setBillDueDate} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none font-mono" />
             <FancySelect
               value={billFrequency}
               onChange={(v) => setBillFrequency(v as RecurringBill["frequency"])}
@@ -1331,7 +1331,7 @@ export function Finance({
             {recurringBills.length === 0 ? (
               <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có hóa đơn lặp lại.</p>
             ) : recurringBills.map(b => (
-              <div key={b.id} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-3">
+              <div key={b.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-slate-200 truncate">{b.title}</p>
                   <p className="text-[10px] text-slate-500 font-mono">{b.amount.toLocaleString()} VNĐ • {translateBillCategory(b.category)} • hạn {formatDateVN(b.nextDueDate)}</p>
@@ -1402,7 +1402,7 @@ export function Finance({
 
       {/* Advanced charts & breakdowns layout */}
       {chartCategoryDistribution.length > 0 && (
-        <div className="relative overflow-hidden bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6" id="finance-statistics">
+        <div className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6" id="finance-statistics">
           <ShimmerLine accent="violet" />
           
           {/* Custom animated category distribution list */}
@@ -1479,7 +1479,7 @@ export function Finance({
       )}
 
       {/* Query Filters blocks and create triggers row */}
-      <div className="relative overflow-hidden bg-slate-900 border border-slate-800 p-4.5 rounded-2xl shadow-xl space-y-3" id="finance-filters">
+      <div className="relative overflow-hidden bg-slate-900 neu-raised p-4.5 rounded-2xl shadow-xl space-y-3" id="finance-filters">
         <ShimmerLine accent="emerald" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1">
@@ -1489,7 +1489,7 @@ export function Finance({
               placeholder="Tìm miêu tả khoản chi, mua đồ đạc gia đình..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
             />
           </div>
         </div>
@@ -1560,7 +1560,7 @@ export function Finance({
           <p className="text-sm text-slate-500">Không có giao dịch nào trong <b className="text-slate-300">{periodLabel(periodMode, anchor)}</b> khớp bộ lọc.</p>
         </div>
       ) : (
-        <div className="relative bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden" id="transactions-table">
+        <div className="relative bg-slate-900 neu-raised rounded-2xl overflow-hidden" id="transactions-table">
           <ShimmerLine accent="sky" />
           <div className="bg-slate-950 p-4 border-b border-slate-800 text-xs text-slate-400 font-semibold uppercase tracking-wider flex justify-between items-center gap-2">
             <span>Dòng tiền {periodLabel(periodMode, anchor)} ({filteredTransactions.length} bản ghi)</span>
@@ -1568,7 +1568,7 @@ export function Finance({
               <button
                 type="button"
                 onClick={exportTransactionsCsv}
-                className="flex items-center gap-1 normal-case bg-slate-900 hover:bg-slate-800 border border-slate-800 text-sky-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
+                className="flex items-center gap-1 normal-case bg-slate-900 hover:bg-slate-800 neu-btn text-sky-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
                 title="Xuất danh sách đang lọc ra file CSV (Excel)"
               >
                 <FileText className="w-3.5 h-3.5" /> Xuất CSV
@@ -1577,7 +1577,7 @@ export function Finance({
                 type="button"
                 onClick={exportReportPdf}
                 disabled={exportingPdf}
-                className="flex items-center gap-1 normal-case bg-slate-900 hover:bg-slate-800 border border-slate-800 text-indigo-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-60"
+                className="flex items-center gap-1 normal-case bg-slate-900 hover:bg-slate-800 neu-btn text-indigo-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-60"
                 title="Xuất báo cáo PDF của kỳ đang xem (tổng quan + hạng mục + giao dịch)"
               >
                 <FileDown className="w-3.5 h-3.5" /> {exportingPdf ? "Đang xuất..." : "Xuất PDF"}
@@ -1657,7 +1657,7 @@ export function Finance({
                     {tx.receiptImage ? (
                       <button 
                         onClick={() => setSelectedReceipt(tx.receiptImage!)}
-                        className="flex items-center gap-1 bg-slate-950 text-sky-400 hover:bg-slate-850 border border-slate-800 text-[10px] px-2 py-1 rounded-lg cursor-pointer"
+                        className="flex items-center gap-1 bg-slate-950 text-sky-400 hover:bg-slate-850 neu-btn text-[10px] px-2 py-1 rounded-lg cursor-pointer"
                         title="Xem ảnh hóa đơn"
                       >
                         <ImageIcon className="w-3.5 h-3.5" /> Xem HĐ
@@ -1676,14 +1676,14 @@ export function Finance({
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => openEditTransaction(tx)}
-                          className="p-1.5 bg-slate-950 border border-slate-800 hover:text-sky-400 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
+                          className="p-1.5 bg-slate-950 neu-btn hover:text-sky-400 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
                           title="Sửa giao dịch này"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(tx.id)}
-                          className="p-1.5 bg-slate-950 border border-slate-800 hover:text-rose-450 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
+                          className="p-1.5 bg-slate-950 neu-btn hover:text-rose-450 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
                           title="Xóa giao dịch này"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1762,7 +1762,7 @@ export function Finance({
                   placeholder={formType === TransactionType.EXPENSE ? "Ví dụ: Đi chợ mua cá lóc, thanh toán hóa đơn điện nước..." : "Ví dụ: Nhận thưởng hoàn thành dự án, nhận lương tháng..."}
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -1779,7 +1779,7 @@ export function Finance({
                   onChange={setFormAmount}
                   placeholder="Điền số giá trị..."
                   operators={formType === TransactionType.EXPENSE}
-                  className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-bold"
+                  className="w-full min-w-0 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-bold"
                 />
               </div>
 
@@ -1789,7 +1789,7 @@ export function Finance({
                 <DateInputDMY
                   value={formDate}
                   onChange={setFormDate}
-                  className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                  className="w-full min-w-0 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                 />
               </div>
 
@@ -1821,7 +1821,7 @@ export function Finance({
                           placeholder="Nhập nguồn thu khác: trúng số, tiền lì xì..."
                           value={formCategory}
                           onChange={(e) => setFormCategory(e.target.value)}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
+                          className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
                           autoFocus
                         />
                       )}
@@ -1845,7 +1845,7 @@ export function Finance({
               </div>
 
               {/* Receipt File upload */}
-              <div className="space-y-1 bg-slate-950/40 p-4 border border-slate-800 rounded-xl">
+              <div className="space-y-1 bg-slate-950/40 p-4 neu-pressed-sm rounded-xl">
                 <label className="text-slate-400 block font-semibold mb-1">Đính kèm ảnh chụp hóa đơn (tự tối ưu trước khi lưu — dán Ctrl+V được)</label>
                 <input
                   type="file"
@@ -1908,7 +1908,7 @@ export function Finance({
             />
             <button 
               onClick={() => setSelectedReceipt(null)}
-              className="absolute top-4 right-4 bg-slate-950/80 hover:bg-slate-800 p-2 text-slate-250 border border-slate-800 hover:text-slate-100 rounded-lg cursor-pointer"
+              className="absolute top-4 right-4 bg-slate-950/80 hover:bg-slate-800 p-2 text-slate-250 neu-btn hover:text-slate-100 rounded-lg cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1934,7 +1934,7 @@ export function Finance({
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
                 placeholder="Tên hóa đơn"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none"
+                className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
               />
               <input
                 type="text"
@@ -1942,12 +1942,12 @@ export function Finance({
                 value={formatMoneyInput(editAmount)}
                 onChange={e => setEditAmount(parseMoneyInput(e.target.value))}
                 placeholder="Số tiền"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none"
+                className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
               />
               <DateInputDMY
                 value={editDueDate}
                 onChange={setEditDueDate}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none"
+                className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
               />
               <FancySelect
                 value={editFrequency}

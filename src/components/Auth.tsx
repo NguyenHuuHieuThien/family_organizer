@@ -89,7 +89,7 @@ export function Auth({ onLoginSuccess }: AuthProps) {
                 placeholder="Nhập tên đăng nhập gia đình..."
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 outline-none transition-all"
+                className="w-full bg-slate-950 neu-pressed-sm focus:border-sky-500 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 outline-none transition-all"
               />
             </div>
           </div>
@@ -103,7 +103,7 @@ export function Auth({ onLoginSuccess }: AuthProps) {
                 placeholder="Mật khẩu của từng thành viên..."
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 outline-none transition-all"
+                className="w-full bg-slate-950 neu-pressed-sm focus:border-sky-500 rounded-xl py-2.5 pl-10 pr-4 text-slate-200 outline-none transition-all"
               />
             </div>
           </div>

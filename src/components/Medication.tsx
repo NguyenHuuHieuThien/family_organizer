@@ -165,7 +165,7 @@ export function Medication({
 
   return (
     <div className="space-y-6" id="medication-module">
-      <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+      <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
         <ShimmerLine accent="rose" />
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -183,8 +183,8 @@ export function Medication({
 
         {canManageMedication(currentUser.role) && (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
-            <input ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên thuốc" className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
-            <input value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder="Liều dùng" className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <input ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} placeholder="Tên thuốc" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <input value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder="Liều dùng" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
             <div className="md:col-span-2">
               <FancySelect
                 value={patientId}
@@ -195,7 +195,7 @@ export function Medication({
             </div>
 
             {/* Giờ uống - chip pickers */}
-            <div className="md:col-span-6 bg-slate-950/40 border border-slate-800 rounded-xl p-3 space-y-2">
+            <div className="md:col-span-6 bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
               <label className="text-slate-400 font-semibold flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-rose-400" /> Giờ uống thuốc trong ngày</label>
               <div className="flex flex-wrap items-center gap-2">
                 {times.map((t, i) => (
@@ -215,14 +215,14 @@ export function Medication({
 
             <div className="md:col-span-3 space-y-1">
               <label className="text-slate-500 text-[10px] block">Ngày bắt đầu</label>
-              <DateInputDMY value={startDate} onChange={setStartDate} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500 font-mono" />
+              <DateInputDMY value={startDate} onChange={setStartDate} className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500 font-mono" />
             </div>
             <div className="md:col-span-3 space-y-1">
               <label className="text-slate-500 text-[10px] block">Ngày kết thúc (tùy chọn)</label>
-              <DateInputDMY value={endDate} onChange={setEndDate} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500 font-mono" />
+              <DateInputDMY value={endDate} onChange={setEndDate} className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500 font-mono" />
             </div>
 
-            <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ghi chú, sau ăn..." className="md:col-span-4 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ghi chú, sau ăn..." className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
             <button disabled={saving} type="submit" className="md:col-span-2 bg-rose-500 hover:bg-rose-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
               <Plus className="w-4 h-4" /> Thêm lịch thuốc
             </button>
@@ -236,7 +236,7 @@ export function Medication({
           <p className="text-sm text-slate-500">Chưa có lịch nhắc thuốc nào.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6">
           <AnimatePresence>
             {sorted.map(med => {
               const patient = users.find(u => u.id === med.patientId);
@@ -248,7 +248,7 @@ export function Medication({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   whileHover={{ y: -3 }}
-                  className="bg-slate-900 border border-slate-800 hover:border-rose-500/30 rounded-2xl p-4 shadow-xl hover:shadow-rose-500/10 transition-[box-shadow,border-color] duration-300 space-y-3"
+                  className="bg-slate-900 neu-raised hover:border-rose-500/30 rounded-2xl p-4 shadow-xl hover:shadow-rose-500/10 transition-[box-shadow,border-color] duration-300 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -256,7 +256,7 @@ export function Medication({
                       <p className="text-xs text-slate-500">{med.dosage || "Chưa ghi liều"} • {patient?.fullName || "Thành viên"}</p>
                     </div>
                     {canManageMedication(currentUser.role) && (
-                      <button onClick={() => onDeleteMedication(med.id)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 border border-slate-800 rounded-lg">
+                      <button onClick={() => onDeleteMedication(med.id)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     )}
@@ -271,7 +271,7 @@ export function Medication({
 
                   {/* Nhật ký liều hôm nay — chỉ hiện cho người quản lý & khi lịch còn hiệu lực */}
                   {canManage && isActiveToday(med) && med.times.length > 0 && (
-                    <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-2.5 space-y-2">
+                    <div className="bg-slate-950/40 neu-pressed-sm rounded-xl p-2.5 space-y-2">
                       <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Hôm nay</p>
                       <div className="space-y-1.5">
                         {med.times.map(time => {

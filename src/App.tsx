@@ -70,6 +70,7 @@ import { FabProvider } from "./components/FabHost.js";
 import { Settings } from "./components/Settings.js";
 import { ServerMonitor } from "./components/ServerMonitor.js";
 import { GlobalSearch } from "./components/GlobalSearch.js";
+import { FancySelect } from "./components/FancySelect.js";
 import { useModalA11y } from "./hooks/useModalA11y.js";
 import { reloadOnce, scheduleReloadFallback } from "./utils/appReload.js";
 import { DEFAULT_VN_LOCATION, findVnLocation } from "./utils/vnLocations.js";
@@ -107,7 +108,7 @@ export default function App() {
   const applyThemeDom = useCallback((t: "light" | "dark") => {
     document.documentElement.classList.toggle("dark", t === "dark");
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", t === "dark" ? "#0d121f" : "#f8fafc");
+    if (meta) meta.setAttribute("content", t === "dark" ? "#171d29" : "#e4e9f1");
   }, []);
 
   // Lưu + áp theme khi mount và khi theme đổi (không tạo hiệu ứng ở đây; hiệu ứng
@@ -1721,15 +1722,15 @@ export default function App() {
           
           <div className="flex items-center gap-2 min-w-0">
             {/* Mobile menu trigger */}
-            <button 
+            <button
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 text-slate-400 hover:bg-slate-800 bg-slate-950 border border-slate-800 rounded-xl leading-none cursor-pointer"
+              className="lg:hidden p-2 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl leading-none cursor-pointer"
             >
               <Menu className="w-4.5 h-4.5" />
             </button>
 
             {/* SSE replication indicators */}
-            <div className="hidden sm:flex items-center gap-2 bg-slate-950 p-2 border border-slate-850 rounded-xl text-[10px] text-slate-400">
+            <div className="hidden sm:flex items-center gap-2 bg-slate-950 p-2 neu-pressed-sm rounded-xl text-[10px] text-slate-400">
               {isOnline ? (
                 <>
                   <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
@@ -1750,31 +1751,30 @@ export default function App() {
             {/* Tìm kiếm toàn cục (⌘K) — gộp tasks/lịch/ghi chú/thu chi/giấy tờ */}
             <GlobalSearch getAuthHeader={getAuthHeader} onNavigate={tab => setActiveTab(tab)} />
 
-            {/* Quick Demo Role selection panel block */}
-            <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-850 text-[10px] font-sans">
-              <span className="text-slate-500 px-1 text-[9px] uppercase font-mono font-bold hidden md:inline">Tài khoản:</span>
-              <select
+            {/* Bộ chọn tài khoản đang dùng — dùng FancySelect (dropdown chuẩn hệ thiết kế:
+                portal, theme-aware, bàn phím); avatar hiện trong trigger qua prop leading. */}
+            {/* Màn điện thoại dọc (hẹp) ẩn ô chọn tài khoản cho header gọn; hiện lại từ sm+ */}
+            <div className="hidden sm:block w-[150px] md:w-[188px]">
+              <FancySelect
                 value={currentUser.id}
-                onChange={(e) => {
-                  const id = e.target.value;
+                ariaLabel="Chuyển tài khoản"
+                onChange={(id) => {
                   if (id && id !== currentUser.id) {
                     setSwitchTargetId(id);
                     setSwitchPassword("");
                     setSwitchError("");
                   }
                 }}
-                className="bg-slate-900 border-0 text-slate-300 font-semibold focus:outline-none focus:ring-0 p-1 rounded-lg cursor-pointer max-w-[120px] md:max-w-[none]"
-              >
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>{u.fullName}</option>
-                ))}
-              </select>
+                options={users.map(u => ({ value: u.id, label: u.fullName }))}
+                leading={<Avatar user={currentUser} className="w-6 h-6 rounded-lg text-[10px]" extraClass="shrink-0" />}
+                className="text-xs font-semibold"
+              />
             </div>
 
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 bg-slate-950 border border-slate-850 rounded-xl outline-none leading-none cursor-pointer group flex items-center justify-center transition-all"
+              className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none cursor-pointer group flex items-center justify-center"
               title={theme === "light" ? "Chuyển sang Giao diện Tối" : "Chuyển sang Giao diện Sáng"}
             >
               {theme === "light" ? (
@@ -1788,7 +1788,7 @@ export default function App() {
             <div className="relative" ref={notifRef}>
               <button
                 onClick={() => { setNotifOpen(!notifOpen); fetchNotifications(); }}
-                className="p-2.5 text-slate-400 hover:text-slate-100 hover:bg-slate-800 bg-slate-950 border border-slate-850 rounded-xl outline-none leading-none relative cursor-pointer group"
+                className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none relative cursor-pointer group"
               >
                 <Bell className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                 {unreadNotifs.length > 0 && (

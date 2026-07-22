@@ -283,7 +283,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
     <div className="space-y-6" id="documents-module">
       {/* Form thêm/sửa */}
       <Reveal>
-      <div ref={formRef} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+      <div ref={formRef} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
         <ShimmerLine accent="indigo" />
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -313,7 +313,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
               value={title}
               onChange={(e) => { setTitle(e.target.value); setTitleManual(e.target.value.trim() !== ""); }}
               placeholder="Tên tự tạo từ loại + chủ sở hữu (có thể sửa)"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 pr-16 text-slate-200 outline-none focus:border-indigo-500"
+              className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 pr-16 text-slate-200 outline-none focus:border-indigo-500"
             />
             {titleManual && (
               <button
@@ -339,19 +339,19 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
               ]}
             />
           </div>
-          <input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder="Số giấy tờ" className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
-          <input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder="Nơi cấp" className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder="Số giấy tờ" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder="Nơi cấp" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
 
           <div className="md:col-span-3 space-y-1">
             <label className="text-slate-500 text-[10px] block">Ngày cấp</label>
-            <DateInputDMY value={issueDate} onChange={setIssueDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
+            <DateInputDMY value={issueDate} onChange={setIssueDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
           </div>
           <div className="md:col-span-3 space-y-1">
             <label className="text-slate-500 text-[10px] block">Ngày hết hạn (để nhắc)</label>
-            <DateInputDMY value={expiryDate} onChange={setExpiryDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
+            <DateInputDMY value={expiryDate} onChange={setExpiryDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
           </div>
 
-          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ghi chú thêm..." className="md:col-span-4 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ghi chú thêm..." className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
           <div className="md:col-span-2">
             <FancySelect
               value={isShared ? "true" : "false"}
@@ -365,7 +365,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
           </div>
 
           {/* Đính kèm ảnh/scan/PDF — hỗ trợ dán ảnh từ clipboard (Ctrl+V) vào form */}
-          <div className="md:col-span-6 bg-slate-950/40 border border-slate-800 rounded-xl p-3 space-y-2">
+          <div className="md:col-span-6 bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <label className="text-slate-400 font-semibold flex items-center gap-1.5 min-w-0">
                 <Paperclip className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Ảnh/PDF đính kèm ({files.length}/{MAX_DOC_FILES})
@@ -436,7 +436,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
           <p className="text-sm text-slate-500">Chưa có giấy tờ nào. Thêm CCCD, đăng kiểm, bảo hiểm... để được nhắc khi sắp hết hạn.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6">
           <AnimatePresence>
             {sorted.map(doc => {
               const owner = users.find(u => u.id === doc.ownerId);
@@ -450,7 +450,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
                   whileHover={{ y: -3 }}
-                  className="bg-slate-900 border border-slate-800 hover:border-indigo-500/30 rounded-2xl p-4 shadow-xl hover:shadow-indigo-500/10 transition-[box-shadow,border-color] duration-300 space-y-3"
+                  className="bg-slate-900 neu-raised hover:border-indigo-500/30 rounded-2xl p-4 shadow-xl hover:shadow-indigo-500/10 transition-[box-shadow,border-color] duration-300 space-y-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -461,10 +461,10 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                     </div>
                     {canManage && (
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => startEdit(doc)} className="p-1.5 text-slate-500 hover:text-amber-400 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer" title="Sửa">
+                      <button onClick={() => startEdit(doc)} className="p-1.5 text-slate-500 hover:text-amber-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title="Sửa">
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => handleDelete(doc)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 border border-slate-800 rounded-lg cursor-pointer" title="Xóa">
+                      <button onClick={() => handleDelete(doc)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title="Xóa">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>

@@ -620,7 +620,7 @@ export function Tasks({
   return (
     <div className="space-y-6" id="tasks-module">
       {/* Search and Quick Filters Header */}
-      <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-4" id="task-filter-panel">
+      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-xl space-y-4" id="task-filter-panel">
         <ShimmerLine accent="sky" />
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1">
@@ -630,7 +630,7 @@ export function Tasks({
               placeholder="Tìm kiếm công việc của gia đình, nhãn dán..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-sm focus:outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-sm focus:outline-none transition-all"
             />
           </div>
           <button
@@ -718,7 +718,7 @@ export function Tasks({
                 setScopeFilter("all");
                 setCompletedWindowDays("30");
               }}
-              className="w-full bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:text-slate-100 p-2 text-slate-400 font-semibold rounded-lg text-center transition-all cursor-pointer"
+              className="w-full bg-slate-950 neu-btn hover:bg-slate-800 hover:text-slate-100 p-2 text-slate-400 font-semibold rounded-lg text-center transition-all cursor-pointer"
             >
               Đặt lại bộ lọc
             </button>
@@ -727,7 +727,7 @@ export function Tasks({
       </Reveal>
 
       {childUsers.length > 0 && (
-        <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4" id="child-reward-panel">
+        <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4" id="child-reward-panel">
           <ShimmerLine accent="amber" />
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
@@ -746,17 +746,17 @@ export function Tasks({
                     ...childUsers.map(u => ({ value: u.id, label: u.fullName }))
                   ]}
                 />
-                <input type="number" value={manualRewardPoints || ""} onChange={(e) => setManualRewardPoints(Number(e.target.value))} placeholder="+/- điểm" className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none" />
-                <input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder="Lý do" className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none" />
+                <input type="number" value={manualRewardPoints || ""} onChange={(e) => setManualRewardPoints(Number(e.target.value))} placeholder="+/- điểm" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+                <input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder="Lý do" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
                 <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl px-3 py-2 font-bold">Cập nhật</button>
               </form>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-5">
             {childUsers.map(child => {
               const recent = rewardEntries.filter(e => e.userId === child.id).slice(0, 3);
               return (
-                <div key={child.id} className="bg-slate-950/60 border border-slate-800 rounded-xl p-4 space-y-2">
+                <div key={child.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-4 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-200">{child.fullName}</span>
                     <span className="text-lg font-extrabold text-amber-400">{rewardTotals[child.id] || 0}</span>
@@ -797,7 +797,7 @@ export function Tasks({
                   <button
                     type="button"
                     onClick={() => { cancelGiftForm(); setShowGiftForm(v => !v); }}
-                    className="flex items-center gap-1 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-pink-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
+                    className="flex items-center gap-1 bg-slate-950 neu-btn hover:bg-slate-800 text-pink-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" /> Thêm quà
                   </button>
@@ -810,13 +810,13 @@ export function Tasks({
               <form onSubmit={handleAddGift} className="space-y-2">
                 <p className="text-[11px] font-bold text-slate-400">{editingGift ? `Sửa quà: ${editingGift.name}` : "Thêm món quà mới"}</p>
                 <div className="grid grid-cols-[64px_1fr_100px_auto_auto] gap-2 text-xs">
-                  <input value={giftEmoji} onChange={e => setGiftEmoji(e.target.value)} placeholder="🎁" maxLength={4} className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 text-center" />
-                  <input value={giftName} onChange={e => setGiftName(e.target.value)} placeholder="Tên quà (vd: 30 phút iPad)" className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 min-w-0" />
-                  <input type="number" min={1} value={giftCost || ""} onChange={e => setGiftCost(Number(e.target.value))} placeholder="Điểm" className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500" />
+                  <input value={giftEmoji} onChange={e => setGiftEmoji(e.target.value)} placeholder="🎁" maxLength={4} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 text-center" />
+                  <input value={giftName} onChange={e => setGiftName(e.target.value)} placeholder="Tên quà (vd: 30 phút iPad)" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 min-w-0" />
+                  <input type="number" min={1} value={giftCost || ""} onChange={e => setGiftCost(Number(e.target.value))} placeholder="Điểm" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500" />
                   <button type="submit" disabled={giftSaving || !giftName.trim() || giftCost <= 0} className="bg-pink-500 hover:bg-pink-400 text-slate-950 rounded-xl px-3 py-2 font-bold cursor-pointer disabled:opacity-60">
                     {giftSaving ? "..." : editingGift ? "Lưu" : "Thêm"}
                   </button>
-                  <button type="button" onClick={cancelGiftForm} className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-500 hover:text-slate-300 cursor-pointer">
+                  <button type="button" onClick={cancelGiftForm} className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-500 hover:text-slate-300 cursor-pointer">
                     <X className="w-4 h-4" />
                   </button>
                 </div>
@@ -840,20 +840,20 @@ export function Tasks({
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {activeGifts.map(item => {
                   const balance = shopTargetId ? (rewardTotals[shopTargetId] || 0) : 0;
                   const affordable = balance >= item.cost;
                   return (
-                    <div key={item.id} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex flex-col gap-2">
+                    <div key={item.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 flex flex-col gap-2">
                       <div className="flex items-start justify-between gap-1">
                         <span className="text-2xl leading-none">{item.emoji || "🎁"}</span>
                         {isAdultRole(currentUser.role) && (
                           <div className="flex gap-1">
-                            <button type="button" onClick={() => startEditGift(item)} title="Sửa quà" aria-label={`Sửa quà ${item.name}`} className="p-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
+                            <button type="button" onClick={() => startEditGift(item)} title="Sửa quà" aria-label={`Sửa quà ${item.name}`} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
                               <Pencil className="w-3 h-3" />
                             </button>
-                            <button type="button" onClick={() => handleDeleteGift(item)} title="Xóa quà" aria-label={`Xóa quà ${item.name}`} className="p-1 bg-slate-950 border border-slate-800 rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
+                            <button type="button" onClick={() => handleDeleteGift(item)} title="Xóa quà" aria-label={`Xóa quà ${item.name}`} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
                               <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
@@ -878,21 +878,21 @@ export function Tasks({
                   const balance = shopTargetId ? (rewardTotals[shopTargetId] || 0) : 0;
                   const affordable = balance >= mysteryCost;
                   return (
-                    <div className="relative bg-gradient-to-br from-violet-950/40 to-pink-950/30 border border-violet-500/30 rounded-xl p-3 flex flex-col gap-2 overflow-hidden">
+                    <div className="relative bg-gradient-to-br from-violet-500/10 to-pink-500/10 dark:from-violet-950/40 dark:to-pink-950/30 border border-violet-500/40 dark:border-violet-500/30 rounded-xl p-3 flex flex-col gap-2 overflow-hidden">
                       {/* shimmer nhẹ để thẻ nổi bật */}
                       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent" />
                       <div className="flex items-start justify-between gap-1">
                         <span className="text-2xl leading-none">{mysteryResult ? (mysteryResult.emoji || "🎁") : "🎲"}</span>
-                        <span className="text-[9px] font-bold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 rounded-md">BẤT NGỜ</span>
+                        <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/15 dark:bg-violet-500/10 border border-violet-500/30 dark:border-violet-500/20 px-1.5 py-0.5 rounded-md">BẤT NGỜ</span>
                       </div>
                       {mysteryResult ? (
-                        <p className="text-[11px] font-bold text-violet-300 leading-snug flex-1 animate-pulse-once">
+                        <p className="text-[11px] font-bold text-violet-700 dark:text-violet-300 leading-snug flex-1 animate-pulse-once">
                           {mysteryResult.emoji ? mysteryResult.emoji + " " : ""}{mysteryResult.name}!
                         </p>
                       ) : (
                         <p className="text-[11px] font-bold text-slate-200 leading-snug flex-1">
                           Quà bất ngờ
-                          <span className="block text-[10px] font-normal text-slate-500 mt-0.5">Giảm ~30% — server chọn ngẫu nhiên</span>
+                          <span className="block text-[10px] font-normal text-slate-450 mt-0.5">Giảm ~30% — server chọn ngẫu nhiên</span>
                         </p>
                       )}
                       <button
@@ -921,7 +921,7 @@ export function Tasks({
       ) : (
         <>
           <div className="space-y-4" id="tasks-kanban-board">
-            <Reveal delay={0.1} className="relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+            <Reveal delay={0.1} className="relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-3 bg-slate-900 neu-raised rounded-2xl p-4">
               <ShimmerLine accent="sky" />
               <div className="flex items-center gap-2.5">
                 <IconChip accent="sky"><Layers className="w-4 h-4" /></IconChip>
@@ -931,24 +931,24 @@ export function Tasks({
                 </div>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
                   <span className="block text-slate-500">Tổng</span>
                   <span className="font-extrabold text-slate-100 tabular-nums">{boardStats.total}</span>
                 </div>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
                   <span className="block text-slate-500">Đang mở</span>
                   <span className="font-extrabold text-sky-400 tabular-nums">{boardStats.active}</span>
                 </div>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
                   <span className="block text-slate-500">Khẩn cấp</span>
                   <span className="font-extrabold text-rose-400 tabular-nums">{boardStats.high}</span>
                 </div>
-                <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2">
+                <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2">
                   <span className="block text-slate-500">Chưa giao</span>
                   <span className="font-extrabold text-amber-400 tabular-nums">{boardStats.unassigned}</span>
                 </div>
               </div>
-              <div className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-[11px] min-w-[180px]">
+              <div className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-[11px] min-w-[180px]">
                 <label htmlFor="completed-window-filter" className="block text-slate-500 mb-1">Hoàn thành</label>
                 <FancySelect
                   id="completed-window-filter"
@@ -975,7 +975,7 @@ export function Tasks({
                 const columnTasks = sortedTasks(boardTasks.filter(task => effectiveStatus(task) === column.status));
 
                 return (
-                  <Reveal as="section" key={column.status} delay={0.16 + columnIndex * 0.06} className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/70 shadow-lg overflow-hidden">
+                  <Reveal as="section" key={column.status} delay={0.16 + columnIndex * 0.06} className="min-w-0 rounded-2xl neu-raised bg-slate-900/70 shadow-lg overflow-hidden">
                     <div className={`border-b ${column.headerClass} bg-slate-950/70 px-4 py-3`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
@@ -1026,7 +1026,7 @@ export function Tasks({
                                     <button
                                       type="button"
                                       onClick={() => setSelectedTask(task)}
-                                      className="size-7 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-400 hover:text-sky-400 flex items-center justify-center cursor-pointer"
+                                      className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-sky-400 flex items-center justify-center cursor-pointer"
                                       title="Xem chi tiết & bình luận"
                                       aria-label={`Xem chi tiết task ${task.title}`}
                                     >
@@ -1036,7 +1036,7 @@ export function Tasks({
                                       <button
                                         type="button"
                                         onClick={() => handleOpenEditTask(task)}
-                                        className="size-7 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-400 hover:text-amber-400 flex items-center justify-center cursor-pointer"
+                                        className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-amber-400 flex items-center justify-center cursor-pointer"
                                         title="Sửa / giao lại công việc"
                                         aria-label={`Sửa task ${task.title}`}
                                       >
@@ -1047,7 +1047,7 @@ export function Tasks({
                                       <button
                                         type="button"
                                         onClick={() => handleDeleteClick(task.id)}
-                                        className="size-7 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg text-slate-400 hover:text-rose-400 flex items-center justify-center cursor-pointer"
+                                        className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-rose-400 flex items-center justify-center cursor-pointer"
                                         title="Xóa công việc"
                                         aria-label={`Xóa task ${task.title}`}
                                       >
@@ -1139,7 +1139,7 @@ export function Tasks({
                                   <button
                                     type="button"
                                     onClick={() => handleUpdateStatus(task, next.status)}
-                                    className="shrink-0 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-slate-100 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
+                                    className="shrink-0 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-300 hover:text-slate-100 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
                                   >
                                     {next.label}
                                   </button>
@@ -1210,7 +1210,7 @@ export function Tasks({
               </div>
 
               {/* Grid of details */}
-              <div className="grid grid-cols-2 gap-4 bg-slate-950/30 p-4 border border-slate-800 rounded-xl text-xs">
+              <div className="grid grid-cols-2 gap-4 bg-slate-950/30 p-4 neu-pressed-sm rounded-xl text-xs">
                 <div>
                   <span className="text-slate-500">Người tạo:</span>
                   <p className="text-slate-200 mt-0.5 font-medium">
@@ -1276,7 +1276,7 @@ export function Tasks({
                     value={commentInput}
                     onChange={(e) => setCommentInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
-                    className="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl focus:border-sky-500 text-xs text-slate-200 outline-none"
+                    className="flex-1 px-3 py-2 bg-slate-950 neu-pressed-sm rounded-xl focus:border-sky-500 text-xs text-slate-200 outline-none"
                   />
                   <button 
                     onClick={handlePostComment}
@@ -1353,7 +1353,7 @@ export function Tasks({
                   placeholder="Ví dụ: Đóng tiền rèm cửa, dọn tủ quần áo..."
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -1364,7 +1364,7 @@ export function Tasks({
                   placeholder="Điền các nội dung lưu ý, chuẩn bị hàng hóa..."
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -1424,7 +1424,7 @@ export function Tasks({
                     value={newRewardPoints || ""}
                     onChange={(e) => setNewRewardPoints(Number(e.target.value))}
                     placeholder="VD: 5"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="space-y-1">
@@ -1447,7 +1447,7 @@ export function Tasks({
                     <DateInputDMY
                       value={newRecurrenceEndDate}
                       onChange={setNewRecurrenceEndDate}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+                      className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
                     />
                   </div>
                 )}
@@ -1484,7 +1484,7 @@ export function Tasks({
                   placeholder="Ví dụ: Nhà cửa, Mua sắm, Bé Vy..."
                   value={newTagsStr}
                   onChange={(e) => setNewTagsStr(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 

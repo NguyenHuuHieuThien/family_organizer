@@ -255,7 +255,7 @@ function ChartCard({ accent, icon, title, legend, children, delay }: {
   delay: number;
 }) {
   return (
-    <Reveal delay={delay} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-4 space-y-2">
+    <Reveal delay={delay} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-2">
       <ShimmerLine accent={accent} />
       <div className="flex items-center justify-between gap-2">
         <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
@@ -441,7 +441,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
   return (
     <div className="space-y-6" id="server-monitor-module">
       {/* Header: tên máy, uptime, load + trạng thái LIVE */}
-      <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-3">
+      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-3">
         <ShimmerLine accent="emerald" />
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -462,9 +462,9 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
       </Reveal>
 
       {/* 4 thẻ chỉ số chính */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 xl:gap-6">
         {/* CPU % */}
-        <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md space-y-3">
+        <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent={cpuAccent} />
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs font-medium">CPU</span>
@@ -482,7 +482,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         </Reveal>
 
         {/* Nhiệt độ CPU + SSD */}
-        <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md space-y-3">
+        <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent={tempAccent} />
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs font-medium">Nhiệt độ CPU</span>
@@ -508,7 +508,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         </Reveal>
 
         {/* RAM */}
-        <Reveal delay={0.14} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md space-y-3">
+        <Reveal delay={0.14} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent={ramAccent} />
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs font-medium">RAM</span>
@@ -528,7 +528,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         </Reveal>
 
         {/* Ổ đĩa */}
-        <Reveal delay={0.18} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-md space-y-3">
+        <Reveal delay={0.18} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent={diskAccent} />
           <div className="flex items-center justify-between">
             <span className="text-slate-400 text-xs font-medium">Bộ nhớ (ổ đĩa)</span>
@@ -549,9 +549,9 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
       </div>
 
       {/* Mạng & truy cập + Ứng dụng & dữ liệu */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
         {/* ── Mạng & truy cập ── */}
-        <Reveal delay={0.2} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-md p-4 space-y-3">
+        <Reveal delay={0.2} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent="sky" />
           <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
             <IconChip accent="sky"><Network className="w-4 h-4" /></IconChip> Mạng &amp; truy cập
@@ -559,7 +559,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
 
           <div className="space-y-2 text-[11px]">
             {/* Link đang dùng để mở app — chính là link chia sẻ cho người nhà */}
-            <div className="flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2">
+            <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
               <span className="flex items-center gap-1.5 text-slate-400 shrink-0"><Globe className="w-3.5 h-3.5 text-sky-400" /> Link truy cập</span>
               <CopyValue value={window.location.origin} className="text-[11px]" />
             </div>
@@ -569,7 +569,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               stats.network.interfaces.map(ni => {
                 const badge = ADDR_KIND_BADGE[ni.kind];
                 return (
-                  <div key={`${ni.name}_${ni.address}`} className="flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2">
+                  <div key={`${ni.name}_${ni.address}`} className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
                     <span className="flex items-center gap-1.5 text-slate-400 min-w-0">
                       <Wifi className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span className="font-mono truncate">{ni.name}</span>
@@ -587,7 +587,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
 
             {/* IP thiết bị đang xem trang này */}
             {stats?.network?.clientIp && (
-              <div className="flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2">
+              <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
                 <span className="flex items-center gap-1.5 text-slate-400 shrink-0"><Smartphone className="w-3.5 h-3.5 text-emerald-400" /> IP của bạn</span>
                 <CopyValue value={stats.network.clientIp} className="text-[11px]" />
               </div>
@@ -603,7 +603,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         </Reveal>
 
         {/* ── Ứng dụng & dữ liệu ── */}
-        <Reveal delay={0.24} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-md p-4 space-y-3">
+        <Reveal delay={0.24} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent="indigo" />
           <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
             <IconChip accent="indigo"><Database className="w-4 h-4" /></IconChip> Ứng dụng &amp; dữ liệu
@@ -611,25 +611,25 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
 
           {stats?.app && stats.data ? (
             <div className="space-y-2 text-[11px]">
-              <div className="flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2">
+              <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
                 <span className="text-slate-400">Phiên bản app</span>
                 <span className="font-mono text-slate-200">
                   v{stats.app.version}{stats.app.commit ? <span className="text-slate-500"> · {stats.app.commit}</span> : null}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2">
+              <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
                 <span className="text-slate-400">Tiến trình Node</span>
                 <span className="font-mono text-slate-200">
                   {stats.app.nodeVersion} · chạy {fmtUptime(stats.app.processUptimeSec)} · RAM {fmtBytes(stats.app.rssBytes)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2">
+              <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
                 <span className="text-slate-400">Dữ liệu</span>
                 <span className="font-mono text-slate-200">
                   SQLite {fmtBytes(stats.data.dbBytes)} · Media {fmtBytes(stats.data.uploadsBytes)}
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 bg-slate-950/40 border border-slate-800 rounded-xl px-3 py-2">
+              <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
                 <span className="flex items-center gap-1.5 text-slate-400"><UsersIcon className="w-3.5 h-3.5 text-indigo-400" /> Kết nối</span>
                 <span className="font-mono text-slate-200">
                   {stats.data.sseClients} phiên đang mở · {stats.data.pushDevices} thiết bị push · {stats.data.users} thành viên
@@ -646,39 +646,39 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
 
       {/* ─── Dịch vụ Homelab (admin) ─── */}
       {isAdmin && (
-        <Reveal delay={0.26} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-md p-4 space-y-3">
+        <Reveal delay={0.26} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent="violet" />
           <div className="flex items-center justify-between gap-2">
             <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="violet"><Globe className="w-4 h-4" /></IconChip> Dịch vụ Homelab
             </h4>
             <button type="button" onClick={() => openLinkForm()}
-              className="flex items-center gap-1 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-violet-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer transition-all">
+              className="flex items-center gap-1 bg-slate-950 neu-btn hover:bg-slate-800 text-violet-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer transition-all">
               <Plus className="w-3.5 h-3.5" /> Thêm
             </button>
           </div>
 
           {/* Form thêm / sửa link */}
           {linkForm.open && (
-            <form ref={linkFormRef} onSubmit={handleLinkSubmit} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 space-y-2">
+            <form ref={linkFormRef} onSubmit={handleLinkSubmit} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 space-y-2">
               <p className="text-[11px] font-semibold text-slate-400">{linkForm.editing ? "Sửa dịch vụ" : "Thêm dịch vụ mới"}</p>
               <div className="grid grid-cols-[56px_1fr_1fr] gap-2 text-xs">
                 <input value={lfEmoji} onChange={e => setLfEmoji(e.target.value)} placeholder="📸" maxLength={4}
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-2 py-2 text-slate-200 outline-none focus:border-violet-500 text-center text-lg" />
+                  className="bg-slate-900 neu-pressed-sm rounded-xl px-2 py-2 text-slate-200 outline-none focus:border-violet-500 text-center text-lg" />
                 <input value={lfName} onChange={e => setLfName(e.target.value)} placeholder="Tên dịch vụ (vd: Immich)" required
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
+                  className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
                 <input value={lfDesc} onChange={e => setLfDesc(e.target.value)} placeholder="Mô tả (tùy chọn)"
-                  className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
+                  className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
               </div>
               <div className="flex gap-2">
                 <input value={lfUrl} onChange={e => setLfUrl(e.target.value)} placeholder="https://dietpi.latxa-goby.ts.net:2283" required type="url"
-                  className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 outline-none focus:border-violet-500 min-w-0" />
+                  className="flex-1 bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs font-mono text-slate-200 outline-none focus:border-violet-500 min-w-0" />
                 <button type="submit" disabled={linkSaving || !lfName.trim() || !lfUrl.trim()}
                   className="flex items-center gap-1.5 bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-slate-950 text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer transition-all shrink-0">
                   <Save className="w-3.5 h-3.5" /> {linkSaving ? "Lưu..." : "Lưu"}
                 </button>
                 <button type="button" onClick={closeLinkForm}
-                  className="p-2 bg-slate-900 border border-slate-800 rounded-xl text-slate-500 hover:text-slate-300 cursor-pointer">
+                  className="p-2 bg-slate-900 neu-btn rounded-xl text-slate-500 hover:text-slate-300 cursor-pointer">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -691,17 +691,17 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               Chưa có dịch vụ nào. Bấm "Thêm" để thêm link tới Immich, Portainer, File Browser...
             </p>
           ) : links.length > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {links.map(link => (
-                <div key={link.id} className="group relative bg-slate-950/60 border border-slate-800 hover:border-violet-500/40 rounded-xl p-3 flex flex-col gap-2 transition-colors">
+                <div key={link.id} className="group relative bg-slate-950/60 neu-pressed-sm hover:border-violet-500/40 rounded-xl p-3 flex flex-col gap-2 transition-colors">
                   {/* Admin controls */}
                   <div className="absolute top-2 right-2 hidden group-hover:flex gap-1">
                     <button type="button" onClick={() => openLinkForm(link)} title="Sửa"
-                      className="p-1 bg-slate-900 border border-slate-800 rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
+                      className="p-1 bg-slate-900 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
                       <Pencil className="w-3 h-3" />
                     </button>
                     <button type="button" onClick={() => handleLinkDelete(link.id)} title="Xóa"
-                      className="p-1 bg-slate-900 border border-slate-800 rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
+                      className="p-1 bg-slate-900 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
@@ -745,7 +745,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
       </Reveal>
 
       {/* 3 biểu đồ riêng: CPU % · RAM % · Nhiệt độ °C */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 xl:gap-6">
         <ChartCard
           accent="emerald"
           icon={<Cpu className="w-3.5 h-3.5" />}

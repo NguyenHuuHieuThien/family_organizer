@@ -64,7 +64,7 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
   const chipBase = "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-semibold cursor-pointer transition-all shrink-0";
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4" id="quick-nudge">
+    <div className="bg-slate-900 neu-raised rounded-2xl p-5 space-y-4" id="quick-nudge">
       <div className="flex items-center gap-2">
         <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 p-1.5 rounded-lg leading-none">
           <Megaphone className="w-4.5 h-4.5" />
@@ -108,7 +108,7 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
             type="button"
             disabled={busy}
             onClick={() => send(p)}
-            className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-sky-500/40 text-slate-300 rounded-lg text-xs font-medium cursor-pointer transition-all disabled:opacity-50"
+            className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 neu-btn hover:border-sky-500/40 text-slate-300 rounded-lg text-xs font-medium cursor-pointer transition-all disabled:opacity-50"
           >
             {p}
           </button>
@@ -124,7 +124,7 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
           onChange={(e) => setCustom(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !busy) send(custom); }}
           placeholder="Hoặc gõ lời nhắc của riêng bạn…"
-          className="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
+          className="flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
         />
         <button
           type="button"

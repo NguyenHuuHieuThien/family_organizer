@@ -161,7 +161,7 @@ export function DebtTracker({
     const isOpen = expanded[debt.id];
     const isBorrowed = debt.direction === "borrowed";
     return (
-      <div key={debt.id} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+      <div key={debt.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3.5 space-y-2.5">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5 truncate">
@@ -193,7 +193,7 @@ export function DebtTracker({
                 src={url}
                 alt={`giấy tờ ${i + 1}`}
                 onClick={() => setLightbox(url)}
-                className="w-12 h-12 object-cover rounded-lg border border-slate-800 cursor-pointer hover:border-amber-500 transition-colors"
+                className="w-12 h-12 object-cover rounded-lg neu-btn cursor-pointer hover:border-amber-500 transition-colors"
                 referrerPolicy="no-referrer"
               />
             ))}
@@ -229,7 +229,7 @@ export function DebtTracker({
               value={payDraft[debt.id] || ""}
               onChange={e => setPayDraft(prev => ({ ...prev, [debt.id]: e.target.value }))}
               placeholder={isBorrowed ? "Số tiền đã trả" : "Số tiền đã thu"}
-              className="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 outline-none focus:border-sky-500 text-[11px]"
+              className="flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-1.5 text-slate-200 outline-none focus:border-sky-500 text-[11px]"
             />
             <button disabled={busy === debt.id} onClick={() => handlePay(debt)} className="bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50">
               {isBorrowed ? "Đã trả" : "Đã thu"}
@@ -269,7 +269,7 @@ export function DebtTracker({
   const lent = debts.filter(d => d.direction === "lent");
 
   return (
-    <Reveal delay={0.14} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+    <Reveal delay={0.14} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
       <ShimmerLine accent="amber" />
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -289,42 +289,42 @@ export function DebtTracker({
         {showForm && (
           <motion.form
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-950/40 border border-slate-800 rounded-xl p-3 overflow-hidden"
+            onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-950/40 neu-pressed-sm rounded-xl p-3 overflow-hidden"
           >
-            <div className="sm:col-span-2 grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg border border-slate-800 font-bold text-center">
+            <div className="sm:col-span-2 grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg neu-pressed-sm font-bold text-center">
               <button type="button" onClick={() => setDirection("borrowed")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "borrowed" ? "bg-rose-500 text-slate-950" : "text-slate-400"}`}>Mình nợ (vay)</button>
               <button type="button" onClick={() => setDirection("lent")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "lent" ? "bg-emerald-500 text-slate-950" : "text-slate-400"}`}>Cho mượn</button>
             </div>
             <div className="sm:col-span-2 space-y-1">
               <label className="text-[10px] text-slate-500 font-semibold">Tên người / tổ chức <span className="text-rose-400">*</span></label>
-              <input value={counterparty} onChange={e => setCounterparty(e.target.value)} placeholder={direction === "borrowed" ? "VD: Anh Ba, Ngân hàng ACB..." : "VD: Chú Tư, bạn Lan..."} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <input value={counterparty} onChange={e => setCounterparty(e.target.value)} placeholder={direction === "borrowed" ? "VD: Anh Ba, Ngân hàng ACB..." : "VD: Chú Tư, bạn Lan..."} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
-            <input inputMode="numeric" value={amount > 0 ? fmtMoney(amount) : ""} onChange={e => setAmount(parseMoney(e.target.value))} placeholder="Số tiền" className="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+            <input inputMode="numeric" value={amount > 0 ? fmtMoney(amount) : ""} onChange={e => setAmount(parseMoney(e.target.value))} placeholder="Số tiền" className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             <div className="space-y-1">
               <label className="text-[10px] text-slate-500 font-semibold">{direction === "borrowed" ? "Ngày mượn" : "Ngày cho mượn"} <span className="text-rose-400">*</span></label>
-              <DateInputDMY value={loanDate} max={dueDate || undefined} onChange={setLoanDate} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+              <DateInputDMY value={loanDate} max={dueDate || undefined} onChange={setLoanDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
             </div>
             <div className="space-y-1">
               <label className="text-[10px] text-slate-500 font-semibold">Ngày hẹn trả <span className="text-rose-400">*</span></label>
-              <DateInputDMY value={dueDate} min={loanDate || undefined} onChange={setDueDate} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+              <DateInputDMY value={dueDate} min={loanDate || undefined} onChange={setDueDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
             </div>
 
             <div className="relative">
               <Building2 className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Ngân hàng / số TK" className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Ngân hàng / số TK" className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
             <div className="relative">
               <Phone className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Số điện thoại" className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Số điện thoại" className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
             <div className="sm:col-span-2 relative">
               <MapPin className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Địa chỉ (tùy chọn)" className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Địa chỉ (tùy chọn)" className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú (tùy chọn)" className="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+            <input value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú (tùy chọn)" className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
 
             {/* Ảnh đính kèm: giấy tờ vay, biên nhận chuyển khoản */}
-            <div className="sm:col-span-2 space-y-2 bg-slate-950/40 border border-slate-800 rounded-lg p-2.5">
+            <div className="sm:col-span-2 space-y-2 bg-slate-950/40 neu-pressed-sm rounded-lg p-2.5">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1"><Paperclip className="w-3 h-3" /> Ảnh giấy tờ / chuyển khoản</label>
                 <span className="text-[9px] text-slate-600 font-mono">{attachments.length}/12</span>
@@ -359,7 +359,7 @@ export function DebtTracker({
       {debts.length === 0 ? (
         <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có khoản vay/cho mượn nào.</p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <div className="space-y-2">
             <p className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1"><ArrowDownLeft className="w-3.5 h-3.5" /> Mình đang nợ</p>
             {borrowed.length === 0 ? <p className="text-[10px] text-slate-600 px-1">Không có.</p> : borrowed.map(renderDebt)}
@@ -381,7 +381,7 @@ export function DebtTracker({
           >
             <div className="relative max-w-full max-h-[85vh] p-1.5 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
               <img src={lightbox} alt="Ảnh đính kèm khoản nợ" className="max-w-full max-h-[80vh] object-contain rounded-xl" referrerPolicy="no-referrer" />
-              <button onClick={() => setLightbox(null)} className="absolute top-3 right-3 bg-slate-950/80 hover:bg-slate-800 p-2 text-slate-200 border border-slate-800 rounded-lg cursor-pointer" title="Đóng">
+              <button onClick={() => setLightbox(null)} className="absolute top-3 right-3 bg-slate-950/80 hover:bg-slate-800 p-2 text-slate-200 neu-btn rounded-lg cursor-pointer" title="Đóng">
                 <X className="w-4 h-4" />
               </button>
             </div>

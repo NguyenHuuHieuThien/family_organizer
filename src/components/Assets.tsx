@@ -596,9 +596,9 @@ export function Assets({
   return (
     <div className="space-y-5" id="assets-module">
       {/* Market price widgets — BTC, ETH, Vàng, USD */}
-      <Reveal className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <Reveal className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {/* Bitcoin */}
-        <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-amber-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
+        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-amber-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
           <ShimmerLine accent="amber" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-400">₿ Bitcoin</span>
@@ -615,7 +615,7 @@ export function Assets({
         </div>
 
         {/* Ethereum */}
-        <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-indigo-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
+        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-indigo-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
           <ShimmerLine accent="indigo" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-indigo-400">Ξ Ethereum</span>
@@ -632,7 +632,7 @@ export function Assets({
         </div>
 
         {/* Vàng */}
-        <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-yellow-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-yellow-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
+        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-yellow-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-yellow-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
           <ShimmerLine accent="yellow" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-yellow-500">🪙 {widgetsOverview?.gold?.source || "Vàng"}</span>
@@ -651,7 +651,7 @@ export function Assets({
         </div>
 
         {/* USD/VND */}
-        <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-emerald-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
+        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-emerald-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
           <ShimmerLine accent="emerald" />
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-400">💵 USD/VND</span>
@@ -679,30 +679,30 @@ export function Assets({
         </div>
       </Reveal>
 
-      <Reveal delay={0.06} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+      <Reveal delay={0.06} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 xl:gap-6">
+        <div className="bg-slate-900 neu-raised rounded-2xl p-4">
           <p className="text-[11px] text-slate-500">Tổng tài sản ước tính</p>
           <p className="mt-1 text-xl font-extrabold text-slate-100 tabular-nums">{formatMoney(stats.totalVnd)}</p>
           {stats.totalUsd > 0 && <p className="text-xs font-bold text-slate-400 tabular-nums">+ {formatMoney(stats.totalUsd, "USD")}</p>}
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div className="bg-slate-900 neu-raised rounded-2xl p-4">
           <p className="text-[11px] text-slate-500">Vàng các loại</p>
           <p className="mt-1 text-lg font-extrabold text-amber-400 tabular-nums">{formatMoney(stats.goldVnd)}</p>
           {stats.goldUsd > 0 && <p className="text-xs font-bold text-amber-400/70 tabular-nums">+ {formatMoney(stats.goldUsd, "USD")}</p>}
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div className="bg-slate-900 neu-raised rounded-2xl p-4">
           <p className="text-[11px] text-slate-500">Crypto</p>
           <p className="mt-1 text-lg font-extrabold text-sky-400 tabular-nums">{formatMoney(stats.cryptoVnd)}</p>
           {stats.cryptoUsd > 0 && <p className="text-xs font-bold text-sky-400/70 tabular-nums">+ {formatMoney(stats.cryptoUsd, "USD")}</p>}
         </div>
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+        <div className="bg-slate-900 neu-raised rounded-2xl p-4">
           <p className="text-[11px] text-slate-500">Sổ đất / BĐS</p>
           <p className="mt-1 text-lg font-extrabold text-emerald-400 tabular-nums">{formatMoney(stats.landVnd)}</p>
           {stats.landUsd > 0 && <p className="text-xs font-bold text-emerald-400/70 tabular-nums">+ {formatMoney(stats.landUsd, "USD")}</p>}
         </div>
       </Reveal>
 
-      <Reveal delay={0.12} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-3">
+      <Reveal delay={0.12} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
         <ShimmerLine accent="emerald" />
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="relative flex-1">
@@ -711,7 +711,7 @@ export function Assets({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Tìm tên tài sản, mã sổ, ví crypto, vị trí lưu giữ..."
-              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 outline-none focus:border-emerald-500"
+              className="w-full pl-9 pr-3 py-2 bg-slate-950 neu-pressed-sm rounded-xl text-xs text-slate-200 outline-none focus:border-emerald-500"
             />
           </div>
           <button
@@ -756,7 +756,7 @@ export function Assets({
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
           {filteredAssets.map((asset, assetIndex) => {
             const owner = users.find(u => u.id === asset.ownerId);
             const creator = users.find(u => u.id === asset.createdById);
@@ -764,13 +764,13 @@ export function Assets({
             const Icon = asset.type === "land" ? Landmark : asset.type === "crypto" ? Coins : asset.type === "vehicle" ? Car : asset.type === "stock" ? LineChart : isGoldType(asset.type) ? Gem : Wallet;
 
             return (
-              <Reveal as="article" key={asset.id} delay={0.16 + staggerDelay(assetIndex)} hoverLift className="bg-slate-900 border border-slate-800 hover:border-emerald-500/25 rounded-2xl p-4 shadow-lg hover:shadow-emerald-500/5 transition-[box-shadow,border-color] duration-300 space-y-4">
+              <Reveal as="article" key={asset.id} delay={0.16 + staggerDelay(assetIndex)} hoverLift className="bg-slate-900 neu-raised hover:border-emerald-500/25 rounded-2xl p-4 shadow-lg hover:shadow-emerald-500/5 transition-[box-shadow,border-color] duration-300 space-y-4">
                 <div className="flex gap-3">
                   <button
                     type="button"
                     disabled={!firstPhoto}
                     onClick={() => firstPhoto && setSelectedPhoto({ asset, photo: firstPhoto })}
-                    className="size-20 rounded-xl border border-slate-800 bg-slate-950 overflow-hidden shrink-0 flex items-center justify-center disabled:cursor-default cursor-pointer"
+                    className="size-20 rounded-xl neu-btn bg-slate-950 overflow-hidden shrink-0 flex items-center justify-center disabled:cursor-default cursor-pointer"
                     aria-label={firstPhoto ? `Xem ảnh tài sản ${asset.name}` : `Tài sản ${asset.name} chưa có ảnh`}
                   >
                     {firstPhoto ? (
@@ -790,14 +790,14 @@ export function Assets({
                       {canManageAsset(asset) && (
                         <div className="flex items-center gap-1 shrink-0">
                           {onSaveTransaction && (
-                            <button type="button" onClick={() => openSellForm(asset)} aria-label={`Bán tài sản ${asset.name}`} title="Bán tài sản" className="size-8 rounded-lg bg-slate-950 border border-slate-800 text-slate-500 hover:text-emerald-400 flex items-center justify-center cursor-pointer">
+                            <button type="button" onClick={() => openSellForm(asset)} aria-label={`Bán tài sản ${asset.name}`} title="Bán tài sản" className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-emerald-400 flex items-center justify-center cursor-pointer">
                               <HandCoins className="size-3.5" />
                             </button>
                           )}
-                          <button type="button" onClick={() => openEditForm(asset)} aria-label={`Sửa tài sản ${asset.name}`} className="size-8 rounded-lg bg-slate-950 border border-slate-800 text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
+                          <button type="button" onClick={() => openEditForm(asset)} aria-label={`Sửa tài sản ${asset.name}`} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
                             <Pencil className="size-3.5" />
                           </button>
-                          <button type="button" onClick={() => handleDelete(asset)} aria-label={`Xóa tài sản ${asset.name}`} className="size-8 rounded-lg bg-slate-950 border border-slate-800 text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
+                          <button type="button" onClick={() => handleDelete(asset)} aria-label={`Xóa tài sản ${asset.name}`} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
                             <Trash2 className="size-3.5" />
                           </button>
                         </div>
@@ -860,32 +860,32 @@ export function Assets({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                   {asset.type === "crypto" && (
                     <>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Mã: <span className="text-sky-400 font-bold">{asset.symbol || "—"}</span></p>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Mạng: <span className="text-slate-200">{asset.network || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Mã: <span className="text-sky-400 font-bold">{asset.symbol || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Mạng: <span className="text-slate-200">{asset.network || "—"}</span></p>
                     </>
                   )}
                   {asset.type === "land" && (
                     <>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Diện tích: <span className="text-emerald-400 font-bold tabular-nums">{asset.areaM2 ? `${asset.areaM2} m2` : "—"}</span></p>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Số sổ: <span className="text-slate-200">{asset.certificateNo || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Diện tích: <span className="text-emerald-400 font-bold tabular-nums">{asset.areaM2 ? `${asset.areaM2} m2` : "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Số sổ: <span className="text-slate-200">{asset.certificateNo || "—"}</span></p>
                     </>
                   )}
                   {isGoldType(asset.type) && (
                     <>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Trọng lượng: <span className="text-amber-400 font-bold tabular-nums">{asset.weight ? `${asset.weight} ${asset.weightUnit || asset.unit}` : "—"}</span></p>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Tuổi vàng: <span className="text-slate-200">{goldPurityLabel(asset.goldPurity)}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Trọng lượng: <span className="text-amber-400 font-bold tabular-nums">{asset.weight ? `${asset.weight} ${asset.weightUnit || asset.unit}` : "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Tuổi vàng: <span className="text-slate-200">{goldPurityLabel(asset.goldPurity)}</span></p>
                     </>
                   )}
                   {asset.type === "vehicle" && (
                     <>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Hãng / dòng: <span className="text-orange-400 font-bold">{asset.brand || "—"}</span></p>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Biển số / số khung: <span className="text-slate-200">{asset.serialNo || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Hãng / dòng: <span className="text-orange-400 font-bold">{asset.brand || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Biển số / số khung: <span className="text-slate-200">{asset.serialNo || "—"}</span></p>
                     </>
                   )}
                   {asset.type === "stock" && (
                     <>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Mã CP: <span className="text-violet-400 font-bold">{asset.symbol || "—"}</span></p>
-                      <p className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-400">Sàn / Cty CK: <span className="text-slate-200">{asset.brand || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Mã CP: <span className="text-violet-400 font-bold">{asset.symbol || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Sàn / Cty CK: <span className="text-slate-200">{asset.brand || "—"}</span></p>
                     </>
                   )}
                 </div>
@@ -896,7 +896,7 @@ export function Assets({
                     {asset.photos?.length > 1 && (
                       <div className="flex flex-wrap gap-2">
                         {asset.photos.map(photo => (
-                          <button key={photo.id} type="button" onClick={() => setSelectedPhoto({ asset, photo })} className="size-10 rounded-lg border border-slate-800 overflow-hidden bg-slate-950 cursor-pointer" aria-label={`Xem ảnh ${photo.fileName}`}>
+                          <button key={photo.id} type="button" onClick={() => setSelectedPhoto({ asset, photo })} className="size-10 rounded-lg neu-btn overflow-hidden bg-slate-950 cursor-pointer" aria-label={`Xem ảnh ${photo.fileName}`}>
                             <img src={photo.thumbnailDataUrl} alt={photo.fileName} className="size-full object-cover" />
                           </button>
                         ))}
@@ -954,7 +954,7 @@ export function Assets({
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">Tên tài sản <span className="text-rose-400">*</span></label>
-                    <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="VD: 2 lượng SJC, BTC ví lạnh, sổ đất Long An..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
+                    <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="VD: 2 lượng SJC, BTC ví lạnh, sổ đất Long An..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
                   </div>
                 </div>
 
@@ -976,7 +976,7 @@ export function Assets({
                     <>
                       <div className="space-y-1">
                         <label className="text-slate-400 block font-semibold">{isGoldType(formType) ? "Trọng lượng" : "Số lượng"}</label>
-                        <input type="number" min="0" step="0.000001" value={formQuantity || ""} onChange={(e) => setFormQuantity(Number(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                        <input type="number" min="0" step="0.000001" value={formQuantity || ""} onChange={(e) => setFormQuantity(Number(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-400 block font-semibold">Đơn vị</label>
@@ -992,7 +992,7 @@ export function Assets({
                             ]}
                           />
                         ) : (
-                          <input value={formUnit} onChange={(e) => setFormUnit(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                          <input value={formUnit} onChange={(e) => setFormUnit(e.target.value)} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                         )}
                       </div>
                     </>
@@ -1019,7 +1019,7 @@ export function Assets({
                         <span className="ml-1.5 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">AUTO</span>
                       )}
                     </label>
-                    <input inputMode="numeric" value={formatMoneyInput(formEstimatedValue)} onChange={(e) => setFormEstimatedValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
+                    <input inputMode="numeric" value={formatMoneyInput(formEstimatedValue)} onChange={(e) => setFormEstimatedValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                     {formAutoValue && (
                       <p className="text-[10px] text-emerald-400/70 flex items-center gap-1">
                         <TrendingUp className="size-3 shrink-0" />
@@ -1038,20 +1038,20 @@ export function Assets({
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">Giá mua ban đầu</label>
-                    <input inputMode="numeric" value={formatMoneyInput(formPurchaseValue)} onChange={(e) => setFormPurchaseValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
+                    <input inputMode="numeric" value={formatMoneyInput(formPurchaseValue)} onChange={(e) => setFormPurchaseValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">Ngày mua / ghi nhận</label>
-                    <DateInputDMY value={formPurchaseDate} onChange={setFormPurchaseDate} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
+                    <DateInputDMY value={formPurchaseDate} onChange={setFormPurchaseDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                   </div>
                 </div>
 
                 {formType === "crypto" && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 border border-slate-800 rounded-xl p-3">
-                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder="Mã coin: BTC" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formNetwork} onChange={(e) => setFormNetwork(e.target.value)} placeholder="Network: Bitcoin/ERC20" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formWalletLabel} onChange={(e) => setFormWalletLabel(e.target.value)} placeholder="Ví: Ledger/Binance" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formWalletAddressMasked} onChange={(e) => setFormWalletAddressMasked(e.target.value)} placeholder="Địa chỉ rút gọn" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
+                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder="Mã coin: BTC" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formNetwork} onChange={(e) => setFormNetwork(e.target.value)} placeholder="Network: Bitcoin/ERC20" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formWalletLabel} onChange={(e) => setFormWalletLabel(e.target.value)} placeholder="Ví: Ledger/Binance" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formWalletAddressMasked} onChange={(e) => setFormWalletAddressMasked(e.target.value)} placeholder="Địa chỉ rút gọn" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                     {marketPrices && formSymbol && marketPrices.crypto[formSymbol.toUpperCase()] && (
                       <div className="md:col-span-4 flex items-center gap-2 text-[10px] text-sky-400/80">
                         <TrendingUp className="size-3 shrink-0" />
@@ -1067,16 +1067,16 @@ export function Assets({
                 )}
 
                 {formType === "land" && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 border border-slate-800 rounded-xl p-3">
-                    <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder="Địa chỉ/thửa đất" className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input type="number" min="0" step="0.01" value={formAreaM2 || ""} onChange={(e) => setFormAreaM2(Number(e.target.value))} placeholder="Diện tích m2" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formCertificateNo} onChange={(e) => setFormCertificateNo(e.target.value)} placeholder="Số sổ" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formParcelNo} onChange={(e) => setFormParcelNo(e.target.value)} placeholder="Số thửa/tờ bản đồ" className="md:col-span-2 bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
+                    <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder="Địa chỉ/thửa đất" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input type="number" min="0" step="0.01" value={formAreaM2 || ""} onChange={(e) => setFormAreaM2(Number(e.target.value))} placeholder="Diện tích m2" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formCertificateNo} onChange={(e) => setFormCertificateNo(e.target.value)} placeholder="Số sổ" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formParcelNo} onChange={(e) => setFormParcelNo(e.target.value)} placeholder="Số thửa/tờ bản đồ" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
                 {isGoldType(formType) && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-950/40 border border-slate-800 rounded-xl p-3">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
                     <div className="flex items-center gap-1.5">
                       <FancySelect
                         value={normalizeGoldPurity(formGoldPurity)}
@@ -1093,8 +1093,8 @@ export function Assets({
                         <Info className="size-4" />
                       </button>
                     </div>
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="SJC/PNJ/DOJI" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder="Số seri nếu có" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="SJC/PNJ/DOJI" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder="Số seri nếu có" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                     {marketPrices?.gold && (
                       <div className="md:col-span-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-amber-400/80">
                         <span className="flex items-center gap-1"><TrendingUp className="size-3" /> Giá vàng 9999 tham chiếu:</span>
@@ -1108,25 +1108,25 @@ export function Assets({
                 )}
 
                 {formType === "vehicle" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 border border-slate-800 rounded-xl p-3">
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="Hãng / dòng xe: Honda SH, Toyota Vios" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder="Biển số / số khung" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
+                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="Hãng / dòng xe: Honda SH, Toyota Vios" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder="Biển số / số khung" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
                 {formType === "stock" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 border border-slate-800 rounded-xl p-3">
-                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder="Mã CP: VNM, FPT, HPG" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="Sàn / Cty CK: HOSE, SSI, VND" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
+                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder="Mã CP: VNM, FPT, HPG" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="Sàn / Cty CK: HOSE, SSI, VND" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder="Nơi lưu giữ / vị trí" className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
-                  <textarea rows={2} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Ghi chú: tình trạng, người giữ, lưu ý bảo mật..." className="bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <input value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder="Nơi lưu giữ / vị trí" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <textarea rows={2} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Ghi chú: tình trạng, người giữ, lưu ý bảo mật..." className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                 </div>
 
-                <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-3 space-y-3">
+                <div className="bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <p className="text-xs font-bold text-slate-200 flex items-center gap-1.5"><ImageIcon className="size-4 text-sky-400" /> Ảnh tài sản</p>
@@ -1140,7 +1140,7 @@ export function Assets({
                   {formPhotos.length > 0 && (
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                       {formPhotos.map(photo => (
-                        <div key={photo.id} className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950 aspect-square">
+                        <div key={photo.id} className="relative rounded-xl overflow-hidden neu-pressed-sm bg-slate-950 aspect-square">
                           <img src={photo.thumbnailDataUrl} alt={photo.fileName} className="size-full object-cover" />
                           <button type="button" onClick={() => setFormPhotos(prev => prev.filter(p => p.id !== photo.id))} aria-label={`Xóa ảnh ${photo.fileName}`} className="absolute right-1 top-1 size-6 rounded-lg bg-slate-950/90 text-slate-400 hover:text-rose-400 flex items-center justify-center">
                             <X className="size-3.5" />
@@ -1251,7 +1251,7 @@ export function Assets({
                 <div className="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl font-medium">{sellError}</div>
               )}
 
-              <div className="bg-slate-950/50 border border-slate-800 rounded-xl p-3">
+              <div className="bg-slate-950/50 neu-pressed-sm rounded-xl p-3">
                 <p className="text-[11px] text-slate-500">Tài sản</p>
                 <p className="text-sm font-bold text-slate-100 truncate">{sellingAsset.name}</p>
                 <p className="mt-1 text-[11px] text-slate-500">
@@ -1285,7 +1285,7 @@ export function Assets({
                   inputMode="numeric"
                   value={formatMoneyInput(sellPrice)}
                   onChange={(e) => { setSellMode("custom"); setSellPrice(parseMoneyInput(e.target.value)); }}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500 font-mono text-base font-bold"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500 font-mono text-base font-bold"
                 />
                 {sellingAsset.currency === "USD" && sellPrice > 0 && (
                   <p className="text-[10px] text-slate-500">
@@ -1319,13 +1319,13 @@ export function Assets({
                 </div>
                 <div className="space-y-1">
                   <label className="text-slate-400 block font-semibold">Ngày bán</label>
-                  <DateInputDMY value={sellDate} onChange={setSellDate} className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
+                  <DateInputDMY value={sellDate} onChange={setSellDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                 </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">Ghi chú (không bắt buộc)</label>
-                <input value={sellNote} onChange={(e) => setSellNote(e.target.value)} placeholder="VD: bán cho người quen, đã nhận đủ tiền..." className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
+                <input value={sellNote} onChange={(e) => setSellNote(e.target.value)} placeholder="VD: bán cho người quen, đã nhận đủ tiền..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
 
               <p className="text-[10px] text-slate-500 leading-relaxed">

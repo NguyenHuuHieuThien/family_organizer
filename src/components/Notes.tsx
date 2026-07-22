@@ -300,7 +300,7 @@ export function Notes({
     <div className="space-y-6" id="notes-module">
       
       {/* Note headers with search */}
-      <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 p-4.5 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4" id="notes-control-header">
+      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised p-4.5 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4" id="notes-control-header">
         <ShimmerLine accent="sky" />
         
         {/* Search & Tags triggers */}
@@ -312,7 +312,7 @@ export function Notes({
               placeholder="Tìm kiếm nhãn ghi chú, đề tài gia đình..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
             />
           </div>
 
@@ -432,7 +432,7 @@ export function Notes({
                       delay={0.1 + staggerDelay(noteIndex)}
                       hoverLift
                       onClick={() => handleReadNote(note)}
-                      className="bg-slate-900 border border-slate-800 hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 px-4.5 py-4 rounded-2xl flex flex-col justify-between space-y-4 cursor-pointer relative group transition-[box-shadow,border-color] duration-300"
+                      className="bg-slate-900 neu-btn hover:border-sky-500/30 hover:shadow-lg hover:shadow-sky-500/5 px-4.5 py-4 rounded-2xl flex flex-col justify-between space-y-4 cursor-pointer relative group transition-[box-shadow,border-color] duration-300"
                     >
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -534,7 +534,7 @@ export function Notes({
                   placeholder="Ví dụ: Công thức nấu ăn cốt lết, Ghi chú bảo hiểm xe máy..."
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 text-sm font-bold"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 text-sm font-bold"
                 />
               </div>
 
@@ -550,7 +550,7 @@ export function Notes({
                       onChange={(e) => setAiPrompt(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAiDraft(); } }}
                       placeholder="VD: lập kế hoạch dọn nhà cuối tuần, công thức bún bò Huế…"
-                      className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-violet-500"
+                      className="flex-1 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-violet-500"
                     />
                     <button
                       type="button"
@@ -571,7 +571,7 @@ export function Notes({
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center gap-2">
                   <label className="text-slate-400 font-semibold">Nội dung (Markdown đầy đủ)</label>
-                  <div className="flex bg-slate-950 border border-slate-800 rounded-lg p-0.5 text-[10px] font-bold">
+                  <div className="flex bg-slate-950 neu-pressed-sm rounded-lg p-0.5 text-[10px] font-bold">
                     <button
                       type="button"
                       onClick={() => setEditorPreview(false)}
@@ -589,7 +589,7 @@ export function Notes({
                   </div>
                 </div>
                 {editorPreview ? (
-                  <div className="w-full min-h-[12rem] max-h-[40vh] overflow-y-auto bg-slate-950 border border-slate-800 rounded-lg p-3">
+                  <div className="w-full min-h-[12rem] max-h-[40vh] overflow-y-auto bg-slate-950 neu-pressed-sm rounded-lg p-3">
                     <Suspense fallback={<MarkdownFallback />}>
                       <MarkdownView content={formContent} />
                     </Suspense>
@@ -602,7 +602,7 @@ export function Notes({
                     value={formContent}
                     onChange={(e) => setFormContent(e.target.value)}
                     onPaste={handleContentPaste}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono leading-relaxed"
+                    className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono leading-relaxed"
                   />
                 )}
                 <p className="text-[10px] text-slate-500">
@@ -619,11 +619,11 @@ export function Notes({
                   placeholder="Ví dụ: Quan trọng, Món ngon, Thiết bị..."
                   value={formTagsStr}
                   onChange={(e) => setFormTagsStr(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
-              <div className="flex flex-col md:flex-row items-center gap-4 bg-slate-950/40 p-4 border border-slate-800 rounded-xl">
+              <div className="flex flex-col md:flex-row items-center gap-4 bg-slate-950/40 p-4 neu-pressed-sm rounded-xl">
                 <label className="flex items-center gap-2 cursor-pointer text-slate-300 font-semibold select-none">
                   <input 
                     type="checkbox" 

@@ -232,7 +232,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                 {messages.map((msg, idx) => (
                   <div
                     key={idx}
-                    className={`text-xs leading-relaxed rounded-2xl px-3 py-2 max-w-[88%] whitespace-pre-line ${msg.role === "user" ? "ml-auto bg-sky-500 text-slate-950 font-semibold" : "bg-slate-950 border border-slate-800 text-slate-300"}`}
+                    className={`text-xs leading-relaxed rounded-2xl px-3 py-2 max-w-[88%] whitespace-pre-line ${msg.role === "user" ? "ml-auto bg-sky-500 text-slate-950 font-semibold" : "bg-slate-950 neu-pressed-sm text-slate-300"}`}
                   >
                     <div>{msg.content}</div>
 
@@ -308,7 +308,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={isListening ? "Đang nghe..." : "Hỏi: lên menu trưa và thêm đồ đi chợ"}
-                  className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 min-w-0"
+                  className="flex-1 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 min-w-0"
                 />
                 <button disabled={loading} type="submit" className="bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2">
                   <Send className="w-4 h-4" />

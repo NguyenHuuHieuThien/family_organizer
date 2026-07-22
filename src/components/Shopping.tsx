@@ -352,7 +352,7 @@ export function Shopping({
         {(currentUser.role === "admin" || item.creatorId === currentUser.id) && (
           <button
             onClick={() => onDeleteItem(item.id)}
-            className="shrink-0 p-1.5 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+            className="shrink-0 p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
             title="Xóa món này"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -365,7 +365,7 @@ export function Shopping({
   return (
     <div className="space-y-6" id="shopping-module">
       {/* Add item bar */}
-      <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 p-4.5 rounded-2xl shadow-xl space-y-3" id="shopping-add">
+      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised p-4.5 rounded-2xl shadow-xl space-y-3" id="shopping-add">
         <ShimmerLine accent="emerald" />
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
           <IconChip accent="emerald"><ShoppingCart className="w-4 h-4" /></IconChip> Danh sách đi chợ chung
@@ -377,14 +377,14 @@ export function Shopping({
             placeholder="Tên món cần mua (vd: Sữa tươi, Rau cải...)"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="flex-1 bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
+            className="flex-1 bg-slate-950 neu-pressed-sm focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
           />
           <input
             type="text"
             placeholder="Số lượng (tùy chọn)"
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
-            className="sm:w-40 bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
+            className="sm:w-40 bg-slate-950 neu-pressed-sm focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
           />
           <button
             type="submit"
@@ -398,7 +398,7 @@ export function Shopping({
       </Reveal>
 
       {/* Weekly menu planner — inline (no popup): shared, persisted, re-randomizable + add to cart */}
-      <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-4.5 space-y-3 text-xs" id="shopping-weekly-menu">
+      <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4.5 space-y-3 text-xs" id="shopping-weekly-menu">
         <ShimmerLine accent="violet" />
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
           <IconChip accent="violet"><ChefHat className="w-4 h-4" /></IconChip> Thực đơn tuần
@@ -411,21 +411,21 @@ export function Shopping({
             <input type="text" inputMode="numeric" value={adultsInput}
               onChange={(e) => setAdultsInput(sanitizeInt(e.target.value).slice(0, 2))}
               onBlur={() => setAdultsInput(String(clampInt(adultsInput, 0, 10, householdDefaults.adults)))}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
+              className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
           </label>
           <label className="space-y-1">
             <span className="text-slate-400 font-semibold block">Trẻ em</span>
             <input type="text" inputMode="numeric" value={childrenInput}
               onChange={(e) => setChildrenInput(sanitizeInt(e.target.value).slice(0, 2))}
               onBlur={() => setChildrenInput(String(clampInt(childrenInput, 0, 10, householdDefaults.children)))}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
+              className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
           </label>
           <label className="space-y-1">
             <span className="text-slate-400 font-semibold block">Số ngày</span>
             <input type="text" inputMode="numeric" value={daysInput}
               onChange={(e) => setDaysInput(sanitizeInt(e.target.value).slice(0, 1))}
               onBlur={() => setDaysInput(String(clampInt(daysInput, 1, 7, 7)))}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
+              className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
           </label>
         </div>
 
@@ -435,7 +435,7 @@ export function Shopping({
             <span className="text-slate-400 font-semibold block">Lưu ý cho AI (dị ứng, kiêng khem, ngân sách, sở thích…)</span>
             <textarea value={planNotes} onChange={(e) => setPlanNotes(e.target.value)} rows={2}
               placeholder="VD: bé út dị ứng hải sản, hạn chế đồ chiên, ưu tiên món rẻ…"
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 resize-none" />
+              className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 resize-none" />
           </label>
         )}
 
@@ -531,7 +531,7 @@ export function Shopping({
       </Reveal>
 
       {/* Pending items */}
-      <Reveal delay={0.12} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-3" id="shopping-pending">
+      <Reveal delay={0.12} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-3" id="shopping-pending">
         <ShimmerLine accent="emerald" />
         <div className="flex items-center justify-between">
           <div>
@@ -578,7 +578,7 @@ export function Shopping({
 
       {/* Purchased items */}
       {purchased.length > 0 && (
-        <Reveal delay={0.18} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-3" id="shopping-purchased">
+        <Reveal delay={0.18} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-3" id="shopping-purchased">
           <ShimmerLine accent="sky" />
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đã mua ({purchased.length})</h4>

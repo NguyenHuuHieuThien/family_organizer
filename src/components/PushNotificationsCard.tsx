@@ -127,7 +127,7 @@ export function PushNotificationsCard() {
   };
 
   return (
-    <div className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 space-y-4">
+    <div className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-4">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
           <BellRing className="w-4.5 h-4.5 text-indigo-400" /> Thông báo đẩy
@@ -174,7 +174,7 @@ export function PushNotificationsCard() {
                   type="button"
                   onClick={disable}
                   disabled={busy}
-                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 border border-slate-800 rounded-xl text-xs font-semibold cursor-pointer transition-all disabled:opacity-60"
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 neu-btn rounded-xl text-xs font-semibold cursor-pointer transition-all disabled:opacity-60"
                 >
                   <BellOff className="w-4 h-4" /> Tắt
                 </button>

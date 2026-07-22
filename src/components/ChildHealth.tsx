@@ -430,7 +430,7 @@ export function ChildHealth({
   return (
     <div className="space-y-6" id="child-health-module">
       {/* Tiêu đề + thanh sub-tab */}
-      <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-3 space-y-3">
+      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-3 space-y-3">
         <ShimmerLine accent="pink" />
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 px-1">
           <IconChip accent="pink"><HeartPulse className="w-4 h-4" /></IconChip> Sức khỏe gia đình
@@ -456,7 +456,7 @@ export function ChildHealth({
       {/* ─── TĂNG TRƯỞNG ─────────────────────────────────────────────── */}
       {section === "growth" && (
         <div className="space-y-5">
-          <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+          <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
             <ShimmerLine accent="emerald" />
             <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="emerald"><Ruler className="w-4 h-4" /></IconChip> Ghi số đo (chiều cao / cân nặng)
@@ -465,15 +465,15 @@ export function ChildHealth({
               {renderMemberSelect("focus:border-emerald-500", "col-span-2 sm:col-span-4")}
               <div className="space-y-1 col-span-2 sm:col-span-1">
                 <label className="text-slate-500 text-[10px] block">Ngày đo</label>
-                <DateInputDMY value={gDate} onChange={setGDate} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
+                <DateInputDMY value={gDate} onChange={setGDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
               </div>
               <div className="space-y-1">
                 <label className="text-slate-500 text-[10px] block">Chiều cao</label>
-                <input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder="Cao (cm)" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                <input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder="Cao (cm)" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
               <div className="space-y-1">
                 <label className="text-slate-500 text-[10px] block">Cân nặng</label>
-                <input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder="Nặng (kg)" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                <input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder="Nặng (kg)" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
               <button type="submit" className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer self-end"><Plus className="w-4 h-4" /> Ghi</button>
               {gError && <p className="col-span-2 sm:col-span-4 text-[11px] text-rose-400">{gError}</p>}
@@ -486,7 +486,7 @@ export function ChildHealth({
             const records = growthByChild.get(member.id) ?? [];
             const bmi = bmiFor(member, records);
             return (
-              <Reveal key={member.id} delay={0.12 + staggerDelay(memberIndex, 0.06, 5)} className="bg-slate-900 border border-slate-800 rounded-2xl shadow-md p-4 space-y-3">
+              <Reveal key={member.id} delay={0.12 + staggerDelay(memberIndex, 0.06, 5)} className="bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
                 {renderMemberHeader(member, bmi ? (
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border shrink-0 ${bmiBadgeClass(bmi.color)}`}>
                     BMI {bmi.bmi.toFixed(1)} · {bmi.label}
@@ -524,7 +524,7 @@ export function ChildHealth({
                       };
                       return (
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5">
+                          <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3.5">
                             <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Chiều cao</p>
                             <p className="mt-1.5 text-3xl md:text-4xl font-extrabold text-emerald-400 tabular-nums leading-none">
                               {lastH ? fmt(lastH.heightCm!) : "—"}
@@ -534,7 +534,7 @@ export function ChildHealth({
                               {lastH ? <>đo {formatDateVN(lastH.date)} {deltaText(lastH.heightCm!, prevH?.heightCm ?? undefined, "cm")}</> : "Chưa có số đo"}
                             </p>
                           </div>
-                          <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5">
+                          <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3.5">
                             <p className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">Cân nặng</p>
                             <p className="mt-1.5 text-3xl md:text-4xl font-extrabold text-sky-400 tabular-nums leading-none">
                               {lastW ? fmt(lastW.weightKg!) : "—"}
@@ -548,18 +548,18 @@ export function ChildHealth({
                       );
                     })()}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                      <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3">
                         <p className="text-[10px] text-emerald-400 font-bold uppercase mb-1">Chiều cao (cm)</p>
                         <MiniChart data={records.filter(g => g.heightCm != null).map(g => ({ date: g.date, value: g.heightCm! }))} color="#10b981" unit="cm" />
                       </div>
-                      <div className="bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+                      <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3">
                         <p className="text-[10px] text-sky-400 font-bold uppercase mb-1">Cân nặng (kg)</p>
                         <MiniChart data={records.filter(g => g.weightKg != null).map(g => ({ date: g.date, value: g.weightKg! }))} color="#0ea5e9" unit="kg" />
                       </div>
                     </div>
                     <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
                       {[...records].reverse().map(g => (
-                        <div key={g.id} className="flex items-center justify-between text-xs bg-slate-950/40 border border-slate-800 rounded-lg px-3 py-2">
+                        <div key={g.id} className="flex items-center justify-between text-xs bg-slate-950/40 neu-pressed-sm rounded-lg px-3 py-2">
                           <span className="font-mono text-slate-400">{formatDateVN(g.date)}</span>
                           <span className="text-slate-100 font-bold tabular-nums">
                             {g.heightCm != null ? `${g.heightCm} cm` : "—"} <span className="text-slate-500 font-normal">·</span> {g.weightKg != null ? `${g.weightKg} kg` : "—"}
@@ -579,21 +579,21 @@ export function ChildHealth({
       {/* ─── TIÊM CHỦNG ──────────────────────────────────────────────── */}
       {section === "vaccination" && (
         <div className="space-y-5">
-          <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+          <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
             <ShimmerLine accent="sky" />
             <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="sky"><Syringe className="w-4 h-4" /></IconChip> Thêm mũi tiêm
             </h4>
             <form onSubmit={handleAddVaccine} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {renderMemberSelect("focus:border-sky-500", "col-span-1 sm:col-span-2")}
-              <input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder="Tên vắc-xin" className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+              <input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder="Tên vắc-xin" className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
               <datalist id="vaccine-list">{COMMON_VACCINES.map(v => <option key={v} value={v} />)}</datalist>
-              <input value={vDose} onChange={e => setVDose(e.target.value)} placeholder="Mũi (vd: Mũi 1, nhắc lại)" className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+              <input value={vDose} onChange={e => setVDose(e.target.value)} placeholder="Mũi (vd: Mũi 1, nhắc lại)" className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
               <div className="space-y-1">
                 <label className="text-slate-500 text-[10px] block">Ngày hẹn tiêm</label>
-                <DateInputDMY value={vScheduled} onChange={setVScheduled} className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 font-mono" />
+                <DateInputDMY value={vScheduled} onChange={setVScheduled} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 font-mono" />
               </div>
-              <input value={vNote} onChange={e => setVNote(e.target.value)} placeholder="Ghi chú" className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
+              <input value={vNote} onChange={e => setVNote(e.target.value)} placeholder="Ghi chú" className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
               {vError && <p className="sm:col-span-2 text-[11px] text-rose-400">{vError}</p>}
               <button type="submit" className="sm:col-span-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> Thêm mũi tiêm</button>
             </form>
@@ -604,7 +604,7 @@ export function ChildHealth({
           ) : sortedMembers.map((member, memberIndex) => {
             const list = vaccinesByChild.get(member.id) ?? [];
             return (
-              <Reveal key={member.id} delay={0.12 + staggerDelay(memberIndex, 0.06, 5)} className="bg-slate-900 border border-slate-800 rounded-2xl shadow-md p-4 space-y-3">
+              <Reveal key={member.id} delay={0.12 + staggerDelay(memberIndex, 0.06, 5)} className="bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
                 {renderMemberHeader(member, <span className="text-[10px] text-slate-500 font-mono shrink-0">{list.length} mũi</span>)}
                 {list.length === 0 ? (
                   <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-lg px-3 py-2 text-center">Chưa có mũi tiêm nào.</p>
@@ -614,7 +614,7 @@ export function ChildHealth({
                       {list.map(v => {
                         const dleft = v.status === "scheduled" ? daysLeft(v.scheduledDate) : null;
                         return (
-                          <motion.div key={v.id} layout initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3 flex items-center justify-between gap-2">
+                          <motion.div key={v.id} layout initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 flex items-center justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-slate-100 truncate">{v.name} {v.doseLabel && <span className="text-slate-400 font-normal">• {v.doseLabel}</span>}</p>
                               <p className="text-[10px] text-slate-500 font-mono flex items-center gap-2 flex-wrap">
@@ -666,7 +666,7 @@ export function ChildHealth({
             Thông tin y tế quan trọng của từng thành viên — nhóm máu, dị ứng, bệnh nền, BHYT, liên hệ khẩn cấp.
             Cả nhà đều xem được để dùng khi cấp cứu.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 justify-items-center sm:justify-items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6 justify-items-center sm:justify-items-stretch">
             {users.map((member, mi) => {
               const p = profileByUser.get(member.id);
               const isEditing = epEditingId === member.id;
@@ -781,7 +781,7 @@ export function ChildHealth({
                         {/* Ngày sinh + tuổi hiện tại (bé <3 tuổi hiện tháng/ngày) */}
                         {member.dateOfBirth && (
                           <div className="relative z-30 px-3 pt-2.5">
-                            <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-950/70 border border-slate-850 px-3 py-1.5">
+                            <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-950/70 neu-pressed-sm px-3 py-1.5">
                               <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 shrink-0">
                                 <Cake className="w-3.5 h-3.5 text-pink-500 dark:text-pink-400" /> Ngày sinh
                               </span>
@@ -798,7 +798,7 @@ export function ChildHealth({
                         {/* Chiều cao · cân nặng gần nhất (từ sổ Tăng trưởng) */}
                         {(measure.height != null || measure.weight != null) && (
                           <div className="relative z-30 px-3 pt-2.5">
-                            <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-950/70 border border-slate-850 px-3 py-1.5">
+                            <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-950/70 neu-pressed-sm px-3 py-1.5">
                               <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 shrink-0">
                                 <Ruler className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" /> Cao · Nặng
                               </span>
@@ -819,7 +819,7 @@ export function ChildHealth({
                             </div>
                           ) : (
                             <div className="space-y-2">
-                              <div className="rounded-lg bg-slate-950/70 border border-slate-850 divide-y divide-slate-850/60">
+                              <div className="rounded-lg bg-slate-950/70 neu-pressed-sm divide-y divide-slate-850/60">
                                 {abilities.length === 0 ? (
                                   <p className="text-[11px] text-slate-500 px-2.5 py-2 text-center italic">Chưa ghi thông tin y tế.</p>
                                 ) : abilities.map((a, i) => {
@@ -837,7 +837,7 @@ export function ChildHealth({
                               </div>
 
                               {p.emergencyContacts?.length > 0 && (
-                                <div className="rounded-lg bg-slate-950/70 border border-slate-850 px-2.5 py-2 space-y-1.5">
+                                <div className="rounded-lg bg-slate-950/70 neu-pressed-sm px-2.5 py-2 space-y-1.5">
                                   <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Liên hệ khẩn cấp</p>
                                   {p.emergencyContacts.map((c, i) => (
                                     <a key={i} href={`tel:${c.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-[11px] text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
@@ -863,7 +863,7 @@ export function ChildHealth({
 
               // ─── NHÁNH SỬA: form chức năng (nền slate cho dễ nhập) ───
               return (
-                <Reveal key={member.id} delay={0.05 + staggerDelay(mi)} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-lg p-3.5 sm:p-4 space-y-3 w-full max-w-[330px] sm:max-w-none">
+                <Reveal key={member.id} delay={0.05 + staggerDelay(mi)} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-3.5 sm:p-4 space-y-3 w-full max-w-[330px] sm:max-w-none">
                   <ShimmerLine accent="amber" />
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5 min-w-0">
@@ -892,31 +892,31 @@ export function ChildHealth({
                         </div>
                         <div className="space-y-1">
                           <label className="text-slate-500 text-[10px] block">Số BHYT</label>
-                          <input value={epBhyt} onChange={e => setEpBhyt(e.target.value)} placeholder="GD-4-79-..." className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                          <input value={epBhyt} onChange={e => setEpBhyt(e.target.value)} placeholder="GD-4-79-..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <label className="text-slate-500 text-[10px] block">Chiều cao (cm)</label>
-                          <input value={epHeight} onChange={e => setEpHeight(e.target.value)} placeholder="112" inputMode="decimal" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                          <input value={epHeight} onChange={e => setEpHeight(e.target.value)} placeholder="112" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                         <div className="space-y-1">
                           <label className="text-slate-500 text-[10px] block">Cân nặng (kg)</label>
-                          <input value={epWeight} onChange={e => setEpWeight(e.target.value)} placeholder="18,5" inputMode="decimal" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                          <input value={epWeight} onChange={e => setEpWeight(e.target.value)} placeholder="18,5" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                         <p className="col-span-2 text-[9px] text-slate-600 -mt-0.5">Đổi số đo sẽ ghi thêm một dòng vào mục Tăng trưởng (ngày hôm nay).</p>
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">Dị ứng (thuốc, thức ăn...)</label>
-                        <input value={epAllergies} onChange={e => setEpAllergies(e.target.value)} placeholder="Ví dụ: Penicillin, hải sản" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <input value={epAllergies} onChange={e => setEpAllergies(e.target.value)} placeholder="Ví dụ: Penicillin, hải sản" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">Bệnh nền</label>
-                        <input value={epChronic} onChange={e => setEpChronic(e.target.value)} placeholder="Ví dụ: Tiểu đường, cao huyết áp" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <input value={epChronic} onChange={e => setEpChronic(e.target.value)} placeholder="Ví dụ: Tiểu đường, cao huyết áp" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">Thuốc đang dùng thường xuyên</label>
-                        <input value={epMeds} onChange={e => setEpMeds(e.target.value)} placeholder="Ví dụ: Metformin 500mg sáng/tối" className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <input value={epMeds} onChange={e => setEpMeds(e.target.value)} placeholder="Ví dụ: Metformin 500mg sáng/tối" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
 
                       <div className="space-y-1.5">
@@ -925,9 +925,9 @@ export function ChildHealth({
                           // Mobile: Tên chiếm trọn hàng 1, SĐT + Quan hệ + nút xóa xuống hàng 2.
                           // sm trở lên: đủ rộng nên gộp lại 1 hàng như cũ.
                           <div key={i} className="flex flex-wrap gap-1.5">
-                            <input value={c.name} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))} placeholder="Tên" className="basis-full sm:basis-0 sm:flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
-                            <input value={c.phone} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, phone: e.target.value } : x))} placeholder="SĐT" inputMode="tel" className="flex-1 min-w-0 sm:flex-none sm:w-28 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
-                            <input value={c.relation || ""} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, relation: e.target.value } : x))} placeholder="Quan hệ" className="w-24 sm:w-20 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                            <input value={c.name} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))} placeholder="Tên" className="basis-full sm:basis-0 sm:flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                            <input value={c.phone} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, phone: e.target.value } : x))} placeholder="SĐT" inputMode="tel" className="flex-1 min-w-0 sm:flex-none sm:w-28 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                            <input value={c.relation || ""} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, relation: e.target.value } : x))} placeholder="Quan hệ" className="w-24 sm:w-20 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
                             <button type="button" onClick={() => setEpContacts(prev => prev.filter((_, xi) => xi !== i))} title="Xóa liên hệ" className="p-2 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -942,7 +942,7 @@ export function ChildHealth({
 
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">Ghi chú thêm</label>
-                        <textarea value={epNotes} onChange={e => setEpNotes(e.target.value)} rows={2} placeholder="Ví dụ: đang mang thai, có máy trợ tim..." className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 resize-none" />
+                        <textarea value={epNotes} onChange={e => setEpNotes(e.target.value)} rows={2} placeholder="Ví dụ: đang mang thai, có máy trợ tim..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 resize-none" />
                       </div>
 
                       {epError && <p className="text-[11px] text-rose-400">{epError}</p>}

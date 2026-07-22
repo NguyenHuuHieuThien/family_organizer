@@ -111,7 +111,7 @@ export function SavingsGoals({
   };
 
   return (
-    <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4">
+    <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
       <ShimmerLine accent="emerald" />
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -131,11 +131,11 @@ export function SavingsGoals({
         {showForm && (
           <motion.form
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-            onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-950/40 border border-slate-800 rounded-xl p-3 overflow-hidden"
+            onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-950/40 neu-pressed-sm rounded-xl p-3 overflow-hidden"
           >
-            <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên mục tiêu (vd: Tết 2027, Du lịch...)" className="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
-            <input inputMode="numeric" value={target > 0 ? fmtMoney(target) : ""} onChange={e => setTarget(parseMoney(e.target.value))} placeholder="Số tiền mục tiêu" className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
-            <DateInputDMY value={deadline} onChange={setDeadline} className="bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Tên mục tiêu (vd: Tết 2027, Du lịch...)" className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+            <input inputMode="numeric" value={target > 0 ? fmtMoney(target) : ""} onChange={e => setTarget(parseMoney(e.target.value))} placeholder="Số tiền mục tiêu" className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+            <DateInputDMY value={deadline} onChange={setDeadline} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
             <FancySelect
               value={color}
               onChange={setColor}
@@ -157,7 +157,7 @@ export function SavingsGoals({
                 { value: "false", label: "Riêng tư" }
               ]}
             />
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú (tùy chọn)" className="sm:col-span-2 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+            <input value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú (tùy chọn)" className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
             {error && <p className="sm:col-span-2 text-[11px] text-rose-400">{error}</p>}
             <div className="sm:col-span-2 flex gap-2">
               <button type="submit" disabled={saving} className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold cursor-pointer">Lưu mục tiêu</button>
@@ -180,7 +180,7 @@ export function SavingsGoals({
             const bar = GOAL_COLORS[goal.color || "emerald"] || GOAL_COLORS.emerald;
             const canManage = canManageGoal(goal);
             return (
-              <div key={goal.id} className="bg-slate-950/60 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+              <div key={goal.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3.5 space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5 truncate">
@@ -218,7 +218,7 @@ export function SavingsGoals({
                     value={contribDraft[goal.id] || ""}
                     onChange={e => setContribDraft(prev => ({ ...prev, [goal.id]: e.target.value }))}
                     placeholder="Số tiền bỏ vào / rút ra"
-                    className="flex-1 min-w-0 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 outline-none focus:border-emerald-500 text-[11px]"
+                    className="flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-1.5 text-slate-200 outline-none focus:border-emerald-500 text-[11px]"
                   />
                   <button disabled={busyGoal === goal.id} onClick={() => handleContribute(goal, 1)} className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50" title="Bỏ thêm vào quỹ">+ Góp</button>
                   <button disabled={busyGoal === goal.id} onClick={() => handleContribute(goal, -1)} className="bg-rose-500/10 text-rose-400 border border-rose-500/25 hover:bg-rose-500/20 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50" title="Rút bớt khỏi quỹ">− Rút</button>

@@ -583,45 +583,45 @@ export function Schedules({
     <div className="space-y-6" id="schedules-module">
       
       {/* Filters and mode change panel */}
-      <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 p-4.5 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4" id="plans-control-header">
+      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised p-4.5 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4" id="plans-control-header">
         <ShimmerLine accent="sky" />
         
         {/* Toggle shared scopes buttons */}
-        <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 self-start md:self-auto gap-1 text-xs">
-          <button 
+        <div className="flex bg-slate-950 p-1.5 rounded-xl neu-pressed-sm self-start md:self-auto gap-1 text-xs">
+          <button
             onClick={() => setFilterSharedOnly("all")}
-            className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all ${filterSharedOnly === "all" ? "bg-slate-800 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all whitespace-nowrap ${filterSharedOnly === "all" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            Tất cả kế hoạch
+            <span className="sm:hidden">Tất cả</span><span className="hidden sm:inline">Tất cả kế hoạch</span>
           </button>
-          <button 
+          <button
             onClick={() => setFilterSharedOnly("shared")}
-            className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all ${filterSharedOnly === "shared" ? "bg-slate-800 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all whitespace-nowrap ${filterSharedOnly === "shared" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            Chung cả nhà
+            <span className="sm:hidden">Chung nhà</span><span className="hidden sm:inline">Chung cả nhà</span>
           </button>
-          <button 
+          <button
             onClick={() => setFilterSharedOnly("personal")}
-            className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all ${filterSharedOnly === "personal" ? "bg-slate-800 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all whitespace-nowrap ${filterSharedOnly === "personal" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            Việc riêng cá nhân
+            <span className="sm:hidden">Cá nhân</span><span className="hidden sm:inline">Việc riêng cá nhân</span>
           </button>
         </div>
 
         {/* Layout Mode selection & add button */}
         <div className="flex items-center gap-3 self-end md:self-auto shrink-0">
           {/* View toggle */}
-          <div className="flex bg-slate-950 p-1.5 rounded-xl border border-slate-800 gap-1">
+          <div className="flex bg-slate-950 p-1.5 rounded-xl neu-pressed-sm gap-1">
             <button 
               onClick={() => setViewMode("board")}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "board" ? "bg-slate-800 text-sky-400" : "text-slate-500 hover:text-slate-300"}`}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "board" ? "bg-slate-900 neu-flat text-sky-400" : "text-slate-500 hover:text-slate-300"}`}
               title="Xem dạng Lịch tháng"
             >
               <LayoutGrid className="w-4.5 h-4.5" />
             </button>
             <button 
               onClick={() => setViewMode("list")}
-              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "list" ? "bg-slate-800 text-sky-400" : "text-slate-500 hover:text-slate-300"}`}
+              className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "list" ? "bg-slate-900 neu-flat text-sky-400" : "text-slate-500 hover:text-slate-300"}`}
               title="Xem dạng Danh sách thời gian"
             >
               <LayoutList className="w-4.5 h-4.5" />
@@ -633,7 +633,7 @@ export function Schedules({
             type="button"
             onClick={exportPlansIcs}
             disabled={filteredPlans.length === 0}
-            className="bg-slate-900 hover:bg-slate-800 border border-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-sky-400 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+            className="bg-slate-900 hover:bg-slate-800 neu-btn disabled:opacity-50 disabled:cursor-not-allowed text-sky-400 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
             title="Xuất sự kiện ra file .ics để nhập vào Google/Apple Calendar"
           >
             <Download className="w-3.5 h-3.5" /> .ics
@@ -653,7 +653,7 @@ export function Schedules({
       {/* Main View Display AREA */}
       {viewMode === "board" ? (
         /* Monthly style responsive Grid */
-        <Reveal delay={0.08} className="relative bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden" id="calendar-monthly-grid-view">
+        <Reveal delay={0.08} className="relative bg-slate-900 neu-raised rounded-2xl overflow-hidden" id="calendar-monthly-grid-view">
           <ShimmerLine accent="amber" />
           
           <div className="bg-slate-950 p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -684,7 +684,7 @@ export function Schedules({
                 type="button"
                 onClick={goToPrevMonth}
                 aria-label="Tháng trước"
-                className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
+                className="p-1.5 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -713,7 +713,7 @@ export function Schedules({
                 type="button"
                 onClick={goToNextMonth}
                 aria-label="Tháng sau"
-                className="p-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
+                className="p-1.5 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -867,7 +867,7 @@ export function Schedules({
               <p className="text-sm text-slate-500">Chưa ghi nhận kế hoạch sinh hoạt gia đình nào phù hợp.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {filteredPlans.map((plan, planIndex) => {
                 const creator = users.find(u => u.id === plan.creatorId);
                 const canManage = canManagePlan(plan);
@@ -880,7 +880,7 @@ export function Schedules({
                     key={plan.id}
                     delay={0.06 + staggerDelay(planIndex)}
                     hoverLift
-                    className={`bg-slate-900 border border-slate-800 ${borderLeftColor(plan.color)} rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-md relative group hover:shadow-xl transition-[box-shadow] duration-300`}
+                    className={`bg-slate-900 neu-raised ${borderLeftColor(plan.color)} rounded-2xl p-4 flex flex-col justify-between space-y-3 shadow-md relative group hover:shadow-xl transition-[box-shadow] duration-300`}
                   >
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-[11px]">
@@ -938,7 +938,7 @@ export function Schedules({
                           type="button"
                           aria-label={`Sửa sự kiện ${plan.title}`}
                           onClick={() => handleOpenEditPlan(plan)}
-                          className="p-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:text-amber-400 text-slate-500 rounded-lg cursor-pointer"
+                          className="p-1.5 bg-slate-950 hover:bg-slate-800 neu-btn hover:text-amber-400 text-slate-500 rounded-lg cursor-pointer"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
@@ -946,7 +946,7 @@ export function Schedules({
                           type="button"
                           aria-label={`Xóa sự kiện ${plan.title}`}
                           onClick={() => handleDeleteClick(plan.id)}
-                          className="p-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:text-rose-400 text-slate-500 rounded-lg cursor-pointer"
+                          className="p-1.5 bg-slate-950 hover:bg-slate-800 neu-btn hover:text-rose-400 text-slate-500 rounded-lg cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1000,7 +1000,7 @@ export function Schedules({
                 {viewingPlan.description || "Không có ghi chú thêm."}
               </p>
 
-              <div className="space-y-2 bg-slate-950/40 border border-slate-800 rounded-xl p-3.5 text-xs font-mono">
+              <div className="space-y-2 bg-slate-950/40 neu-pressed-sm rounded-xl p-3.5 text-xs font-mono">
                 <div className="flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-amber-500/80 shrink-0" />
                   <span className="text-slate-300">Bắt đầu: <span className="text-amber-400">{formatDateTimeVN(viewingPlan.startDate)}</span></span>
@@ -1035,7 +1035,7 @@ export function Schedules({
                   <button
                     type="button"
                     onClick={() => setViewingPlan(null)}
-                    className="px-3 py-1.5 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-800 rounded-lg font-semibold cursor-pointer"
+                    className="px-3 py-1.5 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 neu-btn rounded-lg font-semibold cursor-pointer"
                   >
                     Đóng lại
                   </button>
@@ -1102,7 +1102,7 @@ export function Schedules({
                 </button>
               </div>
 
-              <div className="space-y-2.5 bg-slate-950/40 border border-slate-800 rounded-xl p-3.5 text-xs">
+              <div className="space-y-2.5 bg-slate-950/40 neu-pressed-sm rounded-xl p-3.5 text-xs">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                   <span className="text-slate-300 capitalize">{weekday ? `${weekday}, ` : ""}{dateLabel}</span>
@@ -1129,7 +1129,7 @@ export function Schedules({
               <button
                 type="button"
                 onClick={() => setViewingHoliday(null)}
-                className="w-full px-4 py-2 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-slate-100 border border-slate-800 rounded-xl font-semibold cursor-pointer transition-all"
+                className="w-full px-4 py-2 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-slate-100 neu-btn rounded-xl font-semibold cursor-pointer transition-all"
               >
                 Đóng lại
               </button>
@@ -1183,7 +1183,7 @@ export function Schedules({
                 </button>
               </div>
 
-              <div className="space-y-2.5 bg-slate-950/40 border border-slate-800 rounded-xl p-3.5 text-xs">
+              <div className="space-y-2.5 bg-slate-950/40 neu-pressed-sm rounded-xl p-3.5 text-xs">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-3.5 h-3.5 text-pink-400 shrink-0" />
                   <span className="text-slate-300 capitalize">{weekday}, ngày {dateLabel}</span>
@@ -1215,7 +1215,7 @@ export function Schedules({
               <button
                 type="button"
                 onClick={() => setViewingBirthday(null)}
-                className="w-full px-4 py-2 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-slate-100 border border-slate-800 rounded-xl font-semibold cursor-pointer transition-all"
+                className="w-full px-4 py-2 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-slate-100 neu-btn rounded-xl font-semibold cursor-pointer transition-all"
               >
                 Đóng lại
               </button>
@@ -1268,7 +1268,7 @@ export function Schedules({
                   placeholder="Ví dụ: Cơm tối nhà nội, Đi tiêm phòng cho con..."
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -1279,7 +1279,7 @@ export function Schedules({
                   placeholder="Chuẩn bị quà cáp, tài liệu, tiền lẻ hoặc phương tiện di chuyển..."
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 

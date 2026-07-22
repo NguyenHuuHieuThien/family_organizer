@@ -415,7 +415,7 @@ export function Dashboard({
       {/* Greetings Block — aurora hero that shifts palette with the time of day */}
       <motion.div
         {...fadeUp(0)}
-        className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl shadow-xl"
+        className="relative overflow-hidden bg-slate-900 neu-raised-lg rounded-2xl"
         id="dashboard-header-banner"
       >
         {/* Aurora backdrop: three drifting blurred blobs + twinkling sparkles */}
@@ -469,7 +469,7 @@ export function Dashboard({
 
       {/* Đếm ngược sự kiện lớn (lễ / sinh nhật / sự kiện Quan trọng) */}
       {countdowns.length > 0 && (
-        <motion.div {...fadeUp(0.09)} className="grid grid-cols-2 lg:grid-cols-4 gap-3" id="dashboard-countdowns">
+        <motion.div {...fadeUp(0.09)} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6" id="dashboard-countdowns">
           {countdowns.map(c => {
             const accentMap: Record<string, { ring: string; text: string; bg: string }> = {
               amber: { ring: "border-amber-500/25", text: "text-amber-400", bg: "from-amber-500/10" },
@@ -494,7 +494,7 @@ export function Dashboard({
       )}
 
       {/* Weather + Markets widgets — always rendered (skeleton while loading) to avoid layout shift */}
-      <motion.div {...fadeUp(0.12)} className="grid grid-cols-1 lg:grid-cols-3 gap-4" id="dashboard-widgets">
+      <motion.div {...fadeUp(0.12)} className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6" id="dashboard-widgets">
 
         {/* Weather */}
         {(() => {
@@ -510,7 +510,7 @@ export function Dashboard({
             ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
             : "bg-amber-500/15 border-amber-500/40 text-amber-300";
           return (
-            <div className="relative overflow-hidden lg:col-span-1 bg-gradient-to-br from-sky-500/15 via-slate-900 to-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col min-h-[188px]">
+            <div className="relative overflow-hidden lg:col-span-1 bg-gradient-to-br from-sky-500/15 via-slate-900 to-slate-900 neu-raised rounded-2xl p-5 shadow-lg flex flex-col min-h-[188px]">
               <ShimmerLine via="via-sky-500/60" />
               <div aria-hidden className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-sky-500/10 blur-2xl" />
 
@@ -611,9 +611,9 @@ export function Dashboard({
         })()}
 
         {/* Market mini-cards */}
-        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+        <div className="lg:col-span-2 grid grid-cols-2 gap-4 lg:gap-5">
           {/* Bitcoin */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-amber-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
             <ShimmerLine via="via-amber-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-amber-400">₿ Bitcoin</span>
@@ -636,7 +636,7 @@ export function Dashboard({
           </div>
 
           {/* Ethereum */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-indigo-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
             <ShimmerLine via="via-indigo-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-indigo-400">Ξ Ethereum</span>
@@ -659,7 +659,7 @@ export function Dashboard({
           </div>
 
           {/* Gold */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-yellow-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-yellow-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
             <ShimmerLine via="via-yellow-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-yellow-500">🪙 {widgets?.gold?.source || "Vàng"}</span>
@@ -694,7 +694,7 @@ export function Dashboard({
           </div>
 
           {/* USD/VND */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-emerald-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
             <ShimmerLine via="via-emerald-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-emerald-400">💵 USD/VND</span>
@@ -718,13 +718,13 @@ export function Dashboard({
       </motion.div>
 
       {/* Main Stats Row — glass cards with an accent glow that answers hover */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-stats">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6" id="dashboard-stats">
         {/* Card 1: My Remaining Tasks */}
         <motion.div
           {...fadeUp(0.18)}
           whileHover={reduceMotion ? undefined : { y: -4 }}
           onClick={() => onNavigate("tasks")}
-          className="group relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-sky-500/40 p-4 rounded-2xl shadow-md hover:shadow-xl hover:shadow-sky-500/10 transition-[box-shadow,border-color] duration-300 cursor-pointer flex flex-col justify-between"
+          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
           id="stat-my-tasks"
         >
           <ShimmerLine via="via-sky-500/50" />
@@ -746,7 +746,7 @@ export function Dashboard({
           {...fadeUp(0.23)}
           whileHover={reduceMotion ? undefined : { y: -4 }}
           onClick={() => onNavigate("tasks")}
-          className="group relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-rose-500/40 p-4 rounded-2xl shadow-md hover:shadow-xl hover:shadow-rose-500/10 transition-[box-shadow,border-color] duration-300 cursor-pointer flex flex-col justify-between"
+          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
           id="stat-urgent-tasks"
         >
           <ShimmerLine via="via-rose-500/50" />
@@ -768,7 +768,7 @@ export function Dashboard({
           {...fadeUp(0.28)}
           whileHover={reduceMotion ? undefined : { y: -4 }}
           onClick={() => onNavigate("finance")}
-          className={`group relative overflow-hidden bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-md hover:shadow-xl transition-[box-shadow,border-color] duration-300 cursor-pointer flex flex-col justify-between ${balancePositive ? "hover:border-emerald-500/40 hover:shadow-emerald-500/10" : "hover:border-rose-500/40 hover:shadow-rose-500/10"}`}
+          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
           id="stat-monthly-balance"
         >
           <ShimmerLine via={balancePositive ? "via-emerald-500/50" : "via-rose-500/50"} />
@@ -792,7 +792,7 @@ export function Dashboard({
           {...fadeUp(0.33)}
           whileHover={reduceMotion ? undefined : { y: -4 }}
           onClick={() => onNavigate("plans")}
-          className="group relative overflow-hidden bg-slate-900 border border-slate-800 hover:border-amber-500/40 p-4 rounded-2xl shadow-md hover:shadow-xl hover:shadow-amber-500/10 transition-[box-shadow,border-color] duration-300 cursor-pointer flex flex-col justify-between"
+          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
           id="stat-schedules"
         >
           <ShimmerLine via="via-amber-500/50" />
@@ -817,7 +817,7 @@ export function Dashboard({
         <motion.div {...fadeUp(0.3)} className="lg:col-span-7 space-y-6">
 
           {/* Upcoming Schedule */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4" id="widget-upcoming-plans">
+          <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 neu-raised space-y-4" id="widget-upcoming-plans">
             <ShimmerLine via="via-amber-500/50" />
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -879,7 +879,7 @@ export function Dashboard({
 
           {/* Upcoming Birthdays — ẩn nếu không có ai */}
           {upcomingBirthdays.length > 0 && (
-            <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4" id="widget-birthdays">
+            <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 neu-raised space-y-4" id="widget-birthdays">
               <ShimmerLine via="via-pink-500/50" />
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <IconChip accent="pink"><Cake className="w-4 h-4" /></IconChip>
@@ -909,7 +909,7 @@ export function Dashboard({
           <QuickNudge currentUser={currentUser} users={users} />
 
           {/* Quick Pinned Notes */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4" id="widget-pinned-notes">
+          <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 neu-raised space-y-4" id="widget-pinned-notes">
             <ShimmerLine via="via-sky-500/50" />
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -930,7 +930,7 @@ export function Dashboard({
                 <p className="text-sm text-slate-500">Chưa có ghi chú nào được pin lên màn hình chính.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 {pinnedNotes.map((note) => {
                   const creator = users.find(u => u.id === note.creatorId);
                   return (
@@ -964,7 +964,7 @@ export function Dashboard({
         <motion.div {...fadeUp(0.38)} className="lg:col-span-5 space-y-6">
 
           {/* Recent Money Widget */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4" id="widget-finance-overview">
+          <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 neu-raised space-y-4" id="widget-finance-overview">
             <ShimmerLine via="via-emerald-500/50" />
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -1024,14 +1024,14 @@ export function Dashboard({
           </div>
 
           {/* Activity Logs inside family */}
-          <div className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4" id="widget-activity-logs">
+          <div className="relative overflow-hidden bg-slate-900 rounded-2xl p-5 neu-raised space-y-4" id="widget-activity-logs">
             <ShimmerLine via="via-indigo-500/50" />
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="indigo"><Activity className="w-4 h-4" /></IconChip>
               Nhật ký gia đình
             </h3>
 
-            <div className="bg-slate-950 p-2 rounded-xl border border-slate-800 max-h-[178px] overflow-y-auto space-y-2 font-mono scrollbar-thin">
+            <div className="bg-slate-950 p-2 rounded-xl neu-pressed-sm max-h-[178px] overflow-y-auto space-y-2 font-mono scrollbar-thin">
               {activityLogs.length === 0 ? (
                 <div className="py-8 text-center text-xs text-slate-500">Chưa có hoạt động hệ thống.</div>
               ) : (

@@ -95,25 +95,52 @@ viền `color-500/20` → `color-500/30`. Ví dụ badge:
 
 ## 4. Component Stylings
 
+### Neumorphism (hiệu ứng nổi/lõm) — nền tảng bề mặt
+
+Giao diện dùng phong cách **Neumorphism**: bề mặt cùng gam với canvas, phân biệt
+nhau bằng **bóng KÉP** (sáng trên-trái + tối dưới-phải). Cặp màu bóng
+`--neu-hi`/`--neu-lo` đã remap theo Sáng/Tối trong [src/index.css](src/index.css)
+— **không viết bóng cứng**, dùng các lớp tiện ích sau:
+
+| Lớp | Dùng cho |
+| --- | --- |
+| `.neu-raised` / `.neu-raised-sm` / `.neu-raised-lg` | thẻ/khối **nổi** khỏi nền |
+| `.neu-flat` | nổi rất nhẹ (badge, chip, ô phụ) |
+| `.neu-pressed` / `.neu-pressed-sm` | vùng **lõm** (ô nhập, thanh trạng thái, track) |
+| `.neu-btn` | nút bấm: nổi → **lõm khi `:active`** (kèm hover nhấn nhẹ) |
+| `.neu-btn-active` | nút đang chọn (nav/tab active) — giữ lõm cố định |
+| `.neu-card` | thẻ hoàn chỉnh = nền `slate-900` + `rounded-[1.25rem]` + bóng nổi |
+
+- **CHỈ dùng cho bề mặt NẰM TRÊN canvas** (thẻ, nút, ô nhập trong luồng trang).
+  **KHÔNG** dùng cho phần tử nổi trên lớp phủ (modal / dropdown / toast): nền ở đó
+  không đồng màu nên bóng kép trông sai → giữ `shadow-2xl` mặc định.
+- Neumorphism **kỵ viền cứng**: khi thêm `.neu-*` cho khối, bỏ `border border-slate-*`
+  (viền chọi với bóng, mất cảm giác đùn). Cần ngăn cách thì dùng bóng, không dùng viền.
+- Bo góc mềm hơn phong cách phẳng: thẻ `rounded-2xl`/`rounded-[1.25rem]`.
+
 ### Buttons
 - **Hành động chính:** `bg-indigo-500 hover:bg-indigo-400 text-white rounded-xl
   px-4 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer`,
   thường mở đầu bằng icon (vd `<Plus className="w-4 h-4" />`).
 - **Phụ/Hủy:** `bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl px-4 py-2.5 font-bold`.
-- **Icon nhỏ (sửa/xóa trong thẻ):** `p-1.5 bg-slate-950 border border-slate-800
-  rounded-lg text-slate-500`, hover đổi sang accent (`hover:text-amber-400` cho
-  sửa, `hover:text-rose-400` cho xóa). Luôn kèm `title`/`aria-label`.
+- **Icon nhỏ (sửa/xóa trong thẻ):** `p-1.5 bg-slate-950 neu-btn rounded-lg
+  text-slate-500`, hover đổi sang accent (`hover:text-amber-400` cho sửa,
+  `hover:text-rose-400` cho xóa). Luôn kèm `title`/`aria-label`. **Không viền cứng** —
+  `.neu-btn` tự nổi và lõm khi nhấn.
 - Trạng thái disabled: `disabled:opacity-60`. Luôn `cursor-pointer` khi bấm được.
 
 ### Cards / Containers
-- Khối chuẩn: `bg-slate-900 border border-slate-800 rounded-2xl shadow-xl p-5 space-y-4`.
-- Vùng con bên trong: `bg-slate-950/40 border border-slate-800 rounded-xl p-3`.
+- **Khối chuẩn (neumorphism):** `bg-slate-900 neu-raised rounded-2xl p-5 space-y-4`
+  — KHÔNG `border` + KHÔNG `shadow-*` (dùng `.neu-raised`; thẻ hero to dùng `.neu-raised-lg`).
+- **Vùng con lõm bên trong:** `bg-slate-950/40 neu-pressed-sm rounded-xl p-3`
+  (giếng lõm — hợp cho panel phụ, thanh segmented, khung chứa danh sách).
 - Bo góc: **thẻ = `rounded-2xl`** (bo lớn, mềm), **control/nút = `rounded-xl`**,
   **badge/icon-button = `rounded-lg`**, **chip tròn/FAB/avatar = `rounded-full`**.
 
 ### Inputs / Forms
-- Chuẩn: `bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-slate-200
-  outline-none focus:border-indigo-500`.
+- **Chuẩn (ô lõm):** `bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200
+  outline-none focus:border-indigo-500` — ô nhập là giếng lõm; `focus:border-*` thêm
+  viền màu khi focus. KHÔNG dùng `border border-slate-800` cho ô nhập nữa.
 - **Dropdown chọn 1 giá trị: DÙNG `<FancySelect>`** ([src/components/FancySelect.tsx](src/components/FancySelect.tsx)),
   **không dùng `<select>` gốc** — list bung ra của `<select>` không tạo kiểu được,
   nhìn thô trên web. FancySelect: `options={[{value,label}]}`, popup portal +

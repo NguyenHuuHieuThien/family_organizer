@@ -323,7 +323,7 @@ export function DateInputDMY({
                 type="button"
                 onClick={prevMonth}
                 disabled={showYearMonthPicker}
-                className="size-9 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-100 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
+                className="size-9 rounded-lg bg-slate-900 neu-btn hover:border-slate-700 text-slate-400 hover:text-slate-100 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
                 title="Tháng trước"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -341,7 +341,7 @@ export function DateInputDMY({
                 type="button"
                 onClick={nextMonth}
                 disabled={showYearMonthPicker}
-                className="size-9 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-slate-100 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
+                className="size-9 rounded-lg bg-slate-900 neu-btn hover:border-slate-700 text-slate-400 hover:text-slate-100 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
                 title="Tháng sau"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -464,7 +464,7 @@ export function DateInputDMY({
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="flex-1 min-h-[44px] py-2 bg-slate-900 hover:bg-slate-800 text-[11px] font-bold text-slate-300 border border-slate-800 hover:border-slate-700 rounded-lg transition-colors cursor-pointer"
+                className="flex-1 min-h-[44px] py-2 bg-slate-900 hover:bg-slate-800 text-[11px] font-bold text-slate-300 neu-btn hover:border-slate-700 rounded-lg transition-colors cursor-pointer"
               >
                 Đóng
               </button>
@@ -582,7 +582,7 @@ export function TimeSelect24({
         ref={triggerRef}
         type="button"
         onClick={toggleOpen}
-        className="w-full flex items-center justify-between gap-1.5 bg-slate-950 border border-slate-800 hover:border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono text-xs cursor-pointer select-none"
+        className="w-full flex items-center justify-between gap-1.5 bg-slate-950 neu-pressed-sm hover:border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono text-xs cursor-pointer select-none"
       >
         <span className={value ? "text-slate-200 font-bold" : "text-slate-500"}>
           {value || "Chọn giờ"}
@@ -698,7 +698,7 @@ export function DateTimePicker24({
           required={required}
           value={datePart}
           onChange={(next) => emit(next, hh, mm)}
-          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono text-xs"
+          className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono text-xs"
         />
       </div>
       <TimeSelect24

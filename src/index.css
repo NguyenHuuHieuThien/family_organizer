@@ -24,11 +24,18 @@
    * bên dưới để bàn phím luôn đồng bộ theme app (không theo cài đặt OS). */
   color-scheme: light;
 
-  --slate-950: #f8fafc;  /* Main canvas bg -> light slate */
-  --slate-900: #ffffff;  /* Box/card backgrounds -> pure clinical white */
-  --slate-850: rgb(226, 232, 240);  /* Soft borders -> Slate 200 */
-  --slate-800: rgb(241, 245, 249);  /* Hover and active sub-areas -> Slate 100 */
-  
+  /* NEUMORPHISM (Sáng): canvas là gam xanh-xám mềm để thẻ "nổi" nhờ bóng kép.
+   * Thẻ (slate-900) sáng hơn canvas một chút → vẫn phân biệt được kể cả khi
+   * thiếu bóng (an toàn cho ~187 chỗ dùng bg-slate-900 chưa gắn .neu-*). */
+  --slate-950: #e4e9f1;  /* Main canvas bg -> soft neumorphic base */
+  --slate-900: #eef2f8;  /* Box/card backgrounds -> raised surface */
+  --slate-850: #d7dfe9;  /* Soft borders (dịu, không chọi với bóng) */
+  --slate-800: #e0e6ef;  /* Hover and active sub-areas */
+
+  /* Cặp màu bóng cho hiệu ứng nổi/lõm — dùng trong các lớp .neu-* bên dưới */
+  --neu-hi: #ffffff;     /* nguồn sáng trên-trái */
+  --neu-lo: #c5cedb;     /* bóng đổ dưới-phải */
+
   --slate-500: #64748b;  /* Placeholder / weak info -> Slate 500 (was 400, too light on white) */
   --slate-450: #475569;  /* helper details -> Slate 600 for stronger contrast */
   --slate-400: #334155;  /* Description text -> Slate 700 */
@@ -53,10 +60,15 @@
 .dark {
   color-scheme: dark;  /* Bàn phím iOS + form control dùng gam tối theo theme app */
 
-  --slate-950: #0d121f;  /* Deep dark navy/slate canvas */
-  --slate-900: #131b2e;  /* Box/card backgrounds -> dark navy card */
-  --slate-850: #1e2942;  /* Soft borders -> dark slate border */
-  --slate-800: #253352;  /* Hover and active sub-areas */
+  /* NEUMORPHISM (Tối): canvas navy sâu, thẻ nhỉnh sáng hơn để bóng kép đọc rõ.
+   * neu-hi/neu-lo lệch ±sáng quanh màu thẻ tạo cảm giác đùn nổi. */
+  --slate-950: #171d29;  /* Deep neumorphic canvas */
+  --slate-900: #1f2735;  /* Box/card backgrounds -> raised navy card */
+  --slate-850: #2a3345;  /* Soft borders -> dark slate border */
+  --slate-800: #2f3a4e;  /* Hover and active sub-areas */
+
+  --neu-hi: #29344a;     /* nguồn sáng trên-trái (navy nhạt) */
+  --neu-lo: #0d1119;     /* bóng đổ dưới-phải (gần đen) */
   
   --slate-500: #8392a8;  /* Placeholder / weak info -> lighter for readability on dark cards */
   --slate-450: #9fb0c9;  /* helper details -> brighter */
@@ -106,6 +118,44 @@
   --color-sky-300: var(--sky-300);
   --color-sky-200: var(--sky-200);
   --color-sky-100: var(--sky-100);
+}
+
+/* ── NEUMORPHISM UTILITIES ─────────────────────────────────────────────────
+   Bóng KÉP (nổi/lõm) theme-aware qua --neu-hi/--neu-lo (đổi theo Sáng/Tối).
+   Dùng cho BỀ MẶT NẰM TRÊN canvas (thẻ, nút, ô nhập) — KHÔNG dùng cho phần
+   tử nổi trên lớp phủ (modal/dropdown/toast): ở đó nền không đồng màu nên bóng
+   kép sẽ trông sai; cứ để shadow-xl/2xl mặc định.
+   Quy ước: raised = đùn nổi, pressed = ấn lõm, flat = nổi nhẹ, inset khi :active. */
+.neu-raised     { box-shadow: 5px 5px 12px var(--neu-lo), -5px -5px 12px var(--neu-hi); }
+.neu-raised-sm  { box-shadow: 3px 3px 7px var(--neu-lo), -3px -3px 7px var(--neu-hi); }
+.neu-raised-lg  { box-shadow: 9px 9px 22px var(--neu-lo), -9px -9px 22px var(--neu-hi); }
+.neu-flat       { box-shadow: 2px 2px 6px var(--neu-lo), -2px -2px 6px var(--neu-hi); }
+.neu-pressed    { box-shadow: inset 4px 4px 9px var(--neu-lo), inset -4px -4px 9px var(--neu-hi); }
+.neu-pressed-sm { box-shadow: inset 2px 2px 5px var(--neu-lo), inset -2px -2px 5px var(--neu-hi); }
+
+/* Thẻ nổi hoàn chỉnh: nền bề mặt + bo góc + bóng nổi (tái dùng cho màn hình mới) */
+.neu-card {
+  background: var(--slate-900);
+  border-radius: 1.25rem;
+  box-shadow: 5px 5px 12px var(--neu-lo), -5px -5px 12px var(--neu-hi);
+}
+
+/* Nút bấm nổi → lõm khi nhấn (phản hồi chạm tự nhiên trên PWA iPhone). */
+.neu-btn {
+  box-shadow: 4px 4px 10px var(--neu-lo), -4px -4px 10px var(--neu-hi);
+  transition: box-shadow 0.15s ease, transform 0.12s ease;
+}
+.neu-btn:hover { box-shadow: 5px 5px 12px var(--neu-lo), -5px -5px 12px var(--neu-hi); }
+.neu-btn:active {
+  box-shadow: inset 3px 3px 7px var(--neu-lo), inset -3px -3px 7px var(--neu-hi);
+  transform: translateY(0.5px);
+}
+/* Nút ở trạng thái đang chọn (nav active, tab active) — giữ lõm cố định */
+.neu-btn-active { box-shadow: inset 3px 3px 7px var(--neu-lo), inset -3px -3px 7px var(--neu-hi); }
+
+@media (prefers-reduced-motion: reduce) {
+  .neu-btn { transition: none; }
+  .neu-btn:active { transform: none; }
 }
 
 /*

@@ -782,35 +782,35 @@ export function Settings({
   ];
 
   return (
-    <Reveal className="relative overflow-hidden bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-6" id="settings-module">
+    <Reveal className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-6" id="settings-module">
       <ShimmerLine accent="indigo" />
 
       {/* Settings Navigation sub-header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 gap-4" id="settings-sub-header">
         
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap bg-slate-950 p-1.5 rounded-xl border border-slate-800 gap-1 text-xs">
+        <div className="flex flex-wrap bg-slate-950 p-1.5 rounded-xl neu-pressed-sm gap-1 text-xs">
           <button
             onClick={() => { setActiveTab("profile"); setActionSuccess(""); setActionError(""); }}
-            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "profile" ? "bg-slate-800 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "profile" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <UserCircle className="w-4 h-4 text-indigo-400" /> Hồ sơ của tôi
           </button>
           <button
             onClick={() => { setActiveTab("members"); setActionSuccess(""); setActionError(""); }}
-            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "members" ? "bg-slate-800 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "members" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <Users className="w-4 h-4 text-sky-400" /> Thành viên và Phân quyền
           </button>
           <button
             onClick={() => { setActiveTab("backups"); setActionSuccess(""); setActionError(""); }}
-            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "backups" ? "bg-slate-800 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "backups" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <Database className="w-4 h-4 text-amber-400" /> Lưu trữ & Sao lưu tệp
           </button>
           <button
             onClick={() => { setActiveTab("logs"); setActionSuccess(""); setActionError(""); }}
-            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "logs" ? "bg-slate-800 text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
+            className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "logs" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <History className="w-4 h-4 text-emerald-400" /> Nhật ký hệ thống
           </button>
@@ -843,7 +843,7 @@ export function Settings({
           <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {/* Avatar personalization */}
-            <div className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 space-y-4">
+            <div className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-4">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <ImageIcon className="w-4.5 h-4.5 text-indigo-400" /> Ảnh đại diện
               </h3>
@@ -892,7 +892,7 @@ export function Settings({
             </div>
 
             {/* Personal info fields */}
-            <div className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 space-y-3.5">
+            <div className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-3.5">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <UserCircle className="w-4.5 h-4.5 text-sky-400" /> Thông tin cá nhân
               </h3>
@@ -903,7 +903,7 @@ export function Settings({
                   type="text"
                   value={`@${currentUser.username}`}
                   disabled
-                  className="w-full bg-slate-900/50 border border-slate-800 rounded-lg p-2 text-slate-500 font-mono cursor-not-allowed"
+                  className="w-full bg-slate-900/50 neu-pressed-sm rounded-lg p-2 text-slate-500 font-mono cursor-not-allowed"
                 />
               </div>
 
@@ -914,7 +914,7 @@ export function Settings({
                   value={profFullName}
                   onChange={(e) => setProfFullName(e.target.value)}
                   placeholder="Ví dụ: Bố Hùng"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -924,7 +924,7 @@ export function Settings({
                   <DateInputDMY
                     value={profDob}
                     onChange={setProfDob}
-                    className="w-full min-w-0 bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                    className="w-full min-w-0 bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                   />
                 </div>
                 <div className="space-y-1 text-xs min-w-0">
@@ -934,7 +934,7 @@ export function Settings({
                     value={profPhone}
                     onChange={(e) => setProfPhone(e.target.value)}
                     placeholder="09xx xxx xxx"
-                    className="w-full min-w-0 bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                    className="w-full min-w-0 bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                   />
                 </div>
                 <div className="space-y-1 text-xs min-w-0">
@@ -991,7 +991,7 @@ export function Settings({
                 type="password"
                 value={curPwd}
                 onChange={(e) => setCurPwd(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                className="w-full bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -1001,7 +1001,7 @@ export function Settings({
                   type="password"
                   value={newPwd}
                   onChange={(e) => setNewPwd(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                  className="w-full bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                 />
               </div>
               <div className="space-y-1 text-xs">
@@ -1010,7 +1010,7 @@ export function Settings({
                   type="password"
                   value={confirmPwd}
                   onChange={(e) => setConfirmPwd(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                  className="w-full bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                 />
               </div>
             </div>
@@ -1073,7 +1073,7 @@ export function Settings({
                       {currentUser.role === UserRole.ADMIN && (
                         <button
                           onClick={() => handleOpenEditUser(u)}
-                          className="p-1.5 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-500 hover:text-sky-400 rounded-lg cursor-pointer transition-all"
+                          className="p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-sky-400 rounded-lg cursor-pointer transition-all"
                           title={`Sửa thông tin & vai trò của ${u.fullName}`}
                         >
                           <Pencil className="w-3.5 h-3.5" />
@@ -1082,7 +1082,7 @@ export function Settings({
                       {currentUser.role === UserRole.ADMIN && (
                         <button
                           onClick={() => { setResetTarget(u); setResetNewPwd(""); setActionError(""); setActionSuccess(""); }}
-                          className="p-1.5 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-500 hover:text-amber-400 rounded-lg cursor-pointer transition-all"
+                          className="p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-amber-400 rounded-lg cursor-pointer transition-all"
                           title={`Đặt lại mật khẩu cho ${u.fullName}`}
                         >
                           <KeyRound className="w-3.5 h-3.5" />
@@ -1094,7 +1094,7 @@ export function Settings({
                         <button
                           onClick={() => handleDeleteUserClick(u)}
                           disabled={loadingAction === `delete-user-${u.id}`}
-                          className="p-1.5 bg-slate-950 border border-slate-800 hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-lg cursor-pointer transition-all disabled:opacity-50"
+                          className="p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-lg cursor-pointer transition-all disabled:opacity-50"
                           title={`Xóa tài khoản ${u.fullName}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1107,7 +1107,7 @@ export function Settings({
             </div>
 
             {/* Create new member form (Admin only constraint) */}
-            <div className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 space-y-4">
+            <div className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-4">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <UserPlus className="w-4.5 h-4.5 text-sky-400 animate-pulse" />
                 Tạo tài khoản thành viên mới
@@ -1129,7 +1129,7 @@ export function Settings({
                       placeholder="Viết liền không dấu, ví dụ: bevy"
                       value={regUsername}
                       onChange={(e) => setRegUsername(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                      className="w-full bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                     />
                   </div>
 
@@ -1140,7 +1140,7 @@ export function Settings({
                       placeholder="Ví dụ: Bé Vy (Con út)"
                       value={regFullName}
                       onChange={(e) => setRegFullName(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none"
+                      className="w-full bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none"
                     />
                   </div>
 
@@ -1176,7 +1176,7 @@ export function Settings({
                       placeholder="Mật khẩu riêng..."
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none font-mono"
+                      className="w-full bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none font-mono"
                     />
                   </div>
 
@@ -1186,7 +1186,7 @@ export function Settings({
                       <DateInputDMY
                         value={regDob}
                         onChange={setRegDob}
-                        className="w-full min-w-0 bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                        className="w-full min-w-0 bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                       />
                     </div>
                     <div className="space-y-1 min-w-0">
@@ -1196,7 +1196,7 @@ export function Settings({
                         placeholder="09xx xxx xxx"
                         value={regPhone}
                         onChange={(e) => setRegPhone(e.target.value)}
-                        className="w-full min-w-0 bg-slate-900 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none font-mono"
+                        className="w-full min-w-0 bg-slate-900 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none font-mono"
                       />
                     </div>
                     <div className="space-y-1 min-w-0">
@@ -1339,7 +1339,7 @@ export function Settings({
                         <button 
                           disabled={Boolean(loadingAction && loadingAction.startsWith("restore"))}
                           onClick={() => handleRestoreClick(b.id, b.filename)}
-                          className="px-2.5 py-1.5 bg-slate-900 border border-slate-800 hover:text-emerald-450 hover:bg-slate-800 hover:border-slate-700 text-emerald-400 font-bold rounded-lg flex items-center gap-1 cursor-pointer transition-all"
+                          className="px-2.5 py-1.5 bg-slate-900 neu-btn hover:text-emerald-450 hover:bg-slate-800 hover:border-slate-700 text-emerald-400 font-bold rounded-lg flex items-center gap-1 cursor-pointer transition-all"
                         >
                           <RefreshCw className="w-3.5 h-3.5" /> Khôi phục
                         </button>
@@ -1347,7 +1347,7 @@ export function Settings({
                         {/* Delete trigger */}
                         <button 
                           onClick={() => handleDeleteBackupClick(b.id)}
-                          className="p-1.5 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-500 hover:text-rose-450 rounded-lg cursor-pointer"
+                          className="p-1.5 bg-slate-900 neu-btn hover:bg-slate-800 text-slate-500 hover:text-rose-450 rounded-lg cursor-pointer"
                           title="Xóa tệp"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1379,7 +1379,7 @@ export function Settings({
             </div>
           ) : (
             /* Full scrollable operations trace log */
-            <div className="bg-slate-950 border border-slate-800 rounded-xl max-h-[350px] overflow-y-auto space-y-1.5 p-3 font-mono text-[11px] text-slate-300">
+            <div className="bg-slate-950 neu-pressed-sm rounded-xl max-h-[350px] overflow-y-auto space-y-1.5 p-3 font-mono text-[11px] text-slate-300">
               {activityLogs.length === 0 ? (
                 <p className="text-center text-slate-500 py-12 italic">Không có nhật ký hệ thống.</p>
               ) : (
@@ -1397,7 +1397,7 @@ export function Settings({
                   {activityLogs.length > logsLimit && (
                     <button
                       onClick={() => setLogsLimit(l => l + 30)}
-                      className="w-full mt-2 py-2 text-[11px] font-bold text-sky-400 hover:text-sky-300 bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-lg transition-all cursor-pointer font-sans"
+                      className="w-full mt-2 py-2 text-[11px] font-bold text-sky-400 hover:text-sky-300 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg transition-all cursor-pointer font-sans"
                     >
                       Xem thêm ({activityLogs.length - logsLimit} mục cũ hơn)
                     </button>
@@ -1440,7 +1440,7 @@ export function Settings({
                   type="text"
                   value={euFullName}
                   onChange={(e) => setEuFullName(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500"
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500"
                 />
               </div>
 
@@ -1473,7 +1473,7 @@ export function Settings({
                   <DateInputDMY
                     value={euDob}
                     onChange={setEuDob}
-                    className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                    className="w-full min-w-0 bg-slate-950 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                   />
                 </div>
                 <div className="space-y-1 min-w-0">
@@ -1483,7 +1483,7 @@ export function Settings({
                     value={euPhone}
                     onChange={(e) => setEuPhone(e.target.value)}
                     placeholder="09xx xxx xxx"
-                    className="w-full min-w-0 bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
+                    className="w-full min-w-0 bg-slate-950 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500 font-mono"
                   />
                 </div>
                 <div className="space-y-1 min-w-0">
@@ -1569,7 +1569,7 @@ export function Settings({
                   value={resetNewPwd}
                   onChange={(e) => setResetNewPwd(e.target.value)}
                   placeholder="Mật khẩu mới cho thành viên..."
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl p-2.5 text-slate-200 outline-none font-mono"
+                  className="w-full bg-slate-950 neu-pressed-sm focus:border-sky-500 rounded-xl p-2.5 text-slate-200 outline-none font-mono"
                 />
               </div>
               <div className="flex items-center justify-end gap-2.5 pt-1">
@@ -1595,7 +1595,7 @@ export function Settings({
 
       {/* AI (Gemini) API key — admin configurable, no .env editing needed */}
       {currentUser.role === UserRole.ADMIN && (
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4.5 space-y-3">
+        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
           <div className="space-y-0.5">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-violet-400" /> Trí tuệ AI (Gemini API Key)
@@ -1613,7 +1613,7 @@ export function Settings({
               value={aiKeyInput}
               onChange={(e) => setAiKeyInput(e.target.value)}
               placeholder="Dán Gemini API key (AIza…)"
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-violet-500"
+              className="flex-1 bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-violet-500"
             />
             <button
               type="button"
@@ -1642,7 +1642,7 @@ export function Settings({
 
       {/* Backup tự động qua Telegram — bản sao offsite hằng đêm, admin only */}
       {currentUser.role === UserRole.ADMIN && (
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4.5 space-y-3">
+        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-0.5">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -1675,13 +1675,13 @@ export function Settings({
               value={tgToken}
               onChange={(e) => setTgToken(e.target.value)}
               placeholder={tgStatus?.configured ? `Bot token (đang dùng ${tgStatus.maskedToken})` : "Bot token (123456:ABC-…)"}
-              className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 min-w-0"
+              className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 min-w-0"
             />
             <input
               value={tgChatId}
               onChange={(e) => setTgChatId(e.target.value)}
               placeholder="Chat ID"
-              className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 font-mono"
+              className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 font-mono"
             />
             <button
               type="button"
@@ -1760,7 +1760,7 @@ export function Settings({
 
       {/* Đăng ký lịch gia đình vào app Lịch (ICS subscribe) — mọi thành viên */}
       {icsUrl && (
-        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4.5 space-y-3">
+        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
           <div className="space-y-0.5">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <Calendar className="w-4 h-4 text-amber-400" /> Đồng bộ với app Lịch (Apple/Google)
@@ -1790,7 +1790,7 @@ export function Settings({
       )}
 
       {/* Version & self-update */}
-      <div className="bg-slate-950 border border-slate-800 rounded-2xl p-4.5 space-y-3">
+      <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-0.5">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">

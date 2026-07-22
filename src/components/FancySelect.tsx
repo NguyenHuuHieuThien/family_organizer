@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
@@ -22,6 +22,8 @@ interface FancySelectProps {
   placeholder?: string;
   id?: string;
   ariaLabel?: string;
+  /** Node đặt trước nhãn trong nút trigger (vd avatar tài khoản). */
+  leading?: ReactNode;
 }
 
 /**
@@ -38,7 +40,8 @@ export function FancySelect({
   className = "",
   placeholder = "Chọn...",
   id,
-  ariaLabel
+  ariaLabel,
+  leading
 }: FancySelectProps) {
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
@@ -140,10 +143,13 @@ export function FancySelect({
         aria-label={ariaLabel}
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={onKeyDown}
-        className={`w-full flex items-center justify-between gap-2 bg-slate-950 border ${open ? "border-emerald-500" : "border-slate-800"} rounded-lg p-2 text-left outline-none cursor-pointer transition-colors ${className}`}
+        className={`w-full flex items-center justify-between gap-2 bg-slate-950 neu-pressed-sm ${open ? "border border-emerald-500" : ""} rounded-lg p-2 text-left outline-none cursor-pointer transition-colors ${className}`}
       >
-        <span className={`truncate ${selected ? "text-slate-200" : "text-slate-500"}`}>
-          {selected ? selected.label : placeholder}
+        <span className="flex items-center gap-2 min-w-0">
+          {leading}
+          <span className={`truncate ${selected ? "text-slate-200" : "text-slate-500"}`}>
+            {selected ? selected.label : placeholder}
+          </span>
         </span>
         <ChevronDown className={`w-4 h-4 shrink-0 text-slate-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
