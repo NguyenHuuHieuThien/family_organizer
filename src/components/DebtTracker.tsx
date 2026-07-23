@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { HandCoins, Plus, Trash2, Calendar, ChevronDown, ChevronUp, X, ArrowDownLeft, ArrowUpRight, Building2, Phone, MapPin, Paperclip } from "lucide-react";
+import { HandCoins, Plus, Trash2, Pencil, Calendar, ChevronDown, ChevronUp, X, ArrowDownLeft, ArrowUpRight, Building2, Phone, MapPin, Paperclip } from "lucide-react";
 import { Debt, User } from "../types.js";
 import { motion, AnimatePresence } from "motion/react";
 import { optimizeAndUpload } from "../utils/uploadImage.js";
@@ -59,6 +59,7 @@ export function DebtTracker({
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const [payDraft, setPayDraft] = useState<Record<string, string>>({});
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -77,8 +78,32 @@ export function DebtTracker({
   }, [debts]);
 
   const resetForm = () => {
+    setEditingId(null);
     setDirection("borrowed"); setCounterparty(""); setAddress(""); setPhone(""); setBankName("");
     setAttachments([]); setAmount(0); setLoanDate(new Date().toISOString().slice(0, 10)); setDueDate(""); setNote(""); setError("");
+  };
+
+  // Bấm "+ Khoản nợ": luôn mở form ở chế độ tạo mới (reset mọi field, kể cả khi đang sửa).
+  const toggleCreateForm = () => {
+    if (showForm) { resetForm(); setShowForm(false); }
+    else { resetForm(); setShowForm(true); }
+  };
+
+  // Bấm bút chì trên thẻ: nạp dữ liệu khoản nợ vào form để chỉnh sửa.
+  const handleEdit = (debt: Debt) => {
+    setEditingId(debt.id);
+    setDirection(debt.direction === "lent" ? "lent" : "borrowed");
+    setCounterparty(debt.counterparty || "");
+    setAddress(debt.address || "");
+    setPhone(debt.phone || "");
+    setBankName(debt.bankName || "");
+    setAttachments(debt.attachments || []);
+    setAmount(debt.amount || 0);
+    setLoanDate(debt.loanDate || new Date().toISOString().slice(0, 10));
+    setDueDate(debt.dueDate || "");
+    setNote(debt.note || "");
+    setError("");
+    setShowForm(true);
   };
 
   // Đính kèm ảnh (giấy tờ vay, biên nhận chuyển khoản) — tối ưu trong trình duyệt rồi lưu file.
@@ -118,6 +143,7 @@ export function DebtTracker({
     setSaving(true);
     try {
       await onSaveDebt({
+        ...(editingId ? { id: editingId } : {}),
         direction,
         counterparty: counterparty.trim(),
         address: address.trim() || undefined,
@@ -179,9 +205,14 @@ export function DebtTracker({
             )}
             {debt.note && <p className="text-[10px] text-slate-500 mt-0.5 truncate">{debt.note}</p>}
           </div>
-          <button onClick={() => onDeleteDebt(debt.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0" title="Xóa khoản nợ">
-            <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button onClick={() => handleEdit(debt)} className="p-1.5 text-slate-500 hover:text-amber-400 cursor-pointer" title="Chỉnh sửa khoản nợ">
+              <Pencil className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => onDeleteDebt(debt.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer" title="Xóa khoản nợ">
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Ảnh đính kèm */}
@@ -279,7 +310,7 @@ export function DebtTracker({
           {(totals.owe > 0 || totals.lent > 0) && (
             <span className="text-[10px] font-mono text-slate-500">Nợ <span className="text-rose-400 font-bold">{fmtMoney(totals.owe)}</span> · Cho mượn <span className="text-emerald-400 font-bold">{fmtMoney(totals.lent)}</span></span>
           )}
-          <button onClick={() => setShowForm(v => !v)} className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg px-2.5 py-1.5 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+          <button onClick={toggleCreateForm} className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg px-2.5 py-1.5 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
             <Plus className="w-3.5 h-3.5" /> Khoản nợ
           </button>
         </div>
@@ -291,6 +322,11 @@ export function DebtTracker({
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
             onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-950/40 neu-pressed-sm rounded-xl p-3 overflow-hidden"
           >
+            {editingId && (
+              <div className="sm:col-span-2 flex items-center gap-1.5 text-[11px] font-bold text-amber-400">
+                <Pencil className="w-3.5 h-3.5" /> Đang chỉnh sửa khoản nợ
+              </div>
+            )}
             <div className="sm:col-span-2 grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg neu-pressed-sm font-bold text-center">
               <button type="button" onClick={() => setDirection("borrowed")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "borrowed" ? "bg-rose-500 text-slate-950" : "text-slate-400"}`}>Mình nợ (vay)</button>
               <button type="button" onClick={() => setDirection("lent")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "lent" ? "bg-emerald-500 text-slate-950" : "text-slate-400"}`}>Cho mượn</button>
@@ -349,7 +385,7 @@ export function DebtTracker({
 
             {error && <p className="sm:col-span-2 text-[11px] text-rose-400">{error}</p>}
             <div className="sm:col-span-2 flex gap-2">
-              <button type="submit" disabled={saving || uploading} className="bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold cursor-pointer">Lưu khoản nợ</button>
+              <button type="submit" disabled={saving || uploading} className="bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold cursor-pointer">{saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Lưu khoản nợ"}</button>
               <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg px-3 py-2 font-bold cursor-pointer">Hủy</button>
             </div>
           </motion.form>

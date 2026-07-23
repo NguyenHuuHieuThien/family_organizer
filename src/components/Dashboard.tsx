@@ -235,28 +235,76 @@ const Skeleton = ({ className = "" }: { className?: string }) => (
   <span className={`inline-block bg-slate-700/40 rounded-md animate-pulse align-middle ${className}`} />
 );
 
+// Đường cong mượt (Catmull-Rom → cubic bézier) cho sparkline — thay nối thẳng gãy khúc.
+function smoothLine(pts: { x: number; y: number }[]): string {
+  if (pts.length < 2) return "";
+  let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+  return d;
+}
+
 // Sparkline + % tăng trưởng 7 ngày cho card giá (ẩn khi lịch sử chưa đủ 2 điểm).
 function TrendRow({ values }: { values: number[] }) {
+  const uid = React.useId();
   if (values.length < 2) return null;
   const first = values[0];
   const last = values[values.length - 1];
   const up = last >= first;
   const pct = first !== 0 ? ((last - first) / first) * 100 : 0;
-  const W = 120, H = 30, pad = 2;
+  const W = 120, H = 38, pad = 5;
   const min = Math.min(...values);
   const range = (Math.max(...values) - min) || 1;
-  const pts = values.map((v, i) => {
-    const x = pad + (i / (values.length - 1)) * (W - 2 * pad);
-    const y = H - pad - ((v - min) / range) * (H - 2 * pad);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  });
+  const pts = values.map((v, i) => ({
+    x: pad + (i / (values.length - 1)) * (W - 2 * pad),
+    y: H - pad - ((v - min) / range) * (H - 2 * pad),
+  }));
+  const line = smoothLine(pts);
+  const area = `${line} L ${pts[pts.length - 1].x.toFixed(2)} ${H} L ${pts[0].x.toFixed(2)} ${H} Z`;
   const stroke = up ? "#34d399" : "#fb7185";
+  const gid = `spark-${uid}`;
+  const end = pts[pts.length - 1];
   return (
     <div className="mt-2 space-y-1">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-7" preserveAspectRatio="none" aria-hidden>
-        <polygon points={`${pad},${H - pad} ${pts.join(" ")} ${W - pad},${H - pad}`} fill={stroke} opacity="0.12" />
-        <polyline points={pts.join(" ")} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-      </svg>
+      <div className="relative">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-9" preserveAspectRatio="none" aria-hidden>
+          <defs>
+            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
+              <stop offset="100%" stopColor={stroke} stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={area} fill={`url(#${gid})`} />
+          <path
+            d={line}
+            fill="none"
+            stroke={stroke}
+            strokeWidth="1.75"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        {/* Chấm giá hiện tại — dựng bằng div nên không méo khi SVG giãn ngang */}
+        <span
+          className="absolute w-1.5 h-1.5 rounded-full -translate-x-1/2 -translate-y-1/2"
+          style={{
+            left: `${(end.x / W) * 100}%`,
+            top: `${(end.y / H) * 100}%`,
+            backgroundColor: stroke,
+            boxShadow: `0 0 0 3px ${stroke}30`,
+          }}
+        />
+      </div>
       <p className={`text-[9px] font-mono ${up ? "text-emerald-400" : "text-rose-400"}`}>
         {up ? "▲" : "▼"} {pct >= 0 ? "+" : ""}{pct.toFixed(1).replace(".", ",")}% · 7 ngày
       </p>

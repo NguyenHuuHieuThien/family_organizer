@@ -42,7 +42,7 @@ import {
   Gift
 } from "lucide-react";
 import { FinancialTransaction, TransactionType, ExpenseCategory, AccountType, User, UserRole, BudgetLimit, RecurringBill, FamilyAsset, SavingsGoal, Debt, canAccessFinance } from "../types.js";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useConfirm } from "./ConfirmDialog.js";
 import { Assets } from "./Assets.js";
 import { SavingsGoals } from "./SavingsGoals.js";
@@ -67,6 +67,27 @@ const fmtShortMoney = (n: number): string => {
   if (abs >= 1e3) return Math.round(n / 1e3) + "k";
   return String(Math.round(n));
 };
+
+// Màu CỐ ĐỊNH theo hạng mục — TRÙNG với categoryColorClass/categoryIcon ở phần dòng tiền,
+// để liếc màu/icon là nhận ra hạng mục. Class viết literal đầy đủ cho Tailwind JIT.
+const CAT_BAR: Record<string, { bar: string; text: string }> = {
+  food:          { bar: "from-orange-500 to-orange-400", text: "text-orange-400" },
+  education2:    { bar: "from-violet-500 to-violet-400", text: "text-violet-400" },
+  utilities:     { bar: "from-amber-500 to-amber-400",   text: "text-amber-400" },
+  shopping:      { bar: "from-pink-500 to-pink-400",     text: "text-pink-400" },
+  medical:       { bar: "from-rose-500 to-rose-400",     text: "text-rose-400" },
+  transport:     { bar: "from-sky-500 to-sky-400",       text: "text-sky-400" },
+  debt_bank:     { bar: "from-red-500 to-red-400",       text: "text-red-400" },
+  loan:          { bar: "from-red-500 to-red-400",       text: "text-red-400" },
+  debt_personal: { bar: "from-teal-500 to-teal-400",     text: "text-teal-400" },
+  funeral:       { bar: "from-zinc-500 to-zinc-400",     text: "text-zinc-400" },
+  ceremony:      { bar: "from-yellow-500 to-yellow-400", text: "text-yellow-400" },
+  rent:          { bar: "from-indigo-500 to-indigo-400", text: "text-indigo-400" },
+  internet:      { bar: "from-cyan-500 to-cyan-400",     text: "text-cyan-400" },
+  phone:         { bar: "from-purple-500 to-purple-400", text: "text-purple-400" },
+  insurance:     { bar: "from-slate-500 to-slate-400",   text: "text-slate-300" },
+};
+const catBar = (cat: string) => CAT_BAR[cat] || { bar: "from-slate-600 to-slate-500", text: "text-slate-400" };
 
 // Làm tròn trần "đẹp" cho trục Y (1/2/5 × 10^n) để nhãn chia đều dễ đọc.
 const niceCeil = (v: number): number => {
@@ -529,6 +550,8 @@ export function Finance({
   // Tổng Thu/Chi/Cân đối của một tập giao dịch (logic thuần ở utils/financePeriod)
   const calcTotals = useCallback((list: FinancialTransaction[]) => calcTotalsUtil(list), []);
 
+  const reduceMotion = useReducedMotion();
+
   // Chỉ số của kỳ đang xem + kỳ liền trước (để hiện delta)
   const metrics = useMemo(() => calcTotals(periodTx), [calcTotals, periodTx]);
   const prevMetrics = useMemo(() => calcTotals(prevTx), [calcTotals, prevTx]);
@@ -939,19 +962,18 @@ export function Finance({
 
   return (
     <div className="space-y-6" id="finance-module">
-      <Reveal className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-2 flex flex-col sm:flex-row gap-2 text-xs font-bold">
-        <ShimmerLine accent="emerald" />
+      <Reveal className="bg-slate-950 neu-pressed-sm rounded-2xl p-1.5 flex flex-col sm:flex-row gap-1.5 text-xs font-bold">
         <button
           type="button"
           onClick={() => setFinanceView("cashflow")}
-          className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all ${financeView === "cashflow" ? "bg-emerald-500 text-slate-950" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+          className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-[box-shadow,color] duration-200 ${financeView === "cashflow" ? "bg-slate-900 neu-raised-sm text-emerald-400" : "text-slate-400 hover:text-slate-200"}`}
         >
           <Wallet className="w-4 h-4" /> Thu chi & ngân sách
         </button>
         <button
           type="button"
           onClick={() => setFinanceView("assets")}
-          className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all ${financeView === "assets" ? "bg-amber-500 text-slate-950" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+          className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-[box-shadow,color] duration-200 ${financeView === "assets" ? "bg-slate-900 neu-raised-sm text-amber-400" : "text-slate-400 hover:text-slate-200"}`}
         >
           <FileText className="w-4 h-4" /> Tài sản gia đình
         </button>
@@ -979,7 +1001,7 @@ export function Finance({
                 key={m}
                 type="button"
                 onClick={() => setPeriodMode(m)}
-                className={`py-1.5 rounded-lg transition-all cursor-pointer ${periodMode === m ? "bg-sky-500 text-slate-950" : "text-slate-400 hover:text-slate-200"}`}
+                className={`py-1.5 rounded-lg transition-[box-shadow,color] duration-200 cursor-pointer ${periodMode === m ? "bg-slate-900 neu-raised-sm text-sky-400" : "text-slate-400 hover:text-slate-200"}`}
               >
                 {PERIOD_LABELS[m]}
               </button>
@@ -988,7 +1010,7 @@ export function Finance({
           <button
             type="button"
             onClick={() => setShowCompare(s => !s)}
-            className={`flex items-center gap-1 px-3 py-2 rounded-xl text-[11px] font-bold border transition-all cursor-pointer ${showCompare ? "bg-violet-500 text-slate-950 border-violet-500" : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"}`}
+            className={`flex items-center gap-1 px-3 py-2 rounded-xl text-[11px] font-bold transition-[box-shadow,color] duration-200 cursor-pointer ${showCompare ? "bg-slate-900 neu-raised-sm text-violet-400" : "bg-slate-950 neu-pressed-sm text-slate-400 hover:text-slate-200"}`}
             title="Bật/tắt bảng so sánh với kỳ liền trước"
           >
             <BarChart3 className="w-3.5 h-3.5" /> So sánh
@@ -1243,7 +1265,10 @@ export function Finance({
                 return (
                   <div key={b.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between text-xs gap-2">
-                      <span className="font-bold text-slate-200">{translateCategory(b.category)}</span>
+                      <span className="flex items-center gap-1.5 min-w-0 font-bold text-slate-200">
+                        <span className={`shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 ${catBar(b.category).text}`}>{categoryIcon(b.category)}</span>
+                        <span className="truncate">{translateCategory(b.category)}</span>
+                      </span>
                       {isEditing ? (
                         <div className="flex items-center gap-1.5 shrink-0">
                           <button onClick={() => saveEditBudget(b)} className="text-emerald-400 hover:text-emerald-300 font-bold text-[11px]">Lưu</button>
@@ -1271,7 +1296,7 @@ export function Finance({
                     ) : (
                       <>
                         <div className="h-2 bg-slate-900 rounded-full overflow-hidden">
-                          <div className={`h-full ${used > b.limit ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} />
+                          <div className={`h-full rounded-full bg-gradient-to-r ${used > b.limit ? "from-rose-500 to-rose-400" : catBar(b.category).bar}`} style={{ width: `${pct}%` }} />
                         </div>
                         <p className="text-[10px] text-slate-500 font-mono">{used.toLocaleString()} / {b.limit.toLocaleString()} VNĐ</p>
                       </>
@@ -1288,11 +1313,14 @@ export function Finance({
                 return (
                   <div key={b.category} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-200">{translateCategory(b.category)}</span>
+                      <span className="flex items-center gap-1.5 min-w-0 font-bold text-slate-200">
+                        <span className={`shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 ${catBar(b.category).text}`}>{categoryIcon(b.category)}</span>
+                        <span className="truncate">{translateCategory(b.category)}</span>
+                      </span>
                       <span className="text-[10px] text-slate-500 font-mono">gộp {periodMonthsList.length} tháng</span>
                     </div>
                     <div className="h-2 bg-slate-900 rounded-full overflow-hidden">
-                      <div className={`h-full ${used > b.limit ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} />
+                      <div className={`h-full rounded-full bg-gradient-to-r ${used > b.limit ? "from-rose-500 to-rose-400" : catBar(b.category).bar}`} style={{ width: `${pct}%` }} />
                     </div>
                     <p className="text-[10px] text-slate-500 font-mono">{used.toLocaleString()} / {b.limit.toLocaleString()} VNĐ</p>
                   </div>
@@ -1405,24 +1433,31 @@ export function Finance({
         <div className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6" id="finance-statistics">
           <ShimmerLine accent="violet" />
           
-          {/* Custom animated category distribution list */}
+          {/* Phân hóa hạng mục: thanh gradient màu theo hạng mục, track lõm, chạy mượt khi hiện */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <span>Phân hóa hạng mục tiêu dùng</span>
             </h4>
             <div className="space-y-3 max-h-[190px] overflow-y-auto pr-1">
-              {chartCategoryDistribution.map(({ name, value }) => {
+              {chartCategoryDistribution.map(({ name, value }, i) => {
                 const percentage = Math.round((value / metrics.totalExpense) * 100) || 0;
+                const c = catBar(name);
                 return (
                   <div key={name} className="space-y-1 font-sans text-xs">
-                    <div className="flex justify-between text-slate-300 font-medium pb-0.5">
-                      <span>{translateCategory(name)}</span>
-                      <span className="font-mono text-slate-400">{value.toLocaleString()}đ ({percentage}%)</span>
+                    <div className="flex justify-between items-center gap-2 font-medium pb-0.5">
+                      <span className="flex items-center gap-1.5 min-w-0 text-slate-300">
+                        <span className={`shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 ${c.text}`}>{categoryIcon(name)}</span>
+                        <span className="truncate">{translateCategory(name)}</span>
+                        {i === 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold shrink-0">Cao nhất</span>}
+                      </span>
+                      <span className="font-mono text-slate-400 shrink-0">{value.toLocaleString()}đ <span className={`font-bold ${c.text}`}>({percentage}%)</span></span>
                     </div>
-                    <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden">
-                      <div 
-                        style={{ width: `${percentage}%` }}
-                        className="h-full bg-sky-500 rounded-full" 
+                    <div className="h-2.5 w-full bg-slate-950 neu-pressed-sm rounded-full overflow-hidden">
+                      <motion.div
+                        initial={reduceMotion ? false : { width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 0.7, ease: "easeOut", delay: 0.04 * i }}
+                        className={`h-full rounded-full bg-gradient-to-r ${c.bar}`}
                       />
                     </div>
                   </div>
@@ -1431,50 +1466,72 @@ export function Finance({
             </div>
           </div>
 
-          {/* Fully Custom SVG Donut and slice Chart rendered statically for 100% stability */}
-          <div className="flex flex-col items-center justify-center space-y-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800">
-            <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Mũi phễu lưu lượng dòng tiền</span>
-            <div className="relative w-36 h-36">
-              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                {/* Background Ring */}
-                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#1e293b" strokeWidth="8" />
-                {/* Active Ring */}
-                {metrics.totalIncome + metrics.totalExpense > 0 ? (
-                  <>
-                    {/* Income arc green */}
-                    <circle 
-                      cx="50" 
-                      cy="50" 
-                      r="38" 
-                      fill="transparent" 
-                      stroke="#10b981" 
-                      strokeWidth="8" 
-                      strokeDasharray={`${(metrics.totalIncome / (metrics.totalIncome + metrics.totalExpense)) * 238.7} 238.7`}
-                    />
-                    {/* Expense arc red */}
-                    <circle 
-                      cx="50" 
-                      cy="50" 
-                      r="38" 
-                      fill="transparent" 
-                      stroke="#f43f5e" 
-                      strokeWidth="8" 
-                      strokeDasharray={`${(metrics.totalExpense / (metrics.totalIncome + metrics.totalExpense)) * 238.7} 238.7`}
-                      strokeDashoffset={`-${(metrics.totalIncome / (metrics.totalIncome + metrics.totalExpense)) * 238.7}`}
-                    />
-                  </>
-                ) : null}
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-[10px] text-slate-500 uppercase tracking-widest font-mono">Quỹ</span>
-                <span className="text-xs font-bold text-slate-200">Gia Đình</span>
+          {/* Cán cân Thu/Chi: donut bo cung + khe hở, tâm hiện số dư ròng, legend có số */}
+          {(() => {
+            const total = metrics.totalIncome + metrics.totalExpense;
+            const C = 2 * Math.PI * 38;                       // chu vi vòng r=38
+            const net = metrics.balance;
+            const incPct = total > 0 ? Math.round((metrics.totalIncome / total) * 100) : 0;
+            const expPct = total > 0 ? 100 - incPct : 0;
+            const savingsRate = metrics.totalIncome > 0 ? Math.round((net / metrics.totalIncome) * 100) : 0;
+            const bothSides = metrics.totalIncome > 0 && metrics.totalExpense > 0;
+            const gap = bothSides ? 12 : 0;                   // khe hở giữa 2 cung (bù cho bo tròn đầu)
+            const incLen = total > 0 ? Math.max(0, (metrics.totalIncome / total) * C - gap) : 0;
+            const expLen = total > 0 ? Math.max(0, (metrics.totalExpense / total) * C - gap) : 0;
+            return (
+              <div className="flex flex-col items-center justify-center gap-4 bg-slate-950/40 neu-pressed-sm p-4 rounded-xl">
+                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Cán cân Thu / Chi</span>
+                <div className="relative w-36 h-36">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    <circle cx="50" cy="50" r="38" fill="none" strokeWidth="8" className="stroke-slate-800" />
+                    {total > 0 && (
+                      <>
+                        {incLen > 0 && (
+                          <circle
+                            cx="50" cy="50" r="38" fill="none" strokeWidth="8" strokeLinecap="round"
+                            className="stroke-emerald-500"
+                            strokeDasharray={`${incLen} ${C}`}
+                            strokeDashoffset={`-${gap / 2}`}
+                          />
+                        )}
+                        {expLen > 0 && (
+                          <circle
+                            cx="50" cy="50" r="38" fill="none" strokeWidth="8" strokeLinecap="round"
+                            className="stroke-rose-500"
+                            strokeDasharray={`${expLen} ${C}`}
+                            strokeDashoffset={`-${gap / 2 + incLen + gap}`}
+                          />
+                        )}
+                      </>
+                    )}
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-2">
+                    <span className="text-[9px] text-slate-500 uppercase tracking-widest font-mono">Số dư</span>
+                    <span className={`text-base font-extrabold font-mono leading-tight ${net >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
+                      {net >= 0 ? "+" : "−"}{fmtShortMoney(Math.abs(net))}
+                    </span>
+                    {metrics.totalIncome > 0 && (
+                      <span className="text-[9px] text-slate-500 font-mono mt-0.5">Tiết kiệm {savingsRate}%</span>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 w-full text-[10px] font-mono">
+                  <span className="flex items-center gap-1.5 justify-center">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block shrink-0" />
+                    <span className="text-slate-400">Thu</span>
+                    <span className="text-emerald-400 font-bold">{fmtShortMoney(metrics.totalIncome)}</span>
+                    <span className="text-slate-500">({incPct}%)</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 justify-center">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block shrink-0" />
+                    <span className="text-slate-400">Chi</span>
+                    <span className="text-rose-400 font-bold">{fmtShortMoney(metrics.totalExpense)}</span>
+                    <span className="text-slate-500">({expPct}%)</span>
+                  </span>
+                </div>
               </div>
-            </div>
-            <div className="flex gap-4 text-[10px] font-mono">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" /> Thu</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block" /> Chi</span>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       )}
 

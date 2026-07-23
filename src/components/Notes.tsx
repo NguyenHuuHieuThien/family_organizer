@@ -355,7 +355,7 @@ export function Notes({
               <h3 className="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
                 <Pin className="w-4 h-4 text-yellow-400" /> Được ghim ở đầu ({pinnedNotes.length})
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 {pinnedNotes.map((note, noteIndex) => {
                   const creator = users.find(u => u.id === note.creatorId);
                   return (
@@ -364,13 +364,13 @@ export function Notes({
                       delay={0.06 + staggerDelay(noteIndex)}
                       hoverLift
                       onClick={() => handleReadNote(note)}
-                      className="bg-slate-900 border border-yellow-500/30 hover:border-yellow-500/50 hover:shadow-lg hover:shadow-yellow-500/10 px-4.5 py-4 rounded-2xl flex flex-col justify-between space-y-4 cursor-pointer relative group transition-[box-shadow,border-color] duration-300 overflow-hidden"
+                      className="bg-slate-900 neu-btn hover:shadow-lg hover:shadow-yellow-500/10 px-4.5 py-4 rounded-2xl flex flex-col justify-between space-y-4 cursor-pointer relative group transition-[box-shadow,border-color] duration-300 overflow-hidden"
                     >
                       <ShimmerLine accent="yellow" />
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-bold text-slate-200 line-clamp-1 group-hover:text-sky-400 transition-colors">{note.title}</h4>
-                          <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/10 text-yellow-400 font-bold rounded">Pinned</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <h4 className="text-sm font-bold text-slate-100 line-clamp-1 group-hover:text-sky-400 transition-colors">{note.title}</h4>
+                          <span className="shrink-0 text-[10px] px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-semibold rounded-lg">Đã ghim</span>
                         </div>
                         <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed font-sans">
                           {note.content.replace(/[#*`\-]/g, "")}
@@ -423,7 +423,7 @@ export function Notes({
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                 Ghi chú khác ({normalNotes.length})
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 {normalNotes.map((note, noteIndex) => {
                   const creator = users.find(u => u.id === note.creatorId);
                   return (
