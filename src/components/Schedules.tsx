@@ -25,6 +25,8 @@ import {
   Trees,
   Star,
   BookOpen,
+  Heart,
+  Flame,
   X
 } from "lucide-react";
 import { FamilyPlan, User, UserRole, isLimitedViewer, FAMILY_RELATION_LABELS } from "../types.js";
@@ -57,7 +59,12 @@ const PLAN_TYPES: { value: string; label: string; icon: React.ComponentType<{ cl
   { value: "emerald", label: "Dã ngoại / Ăn chơi", icon: Trees, dotHex: "#10b981" },
   { value: "rose", label: "Quan trọng", icon: Star, dotHex: "#f43f5e" },
   { value: "amber", label: "Bài học / Công việc", icon: BookOpen, dotHex: "#f59e0b" },
+  { value: "pink", label: "Ngày kỷ niệm", icon: Heart, dotHex: "#ec4899" },
+  { value: "violet", label: "Ngày giỗ", icon: Flame, dotHex: "#8b5cf6" },
 ];
+
+// Loại sự kiện lặp hằng năm (kỷ niệm/giỗ): chọn là tự đặt lặp Hằng năm + công khai cả nhà.
+const YEARLY_PLAN_TYPES = new Set(["pink", "violet"]);
 const planTypeMeta = (color: string) => PLAN_TYPES.find(t => t.value === color) || PLAN_TYPES[0];
 
 export function Schedules({
@@ -88,7 +95,7 @@ export function Schedules({
   const [newStartDate, setNewStartDate] = useState("");
   const [newEndDate, setNewEndDate] = useState("");
   const [newIsRecurring, setNewIsRecurring] = useState(false);
-  const [newRecurrenceType, setNewRecurrenceType] = useState<"none" | "daily" | "weekly" | "monthly">("none");
+  const [newRecurrenceType, setNewRecurrenceType] = useState<"none" | "daily" | "weekly" | "monthly" | "yearly">("none");
   const [newRecurrenceWeekdays, setNewRecurrenceWeekdays] = useState<number[]>([]);
   const [newIsShared, setNewIsShared] = useState(true);
   const [newColor, setNewColor] = useState("sky");
@@ -162,7 +169,9 @@ export function Schedules({
     setNewTitle(plan.title);
     setNewDesc(plan.description || "");
     setNewStartDate(plan.startDate || "");
-    setNewEndDate(plan.endDate || plan.startDate || "");
+    // Giữ nguyên endDate đã lưu (rỗng = lặp vô hạn) — KHÔNG fallback về ngày bắt đầu,
+    // nếu không sự kiện lặp vô hạn sẽ bị vô tình đặt mốc kết thúc khi mở ra sửa.
+    setNewEndDate(plan.endDate || "");
     setNewIsRecurring(plan.isRecurring);
     setNewRecurrenceType(plan.recurrenceType || "none");
     setNewRecurrenceWeekdays(plan.recurrenceWeekdays || []);
@@ -350,7 +359,9 @@ export function Schedules({
       title: newTitle.trim(),
       description: newDesc.trim(),
       startDate: newStartDate.trim(),
-      endDate: newEndDate.trim() || newStartDate.trim(),
+      // Lặp lại + bỏ trống ngày kết thúc = lặp VÔ HẠN (giữ "" để backend không ép ngày hiện tại).
+      // Sự kiện 1 lần cần mốc kết thúc để vẽ khoảng → mặc định = ngày bắt đầu.
+      endDate: newIsRecurring ? newEndDate.trim() : (newEndDate.trim() || newStartDate.trim()),
       isRecurring: newIsRecurring,
       recurrenceType: newIsRecurring ? newRecurrenceType : "none",
       recurrenceWeekdays: newIsRecurring && newRecurrenceType === "weekly"
@@ -427,19 +438,29 @@ export function Schedules({
       `DTSTAMP:${new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z")}`,
     ];
 
+    const isRecur = !!(plan.isRecurring && plan.recurrenceType && plan.recurrenceType !== "none");
+    const hasEnd = !!(plan.endDate && plan.endDate.trim());
+
     if (start.allDay) {
-      // All-day event: DTEND is exclusive, so add one day to the last day.
-      const endBase = end.date >= start.date ? new Date(end.date) : new Date(start.date);
-      endBase.setDate(endBase.getDate() + 1);
       lines.push(`DTSTART;VALUE=DATE:${fmtICSDate(start.date)}`);
-      lines.push(`DTEND;VALUE=DATE:${fmtICSDate(endBase)}`);
+      if (isRecur) {
+        // Lặp: MỖI lần chỉ 1 ngày (DTEND exclusive = hôm sau). endDate là mốc dừng chuỗi
+        // → đưa vào RRULE UNTIL, KHÔNG dùng làm DTEND (nếu không mỗi lần lặp phủ kín xx→YY).
+        const nextDay = new Date(start.date);
+        nextDay.setDate(nextDay.getDate() + 1);
+        lines.push(`DTEND;VALUE=DATE:${fmtICSDate(nextDay)}`);
+      } else {
+        const endBase = end.date >= start.date ? new Date(end.date) : new Date(start.date);
+        endBase.setDate(endBase.getDate() + 1);
+        lines.push(`DTEND;VALUE=DATE:${fmtICSDate(endBase)}`);
+      }
     } else {
       let endDt: Date;
-      if (!end.allDay && end.date > start.date) {
-        endDt = end.date;
+      if (!isRecur && !end.allDay && end.date > start.date) {
+        endDt = end.date; // sự kiện 1 lần kéo dài nhiều ngày
       } else {
         endDt = new Date(start.date);
-        endDt.setHours(endDt.getHours() + 1); // default 1h duration
+        endDt.setHours(endDt.getHours() + 1); // lặp hoặc điểm → mỗi lần 1 giờ
       }
       lines.push(`DTSTART:${fmtICSLocal(start.date)}`);
       lines.push(`DTEND:${fmtICSLocal(endDt)}`);
@@ -447,12 +468,14 @@ export function Schedules({
 
     lines.push(`SUMMARY:${escapeICS(plan.title)}`);
     if (plan.description) lines.push(`DESCRIPTION:${escapeICS(plan.description)}`);
-    if (plan.isRecurring && plan.recurrenceType && plan.recurrenceType !== "none") {
-      const freq = plan.recurrenceType === "daily" ? "DAILY" : plan.recurrenceType === "weekly" ? "WEEKLY" : "MONTHLY";
+    if (isRecur) {
+      const freq = plan.recurrenceType === "daily" ? "DAILY" : plan.recurrenceType === "weekly" ? "WEEKLY" : plan.recurrenceType === "yearly" ? "YEARLY" : "MONTHLY";
       const byDay = plan.recurrenceType === "weekly" && plan.recurrenceWeekdays?.length
         ? `;BYDAY=${plan.recurrenceWeekdays.map(d => ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][d]).join(",")}`
         : "";
-      lines.push(`RRULE:FREQ=${freq}${byDay}`);
+      // Mốc DỪNG chuỗi lặp: chỉ khi có ngày kết thúc (trống = lặp vô hạn → không UNTIL).
+      const until = hasEnd ? `;UNTIL=${fmtICSDate(end.date)}T235959` : "";
+      lines.push(`RRULE:FREQ=${freq}${byDay}${until}`);
     }
     lines.push("END:VEVENT", "END:VCALENDAR");
     return lines.join("\r\n");
@@ -478,6 +501,8 @@ export function Schedules({
       case "emerald": return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
       case "rose": return "bg-rose-500/10 text-rose-400 border border-rose-500/20";
       case "amber": return "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+      case "pink": return "bg-pink-500/10 text-pink-400 border border-pink-500/20";
+      case "violet": return "bg-violet-500/10 text-violet-400 border border-violet-500/20";
       default: return "bg-sky-500/10 text-sky-400 border border-sky-500/20";
     }
   };
@@ -487,6 +512,8 @@ export function Schedules({
       case "emerald": return "border-l-4 border-emerald-500";
       case "rose": return "border-l-4 border-rose-500";
       case "amber": return "border-l-4 border-amber-500";
+      case "pink": return "border-l-4 border-pink-500";
+      case "violet": return "border-l-4 border-violet-500";
       default: return "border-l-4 border-sky-500";
     }
   };
@@ -496,6 +523,8 @@ export function Schedules({
       case "emerald": return "bg-emerald-500";
       case "rose": return "bg-rose-500";
       case "amber": return "bg-amber-500";
+      case "pink": return "bg-pink-500";
+      case "violet": return "bg-violet-500";
       default: return "bg-sky-500";
     }
   };
@@ -551,6 +580,7 @@ export function Schedules({
       const days = (plan.recurrenceWeekdays || []).map(d => WEEKDAY_OPTIONS.find(o => o.value === d)?.label).filter(Boolean);
       return days.length ? `Hằng tuần: ${days.join(", ")}` : "Hằng tuần";
     }
+    if (plan.recurrenceType === "yearly") return "Hằng năm";
     return "Hằng tháng";
   };
 
@@ -645,7 +675,7 @@ export function Schedules({
             onClick={handleOpenCreatePlan}
             className="bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all shadow-md shadow-sky-500/5 cursor-pointer"
           >
-            <Plus className="w-4 h-4" /> Lên lịch sự kiện
+            <Plus className="w-4 h-4" /> Sự kiện
           </button>
         </div>
       </Reveal>
@@ -821,6 +851,7 @@ export function Schedules({
                     })}
                     {dayPlans.map(plan => {
                       const meta = getDayBadgeMeta(plan, day.dayNum);
+                      const CellIcon = planTypeMeta(plan.color).icon;
                       return (
                         <button
                           key={plan.id}
@@ -829,7 +860,9 @@ export function Schedules({
                           title={`${plan.title}\n(${formatDateTimeVN(plan.startDate)} → ${formatDateTimeVN(plan.endDate || plan.startDate)})`}
                           className={`w-full text-left text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 sm:py-1 rounded-md font-medium flex items-center gap-0.5 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity ${badgeColorClass(plan.color)}`}
                         >
-                          {meta.contFrom && <ChevronLeft className="w-2.5 h-2.5 shrink-0 opacity-60" />}
+                          {meta.contFrom
+                            ? <ChevronLeft className="w-2.5 h-2.5 shrink-0 opacity-60" />
+                            : <CellIcon className="w-2.5 h-2.5 shrink-0 opacity-80" />}
                           {meta.startTime && <span className="hidden sm:inline shrink-0 text-[8px] font-mono opacity-80">{meta.startTime}</span>}
                           <span className="truncate min-w-0 flex-1">{plan.title}</span>
                           {meta.endTime && <span className="hidden sm:inline shrink-0 text-[8px] font-mono opacity-80">{meta.endTime}</span>}
@@ -981,8 +1014,9 @@ export function Schedules({
             >
               <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-800">
                 <div className="space-y-1 min-w-0">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-lg ${badgeColorClass(viewingPlan.color)} font-semibold`}>
-                    {viewingPlan.color === "emerald" ? "Dã ngoại / Ăn chơi" : viewingPlan.color === "rose" ? "Quan trọng" : viewingPlan.color === "amber" ? "Bài học / Công việc" : "Họp hành / Gặp mặt"}
+                  <span className={`text-[10px] px-2 py-0.5 rounded-lg ${badgeColorClass(viewingPlan.color)} font-semibold inline-flex items-center gap-1`}>
+                    {(() => { const BadgeIcon = planTypeMeta(viewingPlan.color).icon; return <BadgeIcon className="w-3 h-3 shrink-0" />; })()}
+                    {planTypeMeta(viewingPlan.color).label}
                   </span>
                   <h3 className="text-md font-bold text-slate-100">{viewingPlan.title}</h3>
                 </div>
@@ -1005,10 +1039,21 @@ export function Schedules({
                   <Clock className="w-3.5 h-3.5 text-amber-500/80 shrink-0" />
                   <span className="text-slate-300">Bắt đầu: <span className="text-amber-400">{formatDateTimeVN(viewingPlan.startDate)}</span></span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3.5 h-3.5 text-indigo-400/80 shrink-0" />
-                  <span className="text-slate-300">Kết thúc: <span className="text-indigo-400">{formatDateTimeVN(viewingPlan.endDate || viewingPlan.startDate)}</span></span>
-                </div>
+                {(() => {
+                  const hasEnd = !!(viewingPlan.endDate && viewingPlan.endDate.trim());
+                  // Lặp lại mà không có ngày kết thúc = vô hạn → không hiện dòng "Kết thúc"
+                  // (dòng "Lặp lại: ..." bên dưới đã thể hiện tính lặp liên tục).
+                  if (viewingPlan.isRecurring && !hasEnd) return null;
+                  return (
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3.5 h-3.5 text-indigo-400/80 shrink-0" />
+                      <span className="text-slate-300">
+                        {viewingPlan.isRecurring ? "Lặp đến: " : "Kết thúc: "}
+                        <span className="text-indigo-400">{formatDateTimeVN(viewingPlan.endDate || viewingPlan.startDate)}</span>
+                      </span>
+                    </div>
+                  );
+                })()}
                 {viewingPlan.isRecurring && (
                   <div className="flex items-center gap-2 text-indigo-400">
                     <Repeat className="w-3.5 h-3.5 shrink-0" />
@@ -1289,7 +1334,10 @@ export function Schedules({
               </div>
 
               <div className="space-y-1 min-w-0">
-                <label className="text-slate-400 block font-semibold">Kết thúc</label>
+                <label className="text-slate-400 block font-semibold">
+                  {newIsRecurring ? "Kết thúc lặp lại" : "Kết thúc"}
+                  {newIsRecurring && <span className="text-slate-500 font-normal"> · để trống = lặp vô hạn</span>}
+                </label>
                 <DateTimePicker24 value={newEndDate} onChange={setNewEndDate} />
               </div>
 
@@ -1317,7 +1365,8 @@ export function Schedules({
                       options={[
                         { value: "daily", label: "Hằng ngày" },
                         { value: "weekly", label: "Hằng tuần" },
-                        { value: "monthly", label: "Hằng tháng" }
+                        { value: "monthly", label: "Hằng tháng" },
+                        { value: "yearly", label: "Hằng năm (kỷ niệm/giỗ)" }
                       ]}
                     />
                   </div>
@@ -1360,25 +1409,35 @@ export function Schedules({
 
                 <div className="space-y-1 sm:col-span-2">
                   <label className="text-slate-400 block font-semibold">Loại sự kiện</label>
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    {PLAN_TYPES.map(t => {
+                  <FancySelect
+                    value={newColor}
+                    onChange={(v) => {
+                      setNewColor(v);
+                      if (YEARLY_PLAN_TYPES.has(v)) {
+                        // Kỷ niệm/giỗ: mặc định lặp Hằng năm + công khai cả nhà để nhắc mỗi năm
+                        setNewIsRecurring(true);
+                        setNewRecurrenceType("yearly");
+                        setNewIsShared(true);
+                      } else if (newRecurrenceType === "yearly") {
+                        // Đổi từ kỷ niệm/giỗ sang loại thường → gỡ lặp "Hằng năm" về không lặp
+                        setNewIsRecurring(false);
+                        setNewRecurrenceType("none");
+                      }
+                    }}
+                    ariaLabel="Loại sự kiện"
+                    options={PLAN_TYPES.map(t => {
                       const Icon = t.icon;
-                      const active = newColor === t.value;
-                      return (
-                        <button
-                          key={t.value}
-                          type="button"
-                          onClick={() => setNewColor(t.value)}
-                          className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left cursor-pointer transition-colors ${active ? "border-slate-100 bg-slate-800/40" : "border-slate-800 bg-slate-950 hover:border-slate-700"}`}
-                        >
-                          <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${t.dotHex}22`, color: t.dotHex }}>
-                            <Icon className="w-4 h-4" />
+                      return {
+                        value: t.value,
+                        label: t.label,
+                        leading: (
+                          <span className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${t.dotHex}22`, color: t.dotHex }}>
+                            <Icon className="w-3 h-3" />
                           </span>
-                          <span className="text-[11px] font-semibold text-slate-200 leading-tight min-w-0">{t.label}</span>
-                        </button>
-                      );
+                        )
+                      };
                     })}
-                  </div>
+                  />
                 </div>
               </div>
 

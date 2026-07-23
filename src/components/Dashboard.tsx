@@ -386,7 +386,7 @@ export function Dashboard({
     const windowEnd = new Date(startOfToday.getTime() + 86400000 * WINDOW_DAYS);
     const pad2 = (n: number) => String(n).padStart(2, "0");
     const fmtDate = (d: Date) => `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
-    const recurLabel = (t?: string) => t === "daily" ? "Hằng ngày" : t === "weekly" ? "Hằng tuần" : t === "monthly" ? "Hằng tháng" : "";
+    const recurLabel = (t?: string) => t === "daily" ? "Hằng ngày" : t === "weekly" ? "Hằng tuần" : t === "monthly" ? "Hằng tháng" : t === "yearly" ? "Hằng năm" : "";
 
     type UpcomingItem = {
       key: string; planId: string; title: string; description: string; color: string;

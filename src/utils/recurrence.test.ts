@@ -37,6 +37,16 @@ describe("expandRecurringOccurrences — hằng tuần (bug 07/2026: tô mọi n
     expect(out).toEqual(["2026-07-04", "2026-07-05", "2026-07-11", "2026-07-12"]);
   });
 
+  it("bắt đầu Thứ 5 nhưng chọn lặp Thứ 4 → lần đầu là Thứ 4 KẾ TIẾP (không phải ngày bắt đầu)", () => {
+    // 2026-07-23 là Thứ Năm; chọn lặp vào Thứ Tư (getDay=3), không đặt ngày kết thúc.
+    const out = expand(
+      { startDate: "2026-07-23", recurrenceType: "weekly", recurrenceWeekdays: [3] },
+      "2026-07-01", "2026-08-31"
+    );
+    // Thứ Tư đầu tiên KHÔNG trước ngày bắt đầu là 29/7, rồi 5/8, 12/8, 19/8, 26/8
+    expect(out).toEqual(["2026-07-29", "2026-08-05", "2026-08-12", "2026-08-19", "2026-08-26"]);
+  });
+
   it("không chọn thứ nào → mặc định thứ của ngày bắt đầu", () => {
     // 2026-07-01 là Thứ Tư
     const out = expand(
@@ -89,6 +99,60 @@ describe("expandRecurringOccurrences — hằng tháng", () => {
     );
     // Tháng 2 và 4 không có ngày 31 → chỉ 31/3
     expect(out).toEqual(["2026-03-31"]);
+  });
+});
+
+describe("expandRecurringOccurrences — hằng năm (kỷ niệm/giỗ)", () => {
+  it("đúng ngày+tháng của ngày bắt đầu, mỗi năm một lần", () => {
+    // Kỷ niệm 12/08 (không đặt ngày kết thúc) — xem trọn năm 2027 chỉ ra đúng 1 ngày
+    const out = expand(
+      { startDate: "2020-08-12", recurrenceType: "yearly" },
+      "2027-01-01", "2027-12-31"
+    );
+    expect(out).toEqual(["2027-08-12"]);
+  });
+
+  it("lặp VÔ HẠN: bắt đầu từ 2020 vẫn xuất hiện ở 2030", () => {
+    const out = expand(
+      { startDate: "2020-03-10", recurrenceType: "yearly" },
+      "2030-03-01", "2030-03-31"
+    );
+    expect(out).toEqual(["2030-03-10"]);
+  });
+
+  it("ngoài đúng ngày kỷ niệm trong khoảng xem → rỗng", () => {
+    const out = expand(
+      { startDate: "2020-08-12", recurrenceType: "yearly" },
+      "2027-09-01", "2027-09-30"
+    );
+    expect(out).toEqual([]);
+  });
+});
+
+describe("expandRecurringOccurrences — bỏ trống ngày kết thúc = lặp VÔ HẠN", () => {
+  it("hằng ngày không có endDate → mọi ngày trong khoảng xem", () => {
+    const out = expand(
+      { startDate: "2026-07-01", recurrenceType: "daily" }, // endDate undefined
+      "2026-07-01", "2026-07-05"
+    );
+    expect(out).toEqual(["2026-07-01", "2026-07-02", "2026-07-03", "2026-07-04", "2026-07-05"]);
+  });
+
+  it("hằng tuần không có endDate → lặp qua nhiều tháng, không dừng ở ngày bắt đầu", () => {
+    // 2026-07-01 là Thứ Tư — không set endDate → vẫn ra các thứ Tư của tháng 9
+    const out = expand(
+      { startDate: "2026-07-01", recurrenceType: "weekly", recurrenceWeekdays: [3] },
+      "2026-09-01", "2026-09-30"
+    );
+    expect(out).toEqual(["2026-09-02", "2026-09-09", "2026-09-16", "2026-09-23", "2026-09-30"]);
+  });
+
+  it("endDate rỗng ('') cũng coi là lặp vô hạn", () => {
+    const out = expand(
+      { startDate: "2026-07-01", endDate: "", recurrenceType: "monthly" },
+      "2026-10-01", "2026-10-31"
+    );
+    expect(out).toEqual(["2026-10-01"]);
   });
 });
 

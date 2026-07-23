@@ -1111,9 +1111,18 @@ export class FamilyDB {
         title: planData.title || "Kế hoạch mới",
         description: planData.description || "",
         startDate: planData.startDate || new Date().toISOString().slice(0, 16).replace("T", " "),
-        endDate: planData.endDate || new Date(Date.now() + 3600000).toISOString().slice(0, 16).replace("T", " "),
+        // Sự kiện lặp lại bỏ trống ngày kết thúc = lặp VÔ HẠN → giữ "" (KHÔNG ép về giờ hiện tại).
+        // Sự kiện 1 lần không có mốc kết thúc → mặc định +1 giờ để vẽ khoảng hợp lý.
+        endDate: (typeof planData.endDate === "string" && planData.endDate.trim())
+          ? planData.endDate.trim()
+          : (planData.isRecurring ? "" : new Date(Date.now() + 3600000).toISOString().slice(0, 16).replace("T", " ")),
         isRecurring: planData.isRecurring || false,
         recurrenceType: planData.recurrenceType || "none",
+        // Lưu các thứ trong tuần cho lịch lặp hằng tuần (vd chọn Thứ 4 dù bắt đầu Thứ 5).
+        // Thiếu dòng này thì CREATE bỏ mất → hệ thống lặp nhầm theo thứ của ngày bắt đầu.
+        recurrenceWeekdays: Array.isArray(planData.recurrenceWeekdays)
+          ? planData.recurrenceWeekdays.map((d: any) => Number(d)).filter((d: number) => Number.isInteger(d) && d >= 0 && d <= 6)
+          : undefined,
         creatorId: userId,
         isShared: planData.isShared !== undefined ? planData.isShared : true,
         color: planData.color || "sky",

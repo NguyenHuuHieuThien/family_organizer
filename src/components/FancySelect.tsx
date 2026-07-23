@@ -11,6 +11,8 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 export interface SelectOption {
   value: string;
   label: string;
+  /** Node đặt trước nhãn của mục (vd icon loại) — hiện cả ở danh sách lẫn trigger khi được chọn. */
+  leading?: ReactNode;
 }
 
 interface FancySelectProps {
@@ -146,7 +148,7 @@ export function FancySelect({
         className={`w-full flex items-center justify-between gap-2 bg-slate-950 neu-pressed-sm ${open ? "border border-emerald-500" : ""} rounded-lg p-2 text-left outline-none cursor-pointer transition-colors ${className}`}
       >
         <span className="flex items-center gap-2 min-w-0">
-          {leading}
+          {leading ?? selected?.leading}
           <span className={`truncate ${selected ? "text-slate-200" : "text-slate-500"}`}>
             {selected ? selected.label : placeholder}
           </span>
@@ -195,7 +197,10 @@ export function FancySelect({
                           : "text-slate-300"
                     }`}
                   >
-                    <span className="truncate">{o.label}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      {o.leading}
+                      <span className="truncate">{o.label}</span>
+                    </span>
                     {isSel && <Check className="w-3.5 h-3.5 shrink-0" />}
                   </button>
                 );

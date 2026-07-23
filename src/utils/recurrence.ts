@@ -11,7 +11,7 @@ export interface RecurringPlanLike {
   startDate: string;              // "YYYY-MM-DD" hoặc "YYYY-MM-DD HH:mm"
   endDate?: string;               // ngày kết thúc khoảng áp dụng lặp lại
   isRecurring: boolean;
-  recurrenceType?: "none" | "daily" | "weekly" | "monthly";
+  recurrenceType?: "none" | "daily" | "weekly" | "monthly" | "yearly";
   recurrenceWeekdays?: number[];  // 0=CN, 1=T2... (chỉ dùng cho weekly)
 }
 
@@ -29,8 +29,10 @@ export function parsePlanDate(s: string | undefined): Date | null {
 /**
  * Liệt kê các ngày sự kiện lặp lại diễn ra trong [rangeStart, rangeEnd] (bao gồm 2 biên).
  * - daily: mọi ngày; weekly: đúng các thứ đã chọn (mặc định = thứ của ngày bắt đầu);
- *   monthly: đúng ngày-trong-tháng của ngày bắt đầu.
- * - Chỉ trả ngày trong [startDate, endDate] của sự kiện (endDate < startDate coi như 1 ngày).
+ *   monthly: đúng ngày-trong-tháng của ngày bắt đầu; yearly: đúng ngày+tháng của ngày
+ *   bắt đầu (kỷ niệm/giỗ).
+ * - KHÔNG đặt endDate → lặp vô hạn (giới hạn bởi khoảng xem); có endDate hợp lệ → chặn tới
+ *   đó; endDate < startDate coi như sự kiện 1 ngày.
  * - Sự kiện không lặp (hoặc recurrenceType "none") trả mảng rỗng — caller tự xử lý.
  */
 export function expandRecurringOccurrences(
@@ -41,11 +43,19 @@ export function expandRecurringOccurrences(
   if (!plan.isRecurring || !plan.recurrenceType || plan.recurrenceType === "none") return [];
   const start = parsePlanDate(plan.startDate);
   if (!start) return [];
-  const endParsed = parsePlanDate(plan.endDate || plan.startDate);
-  const last = !endParsed || endParsed < start ? start : endParsed;
 
   const from = dayStart(new Date(Math.max(dayStart(rangeStart).getTime(), start.getTime())));
   const to = dayStart(rangeEnd);
+  // Mốc dừng chuỗi lặp (`last`):
+  // - KHÔNG đặt ngày kết thúc → lặp VÔ HẠN (chỉ giới hạn bởi khoảng đang xem `to`).
+  //   Đây là hành vi mong đợi cho sự kiện định kỳ nói chung và kỷ niệm/giỗ (yearly).
+  // - Có ngày kết thúc hợp lệ (>= ngày bắt đầu) → chặn tới đúng ngày đó.
+  // - Ngày kết thúc hỏng/trước ngày bắt đầu → coi như sự kiện 1 ngày.
+  const endRaw = String(plan.endDate ?? "").trim();
+  const endParsed = endRaw ? parsePlanDate(endRaw) : null;
+  const last = !endRaw
+    ? to
+    : (!endParsed || endParsed < start ? start : endParsed);
   const result: Date[] = [];
   const cursor = new Date(from);
   let guard = 0;
@@ -59,6 +69,8 @@ export function expandRecurringOccurrences(
       matches = weekdays.includes(cursor.getDay());
     } else if (plan.recurrenceType === "monthly") {
       matches = cursor.getDate() === start.getDate();
+    } else if (plan.recurrenceType === "yearly") {
+      matches = cursor.getDate() === start.getDate() && cursor.getMonth() === start.getMonth();
     }
     if (matches) result.push(new Date(cursor));
     cursor.setDate(cursor.getDate() + 1);

@@ -159,7 +159,7 @@ export interface FamilyPlan {
   startDate: string; // YYYY-MM-DD HH:mm
   endDate: string; // YYYY-MM-DD HH:mm
   isRecurring: boolean;
-  recurrenceType: "none" | "daily" | "weekly" | "monthly";
+  recurrenceType: "none" | "daily" | "weekly" | "monthly" | "yearly";
   recurrenceWeekdays?: number[]; // 0=Chủ nhật, 1=Thứ hai...
   creatorId: string;
   isShared: boolean;
