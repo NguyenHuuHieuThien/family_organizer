@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { Syringe, Plus, Trash2, Check, Calendar, Ruler, HeartPulse, Pill, ShieldAlert, Phone, Pencil, X, Droplet, Sparkles, AlertTriangle, Stethoscope, Cake, FileDown } from "lucide-react";
+import { Syringe, Plus, Trash2, Check, Calendar, Ruler, HeartPulse, Pill, ShieldAlert, Phone, Pencil, X, Droplet, AlertTriangle, Stethoscope, Cake, FileDown } from "lucide-react";
 import { VaccinationRecord, GrowthRecord, MedicationReminder, MedicationLog, User, UserRole, EmergencyProfile, EmergencyContact, BLOOD_TYPE_OPTIONS, FAMILY_RELATION_LABELS } from "../types.js";
 import { motion, AnimatePresence } from "motion/react";
 import { assessBmi, ageFromDob, BmiAssessment } from "../utils/bmi.js";
@@ -683,20 +683,24 @@ export function ChildHealth({
                 if (p?.healthInsuranceNumber) abilities.push({ label: "Số BHYT", value: p.healthInsuranceNumber, icon: Stethoscope, tone: "text-emerald-600 dark:text-emerald-300" });
 
                 return (
-                  <Reveal key={member.id} delay={0.05 + staggerDelay(mi)} className="w-full max-w-[330px]">
-                    <div className={`holo-card rounded-2xl p-[2px] bg-gradient-to-br ${theme.frame} shadow-lg ${theme.glow} h-full`}>
-                      <div className="relative h-full rounded-[14px] bg-gradient-to-b from-slate-900 to-slate-950 overflow-hidden flex flex-col">
-                        {/* Lớp hologram + foil lấp lánh (theme-aware trong index.css) */}
-                        <div className="holo-foil absolute inset-0 pointer-events-none z-10" />
-                        <div className="holo-sheen absolute inset-0 pointer-events-none z-20" />
+                  <Reveal key={member.id} delay={0.05 + staggerDelay(mi)} className="w-full max-w-[340px] sm:max-w-none">
+                    <div className="relative h-full bg-slate-900 neu-raised rounded-2xl overflow-hidden flex flex-col">
+                      {/* Dải accent mảnh theo hệ ở mép trên — bản sắc màu, không rối */}
+                      <div aria-hidden className={`h-1 bg-gradient-to-r ${theme.frame}`} />
 
-                        {/* Thanh tên + hệ + nút sửa */}
-                        <div className="relative z-30 flex items-center justify-between gap-2 px-3 py-2 border-b border-slate-850">
-                          <div className="min-w-0">
-                            <p className="text-sm font-black text-slate-100 truncate tracking-tight">{member.fullName}</p>
-                            <span className={`inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wide ${theme.accent}`}>
-                              <span className="text-[11px]">{theme.element}</span> {theme.title}{relationLabel ? ` · ${relationLabel}` : ""}
-                            </span>
+                      <div className="p-4 flex flex-col gap-3 flex-1">
+                        {/* Header: avatar viền accent + tên + hệ + nút thao tác */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`shrink-0 rounded-full p-[2px] bg-gradient-to-br ${theme.frame}`}>
+                              <Avatar user={member} className="w-12 h-12 rounded-full text-lg" extraClass="ring-2 ring-slate-900" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-slate-100 truncate">{member.fullName}</p>
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${theme.accent}`}>
+                                <span>{theme.element}</span> {theme.title}{relationLabel ? ` · ${relationLabel}` : ""}
+                              </span>
+                            </div>
                           </div>
                           <div className="shrink-0 flex items-center gap-1.5">
                             {p && (
@@ -705,7 +709,8 @@ export function ChildHealth({
                                 onClick={() => exportCardPdf(member, p)}
                                 disabled={exportingCardId !== null}
                                 title="Xuất thẻ ra PDF (khổ A6 — in gập bỏ ví)"
-                                className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-850 text-slate-400 hover:text-indigo-400 cursor-pointer transition-colors disabled:opacity-60"
+                                aria-label="Xuất thẻ ra PDF"
+                                className="p-1.5 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-indigo-400 cursor-pointer disabled:opacity-60"
                               >
                                 {exportingCardId === member.id
                                   ? <span className="block w-3.5 h-3.5 border-2 border-slate-700 border-t-indigo-400 rounded-full animate-spin" />
@@ -713,148 +718,101 @@ export function ChildHealth({
                               </button>
                             )}
                             {canEditEmergency && (
-                              <button type="button" onClick={() => openEpEdit(member.id)} title="Cập nhật thẻ" className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-850 text-slate-400 hover:text-slate-200 cursor-pointer transition-colors">
+                              <button type="button" onClick={() => openEpEdit(member.id)} title="Cập nhật thẻ" aria-label="Cập nhật thẻ" className="p-1.5 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-500 dark:hover:text-amber-400 cursor-pointer">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
                         </div>
 
-                        {/* Cửa sổ "hình thẻ" — tia holo tỏa tròn + vòng phép + avatar huy hiệu */}
-                        <div className="relative z-30 px-3 pt-3">
-                          <div className={`relative rounded-lg overflow-hidden border ${theme.ring} bg-slate-950`}>
-                            {/* Lớp 1: tint gradient theo hệ */}
-                            <div aria-hidden className={`absolute inset-0 bg-gradient-to-br ${theme.frame} opacity-15 dark:opacity-20`} />
-                            {/* Lớp 2: tia sáng tỏa tròn từ tâm (sunburst holo) */}
-                            <div
-                              aria-hidden
-                              className="card-art-rays absolute inset-0 opacity-[0.16] dark:opacity-25"
-                              style={{ "--ray-color": theme.rayHex } as React.CSSProperties}
-                            />
-                            {/* Lớp 3: dải sáng chân trời phía dưới avatar */}
-                            <div
-                              aria-hidden
-                              className="absolute inset-x-0 bottom-0 h-16 opacity-25 dark:opacity-35"
-                              style={{ background: `radial-gradient(ellipse 90% 100% at 50% 115%, ${theme.rayHex} 0%, transparent 65%)` }}
-                            />
+                        {/* Nhãn mục đích thẻ */}
+                        <div className="flex items-center gap-1.5">
+                          <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">Thẻ y tế khẩn cấp</span>
+                        </div>
 
-                            <div className="relative flex items-center justify-center pt-5 pb-8">
-                              {/* Vòng phép: 1 vòng liền + 1 vòng đứt xoay chậm quanh avatar */}
-                              <div aria-hidden className="absolute w-[8.6rem] h-[8.6rem] rounded-full border" style={{ borderColor: `${theme.rayHex}4d` }} />
-                              <div aria-hidden className="card-ring-spin absolute w-[9.8rem] h-[9.8rem] rounded-full border border-dashed" style={{ borderColor: `${theme.rayHex}38` }} />
-                              {/* Quầng sáng màu hệ ngay sau avatar */}
-                              <div aria-hidden className="absolute w-24 h-24 rounded-full blur-2xl opacity-40 dark:opacity-50" style={{ background: theme.rayHex }} />
-
-                              {/* Sao lấp lánh rải quanh */}
-                              <Sparkles className="absolute top-2.5 left-3 w-4 h-4" style={{ color: `${theme.rayHex}99` }} />
-                              <Sparkles className="absolute top-8 right-4 w-3 h-3" style={{ color: `${theme.rayHex}66` }} />
-                              <Sparkles className="absolute bottom-10 left-6 w-3 h-3" style={{ color: `${theme.rayHex}59` }} />
-                              <span aria-hidden className="absolute top-5 right-12 w-1 h-1 rounded-full" style={{ background: `${theme.rayHex}b3` }} />
-                              <span aria-hidden className="absolute bottom-12 right-8 w-1.5 h-1.5 rounded-full" style={{ background: `${theme.rayHex}80` }} />
-                              <span aria-hidden className="absolute top-12 left-10 w-1 h-1 rounded-full" style={{ background: `${theme.rayHex}8c` }} />
-
-                              {/* Avatar tròn bọc viền gradient theo hệ — như huy hiệu */}
-                              <div className={`relative rounded-full p-[2px] bg-gradient-to-br ${theme.frame} shadow-lg`}>
-                                <Avatar user={member} className="w-24 h-24 rounded-full text-4xl" extraClass="ring-2 ring-slate-950/40" />
+                        {!p ? (
+                          <div className="flex-1 flex items-center justify-center py-6">
+                            <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-xl px-4 py-5 text-center">
+                              Thẻ chưa kích hoạt.{canEditEmergency ? " Bấm ✏️ để điền thông tin." : ""}
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            {/* Sinh hiệu chính: nhóm máu (nổi bật) + ngày sinh */}
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2 flex flex-col gap-1">
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                                  <Droplet className="w-3 h-3 text-red-600 dark:text-red-400 fill-red-600 dark:fill-red-400" /> Nhóm máu
+                                </span>
+                                <span className="text-2xl font-black leading-none text-red-600 dark:text-red-400">{p.bloodType || "?"}</span>
                               </div>
-                            </div>
-                            {/* Nhãn loại thẻ — huy hiệu pill bo tròn, đồng bộ bo góc của layout */}
-                            <div className="absolute bottom-2 inset-x-0 flex justify-center px-2">
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900/85 backdrop-blur-sm border border-slate-850 px-3 py-1 shadow-sm">
-                                <ShieldAlert className="w-3.5 h-3.5 text-amber-500 dark:text-amber-400 shrink-0" />
-                                <span className="text-[10px] font-black text-amber-600 dark:text-amber-300 uppercase tracking-widest whitespace-nowrap">Thẻ Y Tế Khẩn Cấp</span>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Nhóm máu — thông tin sống còn, hiển thị TO ngay dưới hình */}
-                        <div className="relative z-30 px-3 pt-2.5">
-                          <div className="flex items-center justify-between rounded-lg bg-gradient-to-r from-red-500 to-rose-600 px-3 py-2 shadow-lg shadow-red-500/25">
-                            <span className="text-[10px] font-black text-white/85 uppercase tracking-widest flex items-center gap-1.5">
-                              <Droplet className="w-4 h-4 fill-white text-white" /> Nhóm máu
-                            </span>
-                            <span className="text-2xl font-black text-white leading-none drop-shadow">{p?.bloodType || "?"}</span>
-                          </div>
-                        </div>
-
-                        {/* Ngày sinh + tuổi hiện tại (bé <3 tuổi hiện tháng/ngày) */}
-                        {member.dateOfBirth && (
-                          <div className="relative z-30 px-3 pt-2.5">
-                            <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-950/70 neu-pressed-sm px-3 py-1.5">
-                              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 shrink-0">
-                                <Cake className="w-3.5 h-3.5 text-pink-500 dark:text-pink-400" /> Ngày sinh
-                              </span>
-                              <span className="text-[11px] font-bold text-slate-200 font-mono text-right min-w-0 whitespace-nowrap">
-                                {formatDateVN(member.dateOfBirth)}
-                                {formatAgeVi(member.dateOfBirth) && (
-                                  <span className="text-[10px] text-pink-600 dark:text-pink-300"> · {formatAgeVi(member.dateOfBirth)}</span>
+                              <div className="rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2 flex flex-col gap-1">
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                                  <Cake className="w-3 h-3 text-pink-500 dark:text-pink-400" /> Ngày sinh
+                                </span>
+                                {member.dateOfBirth ? (
+                                  <span className="text-[11px] font-bold text-slate-200 leading-tight">
+                                    {formatDateVN(member.dateOfBirth)}
+                                    {formatAgeVi(member.dateOfBirth) && (
+                                      <span className="block text-[10px] font-medium text-pink-600 dark:text-pink-300">{formatAgeVi(member.dateOfBirth)}</span>
+                                    )}
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-slate-500">—</span>
                                 )}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Chiều cao · cân nặng gần nhất (từ sổ Tăng trưởng) */}
-                        {(measure.height != null || measure.weight != null) && (
-                          <div className="relative z-30 px-3 pt-2.5">
-                            <div className="flex items-center justify-between gap-2 rounded-lg bg-slate-950/70 neu-pressed-sm px-3 py-1.5">
-                              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 shrink-0">
-                                <Ruler className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" /> Cao · Nặng
-                              </span>
-                              <span className="text-[11px] font-bold text-slate-200 font-mono text-right whitespace-nowrap">
-                                {measure.height != null ? `${measure.height} cm` : "—"} · {measure.weight != null ? `${measure.weight} kg` : "—"}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Hộp "chiêu thức" = thông tin y tế */}
-                        <div className="relative z-30 px-3 pt-2.5 pb-3 flex-1 flex flex-col">
-                          {!p ? (
-                            <div className="flex-1 flex items-center justify-center">
-                              <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-xl px-3 py-4 text-center">
-                                Thẻ chưa kích hoạt.{canEditEmergency ? " Bấm ✏️ để điền thông tin." : ""}
-                              </p>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <div className="rounded-lg bg-slate-950/70 neu-pressed-sm divide-y divide-slate-850/60">
-                                {abilities.length === 0 ? (
-                                  <p className="text-[11px] text-slate-500 px-2.5 py-2 text-center italic">Chưa ghi thông tin y tế.</p>
-                                ) : abilities.map((a, i) => {
-                                  const Icon = a.icon;
-                                  return (
-                                    <div key={i} className="flex items-start gap-2 px-2.5 py-1.5">
-                                      <Icon className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${a.tone}`} />
-                                      <div className="min-w-0">
-                                        <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">{a.label}</span>
-                                        <p className="text-[11px] text-slate-200 leading-snug">{a.value}</p>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
                               </div>
-
-                              {p.emergencyContacts?.length > 0 && (
-                                <div className="rounded-lg bg-slate-950/70 neu-pressed-sm px-2.5 py-2 space-y-1.5">
-                                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Liên hệ khẩn cấp</p>
-                                  {p.emergencyContacts.map((c, i) => (
-                                    <a key={i} href={`tel:${c.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-[11px] text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
-                                      <span className="font-semibold truncate">{c.name}</span>
-                                      {c.relation && <span className="text-slate-500 shrink-0">({c.relation})</span>}
-                                      <span className="font-mono text-emerald-600 dark:text-emerald-400 ml-auto shrink-0">{c.phone}</span>
-                                    </a>
-                                  ))}
-                                </div>
-                              )}
-
-                              {p.notes && (
-                                <p className="text-[10px] text-slate-500 italic leading-relaxed px-1 border-t border-slate-850 pt-1.5">“{p.notes}”</p>
-                              )}
                             </div>
-                          )}
-                        </div>
+
+                            {/* Chiều cao · cân nặng gần nhất (từ sổ Tăng trưởng) */}
+                            {(measure.height != null || measure.weight != null) && (
+                              <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2">
+                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 shrink-0">
+                                  <Ruler className="w-3 h-3 text-sky-500 dark:text-sky-400" /> Cao · Nặng
+                                </span>
+                                <span className="text-[11px] font-bold text-slate-200 font-mono text-right whitespace-nowrap">
+                                  {measure.height != null ? `${measure.height} cm` : "—"} · {measure.weight != null ? `${measure.weight} kg` : "—"}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Thông tin y tế */}
+                            <div className="rounded-xl bg-slate-950 neu-pressed-sm divide-y divide-slate-850/60 flex-1">
+                              {abilities.length === 0 ? (
+                                <p className="text-[11px] text-slate-500 px-3 py-2.5 text-center italic">Chưa ghi thông tin y tế.</p>
+                              ) : abilities.map((a, i) => {
+                                const Icon = a.icon;
+                                return (
+                                  <div key={i} className="flex items-start gap-2.5 px-3 py-2">
+                                    <Icon className={`w-3.5 h-3.5 shrink-0 mt-0.5 ${a.tone}`} />
+                                    <div className="min-w-0">
+                                      <span className="text-[9px] font-bold uppercase tracking-wide text-slate-500">{a.label}</span>
+                                      <p className="text-[11px] text-slate-200 leading-snug">{a.value}</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+
+                            {/* Liên hệ khẩn cấp */}
+                            {p.emergencyContacts?.length > 0 && (
+                              <div className="rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2 space-y-1.5">
+                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Liên hệ khẩn cấp</p>
+                                {p.emergencyContacts.map((c, i) => (
+                                  <a key={i} href={`tel:${c.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-[11px] text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
+                                    <span className="font-semibold truncate">{c.name}</span>
+                                    {c.relation && <span className="text-slate-500 shrink-0">({c.relation})</span>}
+                                    <span className="font-mono text-emerald-600 dark:text-emerald-400 ml-auto shrink-0">{c.phone}</span>
+                                  </a>
+                                ))}
+                              </div>
+                            )}
+
+                            {p.notes && (
+                              <p className="text-[10px] text-slate-500 italic leading-relaxed px-1">“{p.notes}”</p>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
                   </Reveal>
