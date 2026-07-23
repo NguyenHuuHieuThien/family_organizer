@@ -846,6 +846,24 @@ export class FamilyDB {
 
       db.tasks[idx] = updatedTask;
 
+      // Mở lại việc đã hoàn thành → gỡ điểm đã tự cộng cho việc này để ledger đúng thực
+      // tế; hoàn thành lại sẽ được cộng lại từ đầu (tránh kẹt "đã cộng" mà không cộng mới).
+      const isReopening = oldTask.status === "completed" && updatedTask.status !== "completed";
+      if (isReopening) {
+        const removed = db.rewardLedger.filter(e => e.taskId === updatedTask.id);
+        if (removed.length > 0) {
+          db.rewardLedger = db.rewardLedger.filter(e => e.taskId !== updatedTask.id);
+          const recipientId = removed[0].userId;
+          const totalRemoved = removed.reduce((s, e) => s + e.points, 0);
+          this.addNotificationInternal(db, recipientId, "↩️ Điểm tạm gỡ", `Việc "${updatedTask.title}" được mở lại nên tạm gỡ ${totalRemoved} điểm; hoàn thành lại sẽ được cộng lại.`, "task");
+        }
+        // Việc mở lại thì bỏ luôn cờ chờ duyệt / bằng chứng cũ (bắt đầu lại từ đầu).
+        updatedTask.pendingApproval = false;
+        updatedTask.submittedById = null;
+        updatedTask.submittedAt = null;
+        updatedTask.rejectionReason = null;
+      }
+
       if (needsApproval) {
         const submitter = db.users.find(u => u.id === userId);
         this.notifyAdults(db, "⏳ Chờ duyệt hoàn thành", `${submitter?.fullName || "Bé"} báo đã xong "${updatedTask.title}". Vào duyệt để cộng ${updatedTask.rewardPoints} điểm nhé.`, "task");
