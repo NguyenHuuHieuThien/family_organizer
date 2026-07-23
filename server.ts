@@ -371,7 +371,8 @@ app.get("/api/version", requireAuth, (_req: AuthRequest, res: Response) => {
     buildTime: BUILD_TIME,
     canAutoUpdate: Boolean(WATCHTOWER_URL && WATCHTOWER_TOKEN),
     aiEnabled: Boolean(getGeminiKey()),
-    rewardsEnabled: rewardsFeatureEnabled()
+    rewardsEnabled: rewardsFeatureEnabled(),
+    rewardApprovalThreshold: Math.max(0, Number(getAppSettings().rewardApprovalThreshold || 0))
   });
 });
 
@@ -710,10 +711,19 @@ app.post("/api/settings/ai", requireAuth, requireRole([UserRole.ADMIN]), async (
 // --- FEATURE TOGGLES (admin only) ---
 // Bật/tắt tính năng "Điểm thưởng cho trẻ" cho cả nhà. Gửi { rewards: boolean }.
 app.post("/api/settings/features", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
-  const { rewards } = req.body || {};
+  const { rewards, rewardApprovalThreshold } = req.body || {};
   if (rewards !== undefined) setAppSetting("rewardsEnabled", rewards ? "1" : "0");
+  // Ngưỡng tự duyệt: task của trẻ có điểm ≤ ngưỡng thì bấm xong tự cộng luôn;
+  // lớn hơn thì phải chờ ba mẹ duyệt. 0 = mọi task có điểm đều cần duyệt.
+  if (rewardApprovalThreshold !== undefined) {
+    const n = Math.max(0, Math.floor(Number(rewardApprovalThreshold) || 0));
+    setAppSetting("rewardApprovalThreshold", n > 0 ? String(n) : null);
+  }
   broadcastSyncEvent("SETTINGS_UPDATE");
-  res.json({ rewardsEnabled: rewardsFeatureEnabled() });
+  res.json({
+    rewardsEnabled: rewardsFeatureEnabled(),
+    rewardApprovalThreshold: Math.max(0, Number(getAppSettings().rewardApprovalThreshold || 0))
+  });
 });
 
 // --- TELEGRAM BACKUP SETTINGS (admin only) ---
@@ -900,6 +910,31 @@ app.post("/api/tasks/:id/comments", requireAuth, (req: AuthRequest, res: Respons
     const updatedTask = FamilyDB.addCommentToTask(id, content, session.userId, session.username);
     broadcastSyncEvent("TASKS_UPDATE", { taskId: id });
     res.json({ task: updatedTask });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Người lớn DUYỆT việc trẻ đã báo hoàn thành (chờ duyệt) → cộng điểm cho trẻ.
+app.post("/api/tasks/:id/approve", requireAuth, requireRole([UserRole.ADMIN, UserRole.MEMBER]), (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  try {
+    const task = FamilyDB.approveTaskCompletion(req.params.id, session.userId, session.username);
+    broadcastSyncEvent("TASKS_UPDATE", { taskId: task.id });
+    broadcastSyncEvent("REWARDS_UPDATE", { taskId: task.id });
+    res.json({ task });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Người lớn TRẢ LẠI việc trẻ báo xong (kèm lý do) → trẻ làm lại, không cộng điểm.
+app.post("/api/tasks/:id/reject", requireAuth, requireRole([UserRole.ADMIN, UserRole.MEMBER]), (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  try {
+    const task = FamilyDB.rejectTaskCompletion(req.params.id, session.userId, session.username, req.body?.reason);
+    broadcastSyncEvent("TASKS_UPDATE", { taskId: task.id });
+    res.json({ task });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }

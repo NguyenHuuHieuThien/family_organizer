@@ -765,7 +765,24 @@ export class FamilyDB {
 
       const oldTask = db.tasks[idx];
       const isCompleting = taskData.status === "completed" && oldTask.status !== "completed";
-      
+
+      // Gating duyệt: trẻ (CHILD) tự báo hoàn thành một task có điểm > ngưỡng tự duyệt
+      // của gia đình → task vào trạng thái "chờ ba mẹ duyệt" thay vì cộng điểm ngay.
+      // Người lớn tự hoàn thành, hoặc điểm ≤ ngưỡng → hoàn thành + cộng điểm luôn.
+      const actorRole = db.users.find(u => u.id === userId)?.role;
+      // Ai sẽ nhận điểm: người được giao, nếu không có thì chính người bấm hoàn thành
+      // (khớp đúng logic cộng điểm bên dưới) — nên cổng duyệt cũng xét theo người này.
+      const rewardRecipientId = (taskData.assigneeId ?? oldTask.assigneeId) || userId;
+      const recipientRole = db.users.find(u => u.id === rewardRecipientId)?.role;
+      const rewardPts = Math.max(0, Number((taskData as any).rewardPoints ?? oldTask.rewardPoints ?? 0));
+      const approvalThreshold = Math.max(0, Number(getAppSettings().rewardApprovalThreshold || 0));
+      const needsApproval = isCompleting
+        && rewardPts > 0
+        && actorRole === UserRole.CHILD
+        && recipientRole === UserRole.CHILD
+        && rewardPts > approvalThreshold;
+      const effectiveCompleting = isCompleting && !needsApproval;
+
       // Determine history changes
       const changelog: string[] = [];
       if (taskData.status && taskData.status !== oldTask.status) {
@@ -807,17 +824,37 @@ export class FamilyDB {
         recurrenceEndDate: nextRecurrenceEndDate,
         rotationMemberIds: nextRotation && nextRotation.length > 0 ? nextRotation : undefined,
         sourceRecurringTaskId: (taskData as any).sourceRecurringTaskId ?? oldTask.sourceRecurringTaskId ?? null,
-        completedById: isCompleting ? userId : (taskData.completedById ?? oldTask.completedById ?? null),
-        completedAt: isCompleting ? nowStr : (taskData.completedAt ?? oldTask.completedAt ?? null),
+        completedById: effectiveCompleting ? userId : (taskData.completedById ?? oldTask.completedById ?? null),
+        completedAt: effectiveCompleting ? nowStr : (taskData.completedAt ?? oldTask.completedAt ?? null),
         comments: taskData.comments || oldTask.comments || [],
         history: updatedHistory,
         updatedAt: nowStr
       } as Task;
 
+      // Trẻ báo xong nhưng cần duyệt: giữ ở "đang làm", gắn cờ chờ duyệt, chưa cộng điểm.
+      if (needsApproval) {
+        updatedTask.status = "in_progress" as any;
+        updatedTask.pendingApproval = true;
+        updatedTask.submittedById = userId;
+        updatedTask.submittedAt = nowStr;
+        updatedTask.completedById = null;
+        updatedTask.completedAt = null;
+        updatedTask.rejectionReason = null;
+      } else if (isCompleting) {
+        updatedTask.pendingApproval = false;
+      }
+
       db.tasks[idx] = updatedTask;
 
-      if (isCompleting && updatedTask.rewardPoints && updatedTask.rewardPoints > 0) {
-        const awardUserId = updatedTask.assigneeId || userId;
+      if (needsApproval) {
+        const submitter = db.users.find(u => u.id === userId);
+        this.notifyAdults(db, "⏳ Chờ duyệt hoàn thành", `${submitter?.fullName || "Bé"} báo đã xong "${updatedTask.title}". Vào duyệt để cộng ${updatedTask.rewardPoints} điểm nhé.`);
+      }
+
+      if (effectiveCompleting && updatedTask.rewardPoints && updatedTask.rewardPoints > 0) {
+        // Ưu tiên trẻ đã "báo xong" (submittedById) — để khi ba mẹ duyệt, điểm về đúng
+        // trẻ đã làm chứ không phải người duyệt; nếu không có thì dùng người được giao / người bấm.
+        const awardUserId = updatedTask.submittedById || updatedTask.assigneeId || userId;
         const awardUser = db.users.find(u => u.id === awardUserId);
         const alreadyAwarded = db.rewardLedger.some(e => e.taskId === updatedTask.id && e.userId === awardUserId);
         if (awardUser?.role === UserRole.CHILD && !alreadyAwarded) {
@@ -834,7 +871,7 @@ export class FamilyDB {
         }
       }
 
-      if (isCompleting && updatedTask.recurrenceType && updatedTask.recurrenceType !== "none") {
+      if (effectiveCompleting && updatedTask.recurrenceType && updatedTask.recurrenceType !== "none") {
         const nextDueDate = advanceDateString(updatedTask.dueDate, updatedTask.recurrenceType, updatedTask.recurrenceInterval || 1);
         const recurrenceEnd = updatedTask.recurrenceEndDate ? parseLocalDateTime(`${updatedTask.recurrenceEndDate} 23:59`) : null;
         const nextDue = nextDueDate ? parseLocalDateTime(nextDueDate) : null;
@@ -862,6 +899,13 @@ export class FamilyDB {
             sourceRecurringTaskId: rootId,
             completedById: null,
             completedAt: null,
+            // Bản lặp kế tiếp bắt đầu tinh khôi: xóa trạng thái duyệt/bằng chứng của lần trước.
+            pendingApproval: false,
+            submittedById: null,
+            submittedAt: null,
+            proofImage: null,
+            proofNote: null,
+            rejectionReason: null,
             comments: [],
             history: [{
               id: `h_${Date.now()}_next`,
@@ -927,6 +971,61 @@ export class FamilyDB {
       this.logActivity(userId, username, "Tạo Task", `Đã lập công việc mới "${newTask.title}".`);
       return newTask;
     }
+  }
+
+  // Gửi thông báo (in-app + push) tới mọi người lớn trong nhà (Admin + Member).
+  private static notifyAdults(db: FamilyOrganizerDB, title: string, content: string): void {
+    db.users
+      .filter(u => u.role === UserRole.ADMIN || u.role === UserRole.MEMBER)
+      .forEach(u => this.addNotificationInternal(db, u.id, title, content));
+  }
+
+  // Người lớn DUYỆT việc trẻ đã báo xong → hoàn thành + cộng điểm (tái dùng saveTask
+  // với actor là người lớn nên không bị gate lại; điểm vẫn về cho trẻ nhận việc).
+  public static approveTaskCompletion(taskId: string, approverId: string, approverName: string): Task {
+    const db = this.readRaw();
+    const task = db.tasks.find(t => t.id === taskId);
+    if (!task) throw new Error("Task không tồn tại");
+    if (!task.pendingApproval) throw new Error("Công việc này không ở trạng thái chờ duyệt.");
+    return this.saveTask({ id: taskId, status: "completed" as any }, approverId, approverName);
+  }
+
+  // Người lớn TRẢ LẠI việc → về "đang làm", ghi lý do, báo trẻ làm lại. Không cộng điểm.
+  public static rejectTaskCompletion(taskId: string, approverId: string, approverName: string, reason?: string): Task {
+    const db = this.readRaw();
+    const idx = db.tasks.findIndex(t => t.id === taskId);
+    if (idx === -1) throw new Error("Task không tồn tại");
+    const task = db.tasks[idx];
+    if (!task.pendingApproval) throw new Error("Công việc này không ở trạng thái chờ duyệt.");
+    const nowStr = new Date().toISOString();
+    const reasonText = (reason || "").trim();
+    task.status = "in_progress" as any;
+    task.pendingApproval = false;
+    task.rejectionReason = reasonText || null;
+    task.completedById = null;
+    task.completedAt = null;
+    task.updatedAt = nowStr;
+    task.history = [
+      {
+        id: `h_${Date.now()}`,
+        userId: approverId,
+        username: approverName,
+        action: reasonText ? `Đã trả lại để làm lại: ${reasonText}` : "Đã trả lại để làm lại",
+        createdAt: nowStr
+      },
+      ...(task.history || [])
+    ];
+    if (task.assigneeId) {
+      this.addNotificationInternal(
+        db,
+        task.assigneeId,
+        "🔁 Cần làm lại",
+        reasonText ? `Ba mẹ trả lại việc "${task.title}": ${reasonText}` : `Ba mẹ trả lại việc "${task.title}", con làm lại nhé.`
+      );
+    }
+    this.writeRaw(db);
+    this.logActivity(approverId, approverName, "Trả lại Task", `Đã trả lại công việc "${task.title}" để làm lại.`);
+    return task;
   }
 
   public static addCommentToTask(taskId: string, commentContent: string, userId: string, username: string): Task {

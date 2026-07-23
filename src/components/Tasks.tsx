@@ -23,11 +23,15 @@ import {
   CheckSquare,
   Gift,
   Star,
-  Sparkles
+  Sparkles,
+  Check,
+  RotateCcw,
+  Camera
 } from "lucide-react";
 import { Task, TaskStatus, TaskPriority, User, UserRole, RewardPointEntry, RewardItem, RecurrenceType, isLimitedViewer, isAdultRole } from "../types.js";
 import { motion, AnimatePresence } from "motion/react";
 import { Avatar } from "./Avatar.js";
+import { optimizeImageFile } from "../utils/image.js";
 import { ShimmerLine, Reveal, IconChip, staggerDelay } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { useConfirm } from "./ConfirmDialog.js";
@@ -70,8 +74,12 @@ interface TasksProps {
   onSaveTask: (task: Partial<Task>) => Promise<any>;
   onDeleteTask: (id: string) => Promise<any>;
   onAddComment: (taskId: string, content: string) => Promise<any>;
+  onApproveTask: (taskId: string) => Promise<any>;
+  onRejectTask: (taskId: string, reason?: string) => Promise<any>;
   /** Tính năng Điểm thưởng cho trẻ đang bật (cấu hình trong Thiết lập). */
   rewardsEnabled: boolean;
+  /** Điểm > ngưỡng này thì việc của trẻ phải chờ ba mẹ duyệt mới cộng điểm. */
+  rewardApprovalThreshold: number;
 }
 
 export function Tasks({
@@ -90,7 +98,10 @@ export function Tasks({
   onSaveTask,
   onDeleteTask,
   onAddComment,
-  rewardsEnabled
+  onApproveTask,
+  onRejectTask,
+  rewardsEnabled,
+  rewardApprovalThreshold
 }: TasksProps) {
   // Query Filters State
   const [searchTerm, setSearchTerm] = useState("");
@@ -317,6 +328,90 @@ export function Tasks({
     }
   };
 
+  // ─── Cơ chế duyệt việc có điểm thưởng cho trẻ ───
+  const isChildViewer = currentUser.role === UserRole.CHILD;
+  const canApproveTasks = isAdultRole(currentUser.role);
+  // Trẻ hoàn thành việc có điểm > ngưỡng → phải "báo xong" và chờ ba mẹ duyệt.
+  const childNeedsApproval = (task: Task) =>
+    isChildViewer && (task.rewardPoints || 0) > (rewardApprovalThreshold || 0) &&
+    (task.assigneeId === currentUser.id || task.creatorId === currentUser.id);
+
+  // Modal "Con làm xong" (đính ảnh/ghi chú bằng chứng — tùy chọn)
+  const [submitTaskTarget, setSubmitTaskTarget] = useState<Task | null>(null);
+  const [submitProofImage, setSubmitProofImage] = useState<string>("");
+  const [submitProofNote, setSubmitProofNote] = useState<string>("");
+  const [submitProofBusy, setSubmitProofBusy] = useState(false);
+  const [submitProofErr, setSubmitProofErr] = useState("");
+  const [submitBusy, setSubmitBusy] = useState(false);
+
+  const openSubmitModal = (task: Task) => {
+    setSubmitTaskTarget(task);
+    setSubmitProofImage("");
+    setSubmitProofNote("");
+    setSubmitProofErr("");
+  };
+  const handleProofFile = async (file: File | undefined) => {
+    if (!file) return;
+    setSubmitProofBusy(true);
+    setSubmitProofErr("");
+    try {
+      const optimized = await optimizeImageFile(file, { maxSizes: [768, 512], targetBytes: 300 * 1024 });
+      setSubmitProofImage(optimized.dataUrl);
+    } catch (e: any) {
+      setSubmitProofErr(e?.message || "Không xử lý được ảnh này.");
+    } finally {
+      setSubmitProofBusy(false);
+    }
+  };
+  const confirmSubmit = async () => {
+    if (!submitTaskTarget) return;
+    setSubmitBusy(true);
+    try {
+      await onSaveTask({
+        id: submitTaskTarget.id,
+        status: TaskStatus.COMPLETED,
+        proofImage: submitProofImage || null,
+        proofNote: submitProofNote.trim() || null
+      });
+      setSubmitTaskTarget(null);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSubmitBusy(false);
+    }
+  };
+
+  // Người lớn duyệt / trả lại
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [rejectTaskTarget, setRejectTaskTarget] = useState<Task | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectBusy, setRejectBusy] = useState(false);
+  const [proofPreview, setProofPreview] = useState<string>("");
+
+  const handleApprove = async (task: Task) => {
+    setApprovingId(task.id);
+    try {
+      await onApproveTask(task.id);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setApprovingId(null);
+    }
+  };
+  const confirmReject = async () => {
+    if (!rejectTaskTarget) return;
+    setRejectBusy(true);
+    try {
+      await onRejectTask(rejectTaskTarget.id, rejectReason.trim());
+      setRejectTaskTarget(null);
+      setRejectReason("");
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRejectBusy(false);
+    }
+  };
+
   const handlePostComment = async () => {
     if (!commentInput.trim() || !activeTaskDetails) return;
     try {
@@ -484,8 +579,8 @@ export function Tasks({
   // Style helper colors
   const priorityColor = (p: TaskPriority) => {
     switch (p) {
-      case TaskPriority.HIGH: return "text-rose-400 bg-rose-500/10 border-rose-500/20";
-      case TaskPriority.MEDIUM: return "text-amber-400 bg-amber-500/10 border-amber-500/20";
+      case TaskPriority.HIGH: return "text-rose-700 dark:text-rose-400 bg-rose-500/10 border-rose-500/20";
+      case TaskPriority.MEDIUM: return "text-amber-700 dark:text-amber-400 bg-amber-500/10 border-amber-500/20";
       case TaskPriority.LOW: return "text-sky-400 bg-sky-500/10 border-sky-500/20";
     }
   };
@@ -503,8 +598,8 @@ export function Tasks({
     switch (s) {
       case TaskStatus.TODO: return "bg-slate-800 text-slate-400 border-slate-700";
       case TaskStatus.IN_PROGRESS: return "bg-sky-500/10 text-sky-400 border-sky-500/20";
-      case TaskStatus.COMPLETED: return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-      case TaskStatus.OVERDUE: return "bg-rose-500/10 text-rose-400 border-rose-400/20";
+      case TaskStatus.COMPLETED: return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20";
+      case TaskStatus.OVERDUE: return "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-400/20";
     }
   };
 
@@ -1146,13 +1241,18 @@ export function Tasks({
                                         <Share2 className="size-3" /> Chung
                                       </span>
                                     ) : (
-                                      <span className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg font-semibold">
+                                      <span className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 rounded-lg font-semibold">
                                         Cá nhân
                                       </span>
                                     )}
                                     {(task.rewardPoints || 0) > 0 && (
-                                      <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg font-bold">
+                                      <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 rounded-lg font-bold">
                                         +{task.rewardPoints} điểm
+                                      </span>
+                                    )}
+                                    {task.pendingApproval && (
+                                      <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 rounded-lg font-bold inline-flex items-center gap-1">
+                                        <Clock className="w-3 h-3" /> Chờ ba mẹ duyệt
                                       </span>
                                     )}
                                     {recurrence && (
@@ -1176,17 +1276,72 @@ export function Tasks({
                                   )}
                                 </div>
 
+                                {(task.rejectionReason && !task.pendingApproval) && (
+                                  <div className="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-2 py-1.5 flex items-start gap-1.5">
+                                    <RotateCcw className="w-3 h-3 shrink-0 mt-0.5" />
+                                    <span className="min-w-0">Bị trả lại: {task.rejectionReason}</span>
+                                  </div>
+                                )}
+
+                                {task.pendingApproval && (task.proofImage || task.proofNote) && (
+                                  <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2 space-y-1.5">
+                                    {task.proofImage && (
+                                      <img
+                                        src={task.proofImage}
+                                        alt="Bằng chứng hoàn thành"
+                                        onClick={() => setProofPreview(task.proofImage || "")}
+                                        className="w-full max-h-40 object-cover rounded-md cursor-zoom-in"
+                                      />
+                                    )}
+                                    {task.proofNote && <p className="text-[11px] text-slate-400">{task.proofNote}</p>}
+                                  </div>
+                                )}
+
                                 <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
                                   <span className="min-w-0 truncate text-[10px] text-slate-600">
                                     Tạo bởi {creator ? creator.fullName : "ẩn danh"}
                                   </span>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleUpdateStatus(task, next.status)}
-                                    className="shrink-0 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-300 hover:text-slate-100 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
-                                  >
-                                    {next.label}
-                                  </button>
+                                  {task.pendingApproval ? (
+                                    canApproveTasks ? (
+                                      <div className="shrink-0 flex items-center gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleApprove(task)}
+                                          disabled={approvingId === task.id}
+                                          className="bg-slate-900 hover:bg-slate-800 neu-btn text-emerald-700 dark:text-emerald-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-60 inline-flex items-center gap-1"
+                                        >
+                                          <Check className="w-3.5 h-3.5" /> {approvingId === task.id ? "..." : "Duyệt"}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => { setRejectTaskTarget(task); setRejectReason(""); }}
+                                          className="bg-slate-900 hover:bg-slate-800 neu-btn text-rose-700 dark:text-rose-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
+                                        >
+                                          <X className="w-3.5 h-3.5" /> Trả lại
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <span className="shrink-0 text-[11px] font-bold text-amber-700 dark:text-amber-400 inline-flex items-center gap-1">
+                                        <Clock className="w-3.5 h-3.5" /> Đang chờ duyệt
+                                      </span>
+                                    )
+                                  ) : (childNeedsApproval(task) && next.status === TaskStatus.COMPLETED) ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => openSubmitModal(task)}
+                                      className="shrink-0 bg-slate-900 hover:bg-slate-800 neu-btn text-emerald-700 dark:text-emerald-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
+                                    >
+                                      <Check className="w-3.5 h-3.5" /> Con làm xong
+                                    </button>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleUpdateStatus(task, next.status)}
+                                      className="shrink-0 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-300 hover:text-slate-100 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
+                                    >
+                                      {next.label}
+                                    </button>
+                                  )}
                                 </div>
                               </motion.article>
                             );
@@ -1551,6 +1706,141 @@ export function Tasks({
               </div>
             </form>
           </motion.div>
+        </div>
+      )}
+
+      {/* Modal "Con làm xong" — trẻ báo hoàn thành + đính bằng chứng (tùy chọn) */}
+      {submitTaskTarget && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-slate-900 neu-raised rounded-2xl w-full max-w-md overflow-hidden"
+          >
+            <div className="px-5 py-4 border-t-0 border-b border-slate-800 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-emerald-400" />
+              <h3 className="font-bold text-slate-100">Con làm xong việc này</h3>
+            </div>
+            <div className="p-5 space-y-4 text-xs">
+              <p className="text-slate-400 leading-relaxed">
+                Việc <b className="text-slate-200">"{submitTaskTarget.title}"</b> sẽ gửi cho ba mẹ duyệt.
+                Duyệt xong con sẽ nhận <b className="text-amber-400">+{submitTaskTarget.rewardPoints} điểm</b>.
+                Chụp ảnh hoặc ghi chú cho ba mẹ xem nhé (không bắt buộc).
+              </p>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-semibold block">Ảnh bằng chứng (tùy chọn)</label>
+                {submitProofImage ? (
+                  <div className="relative">
+                    <img src={submitProofImage} alt="Bằng chứng" className="w-full max-h-52 object-cover rounded-xl" />
+                    <button
+                      type="button"
+                      onClick={() => setSubmitProofImage("")}
+                      className="absolute top-2 right-2 bg-slate-950/80 text-slate-200 rounded-lg p-1.5 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center justify-center gap-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-3 text-slate-400 cursor-pointer hover:text-slate-200">
+                    <Camera className="w-4 h-4" />
+                    {submitProofBusy ? "Đang xử lý ảnh..." : "Chọn / chụp ảnh"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={submitProofBusy}
+                      onChange={(e) => handleProofFile(e.target.files?.[0])}
+                    />
+                  </label>
+                )}
+                {submitProofErr && <p className="text-rose-400">{submitProofErr}</p>}
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-slate-400 font-semibold block">Ghi chú (tùy chọn)</label>
+                <textarea
+                  rows={2}
+                  value={submitProofNote}
+                  onChange={(e) => setSubmitProofNote(e.target.value)}
+                  placeholder="Ví dụ: Con đã dọn xong phòng và xếp gọn đồ chơi ạ."
+                  className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSubmitTaskTarget(null)}
+                className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
+              >
+                Đóng lại
+              </button>
+              <button
+                type="button"
+                onClick={confirmSubmit}
+                disabled={submitBusy || submitProofBusy}
+                className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50 text-xs"
+              >
+                {submitBusy ? "Đang gửi..." : "Gửi ba mẹ duyệt"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Modal "Trả lại việc" — người lớn nhập lý do */}
+      {rejectTaskTarget && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-slate-900 neu-raised rounded-2xl w-full max-w-md overflow-hidden"
+          >
+            <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2">
+              <RotateCcw className="w-5 h-5 text-rose-400" />
+              <h3 className="font-bold text-slate-100">Trả lại để làm lại</h3>
+            </div>
+            <div className="p-5 space-y-3 text-xs">
+              <p className="text-slate-400 leading-relaxed">
+                Trả lại việc <b className="text-slate-200">"{rejectTaskTarget.title}"</b> cho bé làm lại. Chưa cộng điểm.
+              </p>
+              <textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Lý do / góp ý cho con (ví dụ: Con dọn lại gầm giường nữa nhé)."
+                className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-rose-500"
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => { setRejectTaskTarget(null); setRejectReason(""); }}
+                className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
+              >
+                Đóng lại
+              </button>
+              <button
+                type="button"
+                onClick={confirmReject}
+                disabled={rejectBusy}
+                className="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50 text-xs"
+              >
+                {rejectBusy ? "Đang gửi..." : "Trả lại việc"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Xem ảnh bằng chứng phóng to */}
+      {proofPreview && (
+        <div
+          className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[60] p-4 cursor-zoom-out"
+          onClick={() => setProofPreview("")}
+        >
+          <img src={proofPreview} alt="Bằng chứng hoàn thành" className="max-w-full max-h-[90vh] rounded-xl" />
         </div>
       )}
 

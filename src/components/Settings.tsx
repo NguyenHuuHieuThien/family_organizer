@@ -96,6 +96,8 @@ interface SettingsProps {
   onChangeWeatherLoc: (code: string) => void;
   rewardsEnabled: boolean;
   onSetRewardsEnabled: (enabled: boolean) => Promise<void>;
+  rewardApprovalThreshold: number;
+  onSetRewardApprovalThreshold: (threshold: number) => Promise<void>;
 }
 
 export function Settings({
@@ -117,7 +119,9 @@ export function Settings({
   weatherLoc,
   onChangeWeatherLoc,
   rewardsEnabled,
-  onSetRewardsEnabled
+  onSetRewardsEnabled,
+  rewardApprovalThreshold,
+  onSetRewardApprovalThreshold
 }: SettingsProps) {
   // In-app confirmation dialog (replaces native browser confirm)
   const { confirm, ConfirmDialog } = useConfirm();
@@ -200,6 +204,24 @@ export function Settings({
       setRewardsErr(e?.message || "Không đổi được cài đặt.");
     } finally {
       setRewardsBusy(false);
+    }
+  };
+
+  // Ngưỡng tự duyệt điểm thưởng — admin only
+  const [thresholdInput, setThresholdInput] = useState<string>(String(rewardApprovalThreshold || 0));
+  const [thresholdBusy, setThresholdBusy] = useState(false);
+  const [thresholdMsg, setThresholdMsg] = useState("");
+  useEffect(() => { setThresholdInput(String(rewardApprovalThreshold || 0)); }, [rewardApprovalThreshold]);
+  const saveThreshold = async () => {
+    setThresholdBusy(true);
+    setThresholdMsg("");
+    try {
+      await onSetRewardApprovalThreshold(Math.max(0, Math.floor(Number(thresholdInput) || 0)));
+      setThresholdMsg("Đã lưu ✓");
+    } catch (e: any) {
+      setThresholdMsg(e?.message || "Không đổi được cài đặt.");
+    } finally {
+      setThresholdBusy(false);
     }
   };
 
@@ -1636,6 +1658,39 @@ export function Settings({
             </button>
           </div>
           {rewardsErr && <p className="text-[11px] text-rose-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {rewardsErr}</p>}
+
+          {rewardsEnabled && (
+            <div className="mt-1 pt-3 border-t border-slate-800/70 space-y-1.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="space-y-0.5 min-w-0">
+                  <h4 className="text-[12px] font-bold text-slate-300">Duyệt việc trước khi cộng điểm</h4>
+                  <p className="text-[11px] text-slate-500">
+                    Trẻ bấm <b className="text-slate-300">"Con làm xong"</b> ở việc có điểm <b className="text-slate-300">lớn hơn</b> ngưỡng
+                    này sẽ vào trạng thái <b className="text-amber-400">chờ ba mẹ duyệt</b> — duyệt rồi mới cộng điểm.
+                    Việc có điểm ≤ ngưỡng thì bấm xong tự cộng luôn. Đặt <b className="text-slate-300">0</b> để mọi việc có điểm đều phải duyệt.
+                  </p>
+                </div>
+                <div className="shrink-0 flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    value={thresholdInput}
+                    onChange={(e) => setThresholdInput(e.target.value)}
+                    className="w-16 bg-slate-900 neu-pressed-sm rounded-lg px-2.5 py-1.5 text-xs text-slate-200 text-center outline-none focus:border-amber-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={saveThreshold}
+                    disabled={thresholdBusy || thresholdInput === String(rewardApprovalThreshold || 0)}
+                    className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-400 cursor-pointer transition-all disabled:opacity-40"
+                  >
+                    {thresholdBusy ? "..." : "Lưu"}
+                  </button>
+                </div>
+              </div>
+              {thresholdMsg && <p className="text-[11px] text-slate-400">{thresholdMsg}</p>}
+            </div>
+          )}
         </div>
       )}
 

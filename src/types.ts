@@ -131,6 +131,14 @@ export interface Task {
   rewardPoints?: number;
   completedById?: string | null;
   completedAt?: string | null;
+  // Cơ chế duyệt việc có điểm thưởng cho trẻ: trẻ "báo xong" → chờ ba mẹ duyệt
+  // mới cộng điểm (task có điểm > ngưỡng tự duyệt của gia đình).
+  pendingApproval?: boolean;       // true = trẻ đã báo xong, đang chờ người lớn duyệt
+  submittedById?: string | null;   // ai bấm "làm xong"
+  submittedAt?: string | null;
+  proofImage?: string | null;      // ảnh bằng chứng (data URL) — tùy chọn
+  proofNote?: string | null;       // ghi chú kèm khi báo xong — tùy chọn
+  rejectionReason?: string | null; // lý do khi bị người lớn trả lại
   recurrenceType?: RecurrenceType;
   recurrenceInterval?: number;
   recurrenceEndDate?: string;

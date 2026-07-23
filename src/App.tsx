@@ -370,6 +370,9 @@ export default function App() {
   // Tính năng "Điểm thưởng cho trẻ" bật/tắt cấp gia đình (admin đổi trong Thiết lập).
   // Mặc định server bật nếu có tài khoản Trẻ. Khởi tạo true để tránh nháy ẩn/hiện.
   const [rewardsEnabled, setRewardsEnabled] = useState<boolean>(true);
+  // Ngưỡng tự duyệt: task của trẻ có điểm ≤ ngưỡng thì bấm xong tự cộng; lớn hơn
+  // phải chờ ba mẹ duyệt. 0 = mọi task có điểm đều cần duyệt.
+  const [rewardApprovalThreshold, setRewardApprovalThreshold] = useState<number>(0);
 
   // Notifications modal control
   const [notifOpen, setNotifOpen] = useState(false);
@@ -674,6 +677,22 @@ export default function App() {
     }
     const d = await res.json();
     setRewardsEnabled(Boolean(d.rewardsEnabled));
+    if (typeof d.rewardApprovalThreshold === "number") setRewardApprovalThreshold(d.rewardApprovalThreshold);
+  };
+
+  // Đổi ngưỡng tự duyệt điểm thưởng (admin, trong Thiết lập).
+  const handleSetRewardApprovalThreshold = async (threshold: number) => {
+    const res = await fetch("/api/settings/features", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeader() },
+      body: JSON.stringify({ rewardApprovalThreshold: threshold })
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error || "Không đổi được cài đặt.");
+    }
+    const d = await res.json();
+    if (typeof d.rewardApprovalThreshold === "number") setRewardApprovalThreshold(d.rewardApprovalThreshold);
   };
 
   // Người dùng đổi địa phương thời tiết: lưu riêng theo user + lấy lại widget ngay.
@@ -711,6 +730,7 @@ export default function App() {
       const d = await res.json();
       setAppVersion(d.shortCommit || d.version || "");
       if (typeof d.rewardsEnabled === "boolean") setRewardsEnabled(d.rewardsEnabled);
+      if (typeof d.rewardApprovalThreshold === "number") setRewardApprovalThreshold(d.rewardApprovalThreshold);
       const commit: string = d.commit || "";
       if (!commit) return; // dev/local build → can't compare reliably
       if (bootCommitRef.current === null) {
@@ -917,6 +937,32 @@ export default function App() {
       method: "POST",
       headers: { "Content-Type": "application/json", ...getAuthHeader() },
       body: JSON.stringify({ content: commentContent })
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+    }
+    return res.json();
+  };
+
+  // Người lớn duyệt / trả lại việc trẻ đã báo hoàn thành (cơ chế chờ duyệt điểm thưởng).
+  const handleApproveTask = async (taskId: string) => {
+    const res = await fetch(`/api/tasks/${taskId}/approve`, {
+      method: "POST",
+      headers: getAuthHeader()
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+    }
+    return res.json();
+  };
+
+  const handleRejectTask = async (taskId: string, reason?: string) => {
+    const res = await fetch(`/api/tasks/${taskId}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeader() },
+      body: JSON.stringify({ reason: reason || "" })
     });
     if (!res.ok) {
       const data = await res.json();
@@ -1856,7 +1902,10 @@ export default function App() {
                   onSaveTask={handleSaveTask}
                   onDeleteTask={handleDeleteTask}
                   onAddComment={handleAddCommentToTask}
+                  onApproveTask={handleApproveTask}
+                  onRejectTask={handleRejectTask}
                   rewardsEnabled={rewardsEnabled}
+                  rewardApprovalThreshold={rewardApprovalThreshold}
                 />
               )}
 
@@ -1987,6 +2036,8 @@ export default function App() {
                   onChangeWeatherLoc={handleChangeWeatherLoc}
                   rewardsEnabled={rewardsEnabled}
                   onSetRewardsEnabled={handleSetRewardsEnabled}
+                  rewardApprovalThreshold={rewardApprovalThreshold}
+                  onSetRewardApprovalThreshold={handleSetRewardApprovalThreshold}
                 />
               )}
             </motion.div>
