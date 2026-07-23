@@ -848,7 +848,7 @@ export class FamilyDB {
 
       if (needsApproval) {
         const submitter = db.users.find(u => u.id === userId);
-        this.notifyAdults(db, "⏳ Chờ duyệt hoàn thành", `${submitter?.fullName || "Bé"} báo đã xong "${updatedTask.title}". Vào duyệt để cộng ${updatedTask.rewardPoints} điểm nhé.`);
+        this.notifyAdults(db, "⏳ Chờ duyệt hoàn thành", `${submitter?.fullName || "Bé"} báo đã xong "${updatedTask.title}". Vào duyệt để cộng ${updatedTask.rewardPoints} điểm nhé.`, "task");
       }
 
       if (effectiveCompleting && updatedTask.rewardPoints && updatedTask.rewardPoints > 0) {
@@ -867,7 +867,7 @@ export class FamilyDB {
             createdById: userId,
             createdAt: nowStr
           });
-          this.addNotificationInternal(db, awardUserId, "Diem thuong moi", `Con vua nhan ${updatedTask.rewardPoints} diem vi hoan thanh "${updatedTask.title}".`);
+          this.addNotificationInternal(db, awardUserId, "Diem thuong moi", `Con vua nhan ${updatedTask.rewardPoints} diem vi hoan thanh "${updatedTask.title}".`, "task");
         }
       }
 
@@ -974,10 +974,10 @@ export class FamilyDB {
   }
 
   // Gửi thông báo (in-app + push) tới mọi người lớn trong nhà (Admin + Member).
-  private static notifyAdults(db: FamilyOrganizerDB, title: string, content: string): void {
+  private static notifyAdults(db: FamilyOrganizerDB, title: string, content: string, type: Notification["type"] = "system"): void {
     db.users
       .filter(u => u.role === UserRole.ADMIN || u.role === UserRole.MEMBER)
-      .forEach(u => this.addNotificationInternal(db, u.id, title, content));
+      .forEach(u => this.addNotificationInternal(db, u.id, title, content, type));
   }
 
   // Người lớn DUYỆT việc trẻ đã báo xong → hoàn thành + cộng điểm (tái dùng saveTask
@@ -1020,7 +1020,8 @@ export class FamilyDB {
         db,
         task.assigneeId,
         "🔁 Cần làm lại",
-        reasonText ? `Ba mẹ trả lại việc "${task.title}": ${reasonText}` : `Ba mẹ trả lại việc "${task.title}", con làm lại nhé.`
+        reasonText ? `Ba mẹ trả lại việc "${task.title}": ${reasonText}` : `Ba mẹ trả lại việc "${task.title}", con làm lại nhé.`,
+        "task"
       );
     }
     this.writeRaw(db);
@@ -2670,13 +2671,13 @@ export class FamilyDB {
   }
 
   // Internal notification builder
-  private static addNotificationInternal(db: FamilyOrganizerDB, userId: string, title: string, content: string) {
+  private static addNotificationInternal(db: FamilyOrganizerDB, userId: string, title: string, content: string, type: Notification["type"] = "system") {
     const newNotif: Notification = {
       id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       userId,
       title,
       content,
-      type: "system",
+      type,
       isRead: false,
       createdAt: new Date().toISOString()
     };
