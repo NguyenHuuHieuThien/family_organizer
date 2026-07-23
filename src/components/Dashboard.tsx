@@ -13,7 +13,6 @@ import {
   Wallet,
   Activity,
   ArrowUpRight,
-  Clock,
   AlertCircle,
   Cake,
   MapPin,
@@ -21,6 +20,7 @@ import {
   Droplets,
   Wind,
   Sun,
+  Moon,
   CloudRain,
   Waves
 } from "lucide-react";
@@ -84,24 +84,120 @@ const timeAgoVi = (ms: number | null | undefined): string => {
 // at low opacity so they read as soft pastels on the light theme and as glow on dark.
 const AURORA = {
   morning: {
-    message: "Chào buổi sáng, chúc gia đình ngày mới an lành! ☀️",
+    greet: "Chào buổi sáng!",
     blobs: ["bg-amber-400/25", "bg-rose-400/20", "bg-orange-300/20"],
     nameGradient: "from-amber-500 via-rose-500 to-orange-500",
-    shimmer: "via-amber-500/60"
+    shimmer: "via-amber-500/60",
+    emblem: "sun"
   },
   afternoon: {
-    message: "Chào buổi chiều, chúc gia đình làm việc hiệu quả! 🌤️",
+    greet: "Chào buổi chiều!",
     blobs: ["bg-sky-500/20", "bg-cyan-400/20", "bg-violet-500/20"],
     nameGradient: "from-sky-500 via-violet-500 to-cyan-500",
-    shimmer: "via-sky-500/60"
+    shimmer: "via-sky-500/60",
+    emblem: "sun"
   },
   evening: {
-    message: "Chúc gia đình buổi tối ấm áp và thư giãn! 🌙",
+    greet: "Chào buổi tối!",
     blobs: ["bg-violet-500/25", "bg-fuchsia-500/15", "bg-indigo-500/25"],
     nameGradient: "from-violet-500 via-fuchsia-500 to-sky-500",
-    shimmer: "via-violet-500/60"
+    shimmer: "via-violet-500/60",
+    emblem: "moon"
   }
 } as const;
+
+// Lời chúc gia đình xoay vòng theo NGÀY — cả nhà thấy cùng một câu trong ngày,
+// mỗi ngày đổi một câu để trang Tổng quan luôn tươi mới.
+const DAILY_GREETINGS = [
+  "Gia đình là nơi bình yên nhất để trở về. 🏡",
+  "Yêu thương cho đi là yêu thương còn mãi. 💞",
+  "Một nụ cười của cả nhà đáng giá hơn ngàn lời nói. 😊",
+  "Hôm nay hãy ôm người thân một cái thật chặt nhé! 🤗",
+  "Bữa cơm gia đình là liều thuốc bổ cho tâm hồn. 🍚",
+  "Chậm lại một chút để lắng nghe nhau nhiều hơn. 🌿",
+  "Sức khỏe của cả nhà là tài sản quý nhất. 💪",
+  "Mỗi ngày bên nhau là một món quà. 🎁",
+  "Gia đình đồng lòng, việc khó hóa dễ. 🤝",
+  "Hãy để lời yêu thương được nói ra hôm nay. 💌",
+  "Niềm vui nhân đôi khi được sẻ chia. ✨",
+  "Nhà là nơi trái tim luôn hướng về. ❤️",
+  "Cùng nhau cố gắng, cùng nhau hạnh phúc. 🌈",
+  "Việc nhỏ làm bằng tình yêu lớn. 🌟",
+  "Giữ lửa yêu thương từ những điều giản dị. 🔥",
+  "Hôm nay uống đủ nước và cười thật tươi nhé! 💧",
+  "Kiên nhẫn với nhau, dịu dàng với chính mình. 🕊️",
+  "Thành công lớn bắt đầu từ một gia đình ấm êm. 🏆",
+  "Biết ơn những điều bình dị mỗi ngày. 🙏",
+  "Cùng nhau vượt qua, không ai bị bỏ lại phía sau. 🫶",
+  "Dành thời gian cho nhau là món quà vô giá. ⏳",
+  "Một gia đình gọn gàng, một tâm trí thảnh thơi. 🧹",
+  "Yêu thương là ngôn ngữ mọi trái tim đều hiểu. 💗",
+  "Chúc cả nhà một ngày tràn đầy năng lượng! ⚡"
+] as const;
+
+// Chọn lời chúc theo số thứ tự ngày trong năm → ổn định trong ngày, đổi mỗi ngày.
+function greetingOfDay(d = new Date()): string {
+  const start = new Date(d.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000);
+  return DAILY_GREETINGS[dayOfYear % DAILY_GREETINGS.length];
+}
+
+// Biểu tượng thời gian trong ngày: mặt trời toả tia (xoay chậm) hoặc trăng + sao lấp lánh.
+function TimeEmblem({ kind }: { kind: "sun" | "moon" }) {
+  const reduce = useReducedMotion();
+  if (kind === "moon") {
+    return (
+      <div className="relative w-10 h-10 grid place-items-center shrink-0">
+        <div aria-hidden className="absolute inset-0 rounded-full bg-violet-400/25 blur-md" />
+        <Moon className="relative w-6 h-6 text-violet-500 dark:text-violet-200 fill-violet-400/40" />
+        {!reduce && (
+          <motion.span
+            aria-hidden
+            className="absolute -top-0.5 -right-0.5 text-amber-400 dark:text-amber-300 text-[10px] leading-none"
+            animate={{ opacity: [0.2, 1, 0.2], scale: [0.7, 1.15, 0.7] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            ✦
+          </motion.span>
+        )}
+      </div>
+    );
+  }
+  return (
+    <div className="relative w-10 h-10 grid place-items-center shrink-0">
+      <div aria-hidden className="absolute inset-0 rounded-full bg-amber-400/30 blur-md" />
+      <motion.div
+        className="relative"
+        animate={reduce ? undefined : { rotate: 360 }}
+        transition={reduce ? undefined : { duration: 22, repeat: Infinity, ease: "linear" }}
+      >
+        <Sun className="w-6 h-6 text-amber-500 dark:text-amber-300" />
+      </motion.div>
+    </div>
+  );
+}
+
+// Đồng hồ chạy thật — tách riêng để chỉ nó re-render mỗi giây, không kéo cả Dashboard.
+function LiveClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="text-right leading-none">
+      <div className="font-mono font-bold text-slate-100 tabular-nums text-lg md:text-xl">
+        {now.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+        <span className="text-[11px] font-semibold text-slate-400 ml-1 align-top">
+          {now.toLocaleTimeString("vi-VN", { second: "2-digit" })}
+        </span>
+      </div>
+      <div className="text-[10px] md:text-[11px] text-slate-300 mt-1 whitespace-nowrap">
+        {now.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+      </div>
+    </div>
+  );
+}
 
 // Smoothly counts from the previous value up to the target (easeOutCubic).
 function useCountUp(target: number | null | undefined, duration = 900): number {
@@ -388,6 +484,8 @@ export function Dashboard({
     if (hours >= 12 && hours < 18) return AURORA.afternoon;
     return AURORA.evening;
   }, []);
+  // Lời chúc gia đình đổi theo ngày (ổn định trong phiên).
+  const dailyGreeting = useMemo(() => greetingOfDay(), []);
 
   // Chuỗi giá 7 ngày cho sparkline từng card (server chụp ~10 phút/lần).
   const marketSeries = useMemo(() => {
@@ -444,11 +542,15 @@ export function Dashboard({
 
         <div className="relative p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <Avatar
-              user={currentUser}
-              className="w-12 h-12 md:w-14 md:h-14 rounded-2xl text-lg"
-              extraClass="ring-2 ring-slate-800/80 shadow-lg"
-            />
+            <div className="relative shrink-0">
+              {/* Quầng sáng aurora theo buổi ôm quanh avatar */}
+              <div aria-hidden className={`absolute -inset-1.5 rounded-2xl blur-md opacity-50 bg-gradient-to-br ${aurora.nameGradient}`} />
+              <Avatar
+                user={currentUser}
+                className="relative w-12 h-12 md:w-14 md:h-14 rounded-2xl text-lg"
+                extraClass="ring-2 ring-slate-100/10 shadow-lg"
+              />
+            </div>
             <div className="space-y-1 min-w-0">
               <h2 className="text-xl md:text-2xl font-extrabold text-slate-100 truncate">
                 Xin chào,{" "}
@@ -457,12 +559,14 @@ export function Dashboard({
                 </span>
                 !
               </h2>
-              <p className="text-slate-400 text-sm md:text-base">{aurora.message}</p>
+              <p className="text-slate-300 text-sm md:text-base">
+                <span className="font-semibold text-slate-200">{aurora.greet}</span> {dailyGreeting}
+              </p>
             </div>
           </div>
-          <div className="bg-slate-950/60 backdrop-blur-md px-4 py-2 rounded-xl border border-slate-800/80 flex items-center gap-3 self-start md:self-auto text-xs md:text-sm font-mono text-slate-300 shrink-0">
-            <Clock className="w-4 h-4 text-sky-400 animate-pulse" />
-            <span>{new Date().toLocaleDateString("vi-VN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+          <div className="self-start md:self-auto shrink-0 flex items-center gap-3 bg-slate-950/50 backdrop-blur-md px-4 py-2.5 rounded-2xl neu-pressed-sm">
+            <TimeEmblem kind={aurora.emblem} />
+            <LiveClock />
           </div>
         </div>
       </motion.div>
@@ -507,8 +611,8 @@ export function Dashboard({
           const quakes = widgets?.quakes;
           const quakeList: any[] = quakes?.events || [];
           const stormStyle = storm?.level === "warning"
-            ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
-            : "bg-amber-500/15 border-amber-500/40 text-amber-300";
+            ? "bg-rose-500/15 border-rose-500/40 text-rose-700 dark:text-rose-300"
+            : "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300";
           return (
             <div className="relative overflow-hidden lg:col-span-1 bg-gradient-to-br from-sky-500/15 via-slate-900 to-slate-900 neu-raised rounded-2xl p-5 shadow-lg flex flex-col min-h-[188px]">
               <ShimmerLine via="via-sky-500/60" />
