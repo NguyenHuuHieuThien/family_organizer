@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Family Organizer — App quản lý gia đình tự host trên Raspberry Pi</title>
+    <meta
+      name="description"
+      content="Family Organizer: quản lý tài chính, lịch, nhiệm vụ, sức khỏe, giấy tờ cho cả gia đình — chạy tại nhà trên Raspberry Pi / mini PC, dữ liệu riêng tư, không phí thuê bao."
+    />
+    <meta name="theme-color" content="#e4e9f1" />
+
+    <!-- Open Graph / social preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Family Organizer — Trợ lý gia đình chạy tại nhà" />
+    <meta
+      property="og:description"
+      content="Tất cả cho gia đình trong một app: chi tiêu, lịch, nhiệm vụ, sức khỏe, giấy tờ, điểm thưởng cho trẻ và trợ lý AI. Tự host trên Raspberry Pi, dữ liệu ở nhà bạn."
+    />
+    <meta property="og:image" content="assets/family-organizer-cover.png" />
+
+    <!-- Áp theme đã lưu trước khi vẽ để tránh chớp sáng -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("fo_landing_theme");
+          if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          if (t === "dark") document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
+
+    <style>
+      :root {
+        --bg: #e4e9f1;
+        --surface: #e4e9f1;
+        --text: #334155;
+        --muted: #64748b;
+        --accent: #6366f1;
+        --accent-soft: #eef2ff;
+        --green: #16a34a;
+        --sh-dark: #c3c8d2;
+        --sh-light: #ffffff;
+        --radius: 22px;
+      }
+      html.dark {
+        --bg: #171d29;
+        --surface: #171d29;
+        --text: #cbd5e1;
+        --muted: #94a3b8;
+        --accent: #818cf8;
+        --accent-soft: #232b3b;
+        --green: #4ade80;
+        --sh-dark: #0d1119;
+        --sh-light: #222b3c;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        transition: background 0.3s ease, color 0.3s ease;
+      }
+      a { color: var(--accent); text-decoration: none; }
+      .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+      /* Neumorphism cards */
+      .neu {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: 8px 8px 18px var(--sh-dark), -8px -8px 18px var(--sh-light);
+      }
+      .neu-inset {
+        background: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: inset 6px 6px 12px var(--sh-dark), inset -6px -6px 12px var(--sh-light);
+      }
+
+      /* Top bar */
+      header.top {
+        position: sticky; top: 0; z-index: 20;
+        backdrop-filter: blur(10px);
+        background: color-mix(in srgb, var(--bg) 82%, transparent);
+      }
+      .top-inner { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; max-width: 1080px; margin: 0 auto; }
+      .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.02em; }
+      .brand .logo { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; font-size: 18px; }
+      .top-actions { display: flex; align-items: center; gap: 10px; }
+      button.icon-btn, a.btn {
+        border: none; cursor: pointer; font: inherit; font-weight: 600;
+        color: var(--text); background: var(--surface);
+        border-radius: 14px; padding: 10px 16px;
+        box-shadow: 5px 5px 11px var(--sh-dark), -5px -5px 11px var(--sh-light);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        display: inline-flex; align-items: center; gap: 8px;
+      }
+      button.icon-btn { padding: 10px 12px; }
+      a.btn:active, button.icon-btn:active { box-shadow: inset 4px 4px 9px var(--sh-dark), inset -4px -4px 9px var(--sh-light); transform: translateY(1px); }
+      a.btn.primary { background: var(--accent); color: #fff; box-shadow: 5px 5px 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+      a.btn.primary:active { box-shadow: inset 3px 3px 8px rgba(0,0,0,0.25); }
+
+      /* Hero */
+      .hero { padding: 46px 0 20px; }
+      .hero h1 { font-size: clamp(28px, 5vw, 46px); line-height: 1.12; letter-spacing: -0.03em; margin: 0 0 16px; }
+      .hero h1 .grad { background: linear-gradient(90deg, var(--accent), var(--green)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+      .hero p.lead { font-size: clamp(16px, 2.4vw, 20px); color: var(--muted); max-width: 640px; margin: 0 auto 26px; }
+      .hero .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 34px; }
+      .hero-center { text-align: center; }
+      .cover { width: 100%; border-radius: 26px; padding: 12px; }
+      .cover img { width: 100%; display: block; border-radius: 16px; }
+
+      /* Pills */
+      .pills { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 26px 0 6px; }
+      .pill { font-size: 13px; font-weight: 600; color: var(--muted); padding: 8px 14px; border-radius: 999px;
+        box-shadow: inset 3px 3px 7px var(--sh-dark), inset -3px -3px 7px var(--sh-light); }
+
+      section { padding: 46px 0; }
+      .section-title { text-align: center; margin: 0 0 8px; font-size: clamp(22px, 3.4vw, 32px); letter-spacing: -0.02em; }
+      .section-sub { text-align: center; color: var(--muted); max-width: 620px; margin: 0 auto 34px; }
+
+      /* Value grid */
+      .grid { display: grid; gap: 18px; }
+      .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+      .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+      .card { padding: 24px; }
+      .card .emoji { font-size: 26px; margin-bottom: 10px; display: block; }
+      .card h3 { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.01em; }
+      .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+      /* Gallery */
+      .gallery-group { margin-bottom: 34px; }
+      .gallery-group h3 { text-align: center; font-size: 17px; color: var(--muted); font-weight: 700; margin: 0 0 16px; }
+      .shots { display: grid; gap: 16px; }
+      .shots.two { grid-template-columns: repeat(2, 1fr); }
+      .shots.three { grid-template-columns: repeat(3, 1fr); }
+      figure.shot { margin: 0; padding: 10px; border-radius: 18px; }
+      figure.shot img { width: 100%; display: block; border-radius: 11px; cursor: zoom-in; }
+      figure.shot figcaption { text-align: center; font-size: 13px; color: var(--muted); padding: 10px 4px 4px; font-weight: 600; }
+
+      /* Feature list */
+      .feat-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .feat { display: flex; gap: 14px; padding: 20px; }
+      .feat .ico { font-size: 22px; flex-shrink: 0; }
+      .feat h4 { margin: 0 0 4px; font-size: 16px; }
+      .feat p { margin: 0; color: var(--muted); font-size: 14px; }
+
+      /* Table */
+      .table-card { padding: 8px; overflow: hidden; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { text-align: left; padding: 14px 18px; font-size: 14px; }
+      thead th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+      tbody tr td:first-child { font-weight: 700; }
+      tbody tr:not(:last-child) td { border-bottom: 1px solid color-mix(in srgb, var(--muted) 18%, transparent); }
+
+      /* Steps */
+      .steps { counter-reset: step; display: grid; gap: 14px; }
+      .step { display: flex; gap: 16px; padding: 18px 22px; align-items: flex-start; }
+      .step::before { counter-increment: step; content: counter(step); flex-shrink: 0;
+        width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; font-weight: 800; color: #fff;
+        background: var(--accent); box-shadow: 4px 4px 10px color-mix(in srgb, var(--accent) 40%, transparent); }
+      .step code { background: var(--accent-soft); color: var(--accent); padding: 2px 7px; border-radius: 6px; font-size: 13px; }
+
+      /* CTA band */
+      .cta-band { text-align: center; padding: 44px 26px; }
+      .cta-band h2 { margin: 0 0 10px; font-size: clamp(22px, 3.4vw, 30px); }
+      .cta-band p { color: var(--muted); margin: 0 auto 22px; max-width: 520px; }
+
+      footer { text-align: center; color: var(--muted); font-size: 13px; padding: 40px 20px 60px; }
+      footer a { font-weight: 600; }
+
+      /* Lightbox */
+      .lightbox { position: fixed; inset: 0; z-index: 50; background: rgba(10,12,18,0.85); display: none;
+        align-items: center; justify-content: center; padding: 24px; cursor: zoom-out; }
+      .lightbox.open { display: flex; }
+      .lightbox img { max-width: 100%; max-height: 92vh; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+
+      @media (max-width: 820px) {
+        .grid.cols-3, .grid.cols-2, .shots.three, .shots.two, .feat-list { grid-template-columns: 1fr; }
+        .hero { padding: 30px 0 10px; }
+      }
+      @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto; } }
+    </style>
+  </head>
+
+  <body>
+    <header class="top">
+      <div class="top-inner">
+        <div class="brand"><span class="logo neu">🏡</span> Family Organizer</div>
+        <div class="top-actions">
+          <button class="icon-btn" id="themeToggle" aria-label="Đổi giao diện sáng/tối" title="Sáng / Tối">🌙</button>
+          <a class="btn primary" href="https://github.com/happysmartlight/Family-Organizer" target="_blank" rel="noopener">GitHub ↗</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <!-- HERO -->
+      <section class="hero hero-center">
+        <div class="pills">
+          <span class="pill">🔒 Dữ liệu ở nhà bạn</span>
+          <span class="pill">💸 Không phí thuê bao</span>
+          <span class="pill">🍓 Chạy trên Raspberry Pi</span>
+          <span class="pill">📱 Cài như app điện thoại</span>
+        </div>
+        <h1>Cả gia đình gọn trong <span class="grad">một app</span> —<br />chạy ngay tại nhà bạn</h1>
+        <p class="lead">
+          Chi tiêu, lịch, nhiệm vụ, sức khỏe, giấy tờ, đi chợ, điểm thưởng cho trẻ và trợ lý AI.
+          Tự host trên một chiếc máy nhỏ đặt góc nhà — dữ liệu riêng tư tuyệt đối, không gửi lên cloud của ai.
+        </p>
+        <div class="cta">
+          <a class="btn primary" href="https://github.com/happysmartlight/Family-Organizer" target="_blank" rel="noopener">Xem mã nguồn trên GitHub</a>
+          <a class="btn" href="#cai-dat">Hướng dẫn cài đặt</a>
+        </div>
+        <div class="cover neu">
+          <img src="assets/family-organizer-cover.png" alt="Family Organizer chạy trên laptop, điện thoại và Raspberry Pi" />
+        </div>
+      </section>
+
+      <!-- VALUE PROPS -->
+      <section id="vi-sao">
+        <h2 class="section-title">Vì sao tự host tại nhà?</h2>
+        <p class="section-sub">Đây không phải dịch vụ đám mây thuê bao. Nó chạy trên phần cứng của chính bạn.</p>
+        <div class="grid cols-3">
+          <div class="card neu"><span class="emoji">🔒</span><h3>Riêng tư tuyệt đối</h3><p>Tài chính, sức khỏe, giấy tờ… nằm trên ổ đĩa nhà bạn. Không bên thứ ba nào đọc được.</p></div>
+          <div class="card neu"><span class="emoji">💸</span><h3>Không phí hàng tháng</h3><p>Mua máy một lần. Tiền điện mỗi tháng chỉ vài nghìn đồng cho cả gia đình dùng thoải mái.</p></div>
+          <div class="card neu"><span class="emoji">🍓</span><h3>Phần cứng nhỏ gọn</h3><p>Raspberry Pi 5, mini PC, NAS hay máy Linux cũ — cài Docker là chạy 24/7, êm và mát.</p></div>
+          <div class="card neu"><span class="emoji">📶</span><h3>Dùng mọi lúc mọi nơi</h3><p>Ở nhà qua Wi-Fi; ra ngoài vào an toàn qua Tailscale — không cần mở port hay IP tĩnh.</p></div>
+          <div class="card neu"><span class="emoji">📱</span><h3>Như app thật</h3><p>Cài lên màn hình chính iPhone/Android (PWA), có thông báo đẩy, chạy toàn màn hình.</p></div>
+          <div class="card neu"><span class="emoji">♻️</span><h3>Tự cập nhật &amp; sao lưu</h3><p>Watchtower tự nâng cấp bản mới; backup mỗi đêm, gửi kèm ra Telegram để cất offsite.</p></div>
+        </div>
+      </section>
+
+      <!-- GALLERY -->
+      <section id="anh">
+        <h2 class="section-title">📸 Ảnh màn hình</h2>
+        <p class="section-sub">Giao diện Neumorphism, hỗ trợ Light / Dark mode. Bấm vào ảnh để phóng to.</p>
+
+        <div class="gallery-group">
+          <h3>Tổng quan — Sáng &amp; Tối</h3>
+          <div class="shots two">
+            <figure class="shot neu"><img src="assets/dashboard-light.png" alt="Dashboard sáng" /><figcaption>☀️ Dashboard — Light</figcaption></figure>
+            <figure class="shot neu"><img src="assets/dashboard-dark.png" alt="Dashboard tối" /><figcaption>🌙 Dashboard — Dark</figcaption></figure>
+          </div>
+        </div>
+
+        <div class="gallery-group">
+          <h3>Chi tiêu &amp; Tài sản</h3>
+          <div class="shots three">
+            <figure class="shot neu"><img src="assets/finance-overview.png" alt="Thu chi và ngân sách" /><figcaption>Thu chi &amp; ngân sách</figcaption></figure>
+            <figure class="shot neu"><img src="assets/finance-assets.png" alt="Tài sản gia đình" /><figcaption>Tài sản gia đình</figcaption></figure>
+            <figure class="shot neu"><img src="assets/finance-trends.png" alt="Xu hướng và so sánh chi tiêu" /><figcaption>Xu hướng &amp; so sánh</figcaption></figure>
+          </div>
+        </div>
+
+        <div class="gallery-group">
+          <h3>Nhiệm vụ, Lịch &amp; Sức khỏe</h3>
+          <div class="shots three">
+            <figure class="shot neu"><img src="assets/tasks-rewards.png" alt="Nhiệm vụ và điểm thưởng" /><figcaption>Nhiệm vụ + điểm thưởng</figcaption></figure>
+            <figure class="shot neu"><img src="assets/health-emergency-card.png" alt="Thẻ y tế khẩn cấp" /><figcaption>Sức khỏe — thẻ khẩn cấp</figcaption></figure>
+            <figure class="shot neu"><img src="assets/health-growth.png" alt="Biểu đồ tăng trưởng" /><figcaption>Sức khỏe — tăng trưởng</figcaption></figure>
+            <figure class="shot neu"><img src="assets/task-create-modal.png" alt="Tạo nhiệm vụ mới" /><figcaption>Tạo nhiệm vụ</figcaption></figure>
+            <figure class="shot neu"><img src="assets/plan-create-modal.png" alt="Đăng ký lịch trình" /><figcaption>Đăng ký lịch trình</figcaption></figure>
+            <figure class="shot neu"><img src="assets/documents.png" alt="Kho giấy tờ gia đình" /><figcaption>Giấy tờ gia đình</figcaption></figure>
+          </div>
+        </div>
+
+        <div class="gallery-group">
+          <h3>Quản trị (Admin)</h3>
+          <div class="shots three">
+            <figure class="shot neu"><img src="assets/members-rbac.png" alt="Thành viên và phân quyền" /><figcaption>Thành viên &amp; phân quyền</figcaption></figure>
+            <figure class="shot neu"><img src="assets/settings-profile.png" alt="Hồ sơ cá nhân" /><figcaption>Hồ sơ cá nhân</figcaption></figure>
+            <figure class="shot neu"><img src="assets/settings-backup.png" alt="Sao lưu và khôi phục" /><figcaption>Sao lưu &amp; khôi phục</figcaption></figure>
+          </div>
+          <div class="shots two" style="margin-top:16px">
+            <figure class="shot neu"><img src="assets/server-monitor-light.png" alt="Quản lý server sáng" /><figcaption>Server monitor — Light</figcaption></figure>
+            <figure class="shot neu"><img src="assets/server-monitor-dark.png" alt="Quản lý server tối" /><figcaption>Server monitor — Dark</figcaption></figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURES -->
+      <section id="tinh-nang">
+        <h2 class="section-title">✨ Tính năng</h2>
+        <p class="section-sub">Tất cả những gì một gia đình cần theo dõi mỗi ngày, gom về một chỗ.</p>
+        <div class="feat-list">
+          <div class="feat neu"><span class="ico">📊</span><div><h4>Tổng quan</h4><p>Việc cần làm, số dư quỹ, thời tiết, giá vàng/crypto, nhắc sinh nhật &amp; uống thuốc.</p></div></div>
+          <div class="feat neu"><span class="ico">📋</span><div><h4>Nhiệm vụ &amp; điểm thưởng</h4><p>Phân việc, ưu tiên, task lặp xoay vòng; trẻ hoàn thành được cộng điểm đổi quà.</p></div></div>
+          <div class="feat neu"><span class="ico">📅</span><div><h4>Lịch gia đình</h4><p>Sự kiện đơn/nhiều ngày, lịch lặp, xuất <code>.ics</code> sang iOS/Google Calendar.</p></div></div>
+          <div class="feat neu"><span class="ico">💰</span><div><h4>Chi tiêu &amp; tài sản</h4><p>Thu chi, ngân sách, hóa đơn định kỳ, mục tiêu tiết kiệm; vàng, crypto, BĐS, xe, cổ phiếu.</p></div></div>
+          <div class="feat neu"><span class="ico">💊</span><div><h4>Sức khỏe</h4><p>Thẻ y tế khẩn cấp, tiêm chủng, lịch uống thuốc và biểu đồ tăng trưởng của con.</p></div></div>
+          <div class="feat neu"><span class="ico">📄</span><div><h4>Giấy tờ</h4><p>CCCD, hộ chiếu, bảo hiểm, đăng kiểm… tự cảnh báo trước khi hết hạn.</p></div></div>
+          <div class="feat neu"><span class="ico">🛒</span><div><h4>Đi chợ &amp; thực đơn</h4><p>Danh sách chung realtime, AI gợi ý thực đơn tuần và gộp nguyên liệu; thêm bằng giọng nói.</p></div></div>
+          <div class="feat neu"><span class="ico">🤖</span><div><h4>Trợ lý AI (Gemini)</h4><p>Viết nháp ghi chú, gợi ý thực đơn, gửi bản tin gia đình mỗi tuần qua Telegram.</p></div></div>
+        </div>
+      </section>
+
+      <!-- RBAC -->
+      <section id="phan-quyen">
+        <h2 class="section-title">🔒 Phân quyền theo vai trò</h2>
+        <p class="section-sub">Mỗi thành viên thấy đúng phần của mình — trẻ em không xem được tài chính.</p>
+        <div class="table-card neu">
+          <table>
+            <thead><tr><th>Vai trò</th><th>Phù hợp cho</th><th>Quyền chính</th></tr></thead>
+            <tbody>
+              <tr><td>Admin</td><td>Ba/mẹ, người quản trị</td><td>Toàn quyền: thành viên, backup/restore, cập nhật app, server monitor</td></tr>
+              <tr><td>Member</td><td>Người lớn trong nhà</td><td>Dùng đầy đủ nội dung, truy cập tài chính, quản lý thuốc</td></tr>
+              <tr><td>Child</td><td>Trẻ em / con</td><td>Nội dung cá nhân, nhận điểm thưởng, không xem tài chính</td></tr>
+              <tr><td>Guest</td><td>Khách</td><td>Chủ yếu xem nội dung được chia sẻ</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- INSTALL -->
+      <section id="cai-dat">
+        <h2 class="section-title">🚀 Cài đặt trong 3 bước</h2>
+        <p class="section-sub">Trên Raspberry Pi hoặc bất kỳ máy Linux nào có Docker.</p>
+        <div class="steps">
+          <div class="step neu"><div><h4 style="margin:0 0 4px">Cài Docker</h4><p style="margin:0;color:var(--muted)"><code>curl -fsSL https://get.docker.com | sudo sh</code></p></div></div>
+          <div class="step neu"><div><h4 style="margin:0 0 4px">Clone repo &amp; tạo cấu hình</h4><p style="margin:0;color:var(--muted)"><code>git clone …/Family-Organizer</code> rồi <code>cp .env.example .env</code></p></div></div>
+          <div class="step neu"><div><h4 style="margin:0 0 4px">Khởi chạy</h4><p style="margin:0;color:var(--muted)"><code>docker compose up -d</code> → mở <code>http://&lt;ip-máy&gt;:3001</code></p></div></div>
+        </div>
+        <p style="text-align:center;margin-top:26px">
+          👉 Xem hướng dẫn đầy đủ (phần cứng gợi ý, Tailscale, backup, bảo mật):
+          <a href="https://github.com/happysmartlight/Family-Organizer/blob/main/docs/gioi-thieu-va-huong-dan.md" target="_blank" rel="noopener">Giới thiệu &amp; hướng dẫn chi tiết ↗</a>
+        </p>
+      </section>
+
+      <!-- CTA BAND -->
+      <section>
+        <div class="cta-band neu">
+          <h2>Mã nguồn mở — mời bạn dùng &amp; đóng góp</h2>
+          <p>Mỗi gia đình vận hành một kiểu. Fork về chỉnh cho nhà bạn, hoặc gửi PR để cùng cải thiện.</p>
+          <div class="cta" style="justify-content:center">
+            <a class="btn primary" href="https://github.com/happysmartlight/Family-Organizer" target="_blank" rel="noopener">⭐ Ghé GitHub</a>
+            <a class="btn" href="https://github.com/happysmartlight/Family-Organizer/issues" target="_blank" rel="noopener">Báo lỗi / góp ý</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Family Organizer — app quản lý gia đình tự host trên Raspberry Pi.<br />
+      Made with ❤️ · <a href="https://github.com/happysmartlight/Family-Organizer" target="_blank" rel="noopener">github.com/happysmartlight/Family-Organizer</a>
+    </footer>
+
+    <div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt="" /></div>
+
+    <script>
+      // Dark mode toggle
+      var toggle = document.getElementById("themeToggle");
+      function syncIcon() { toggle.textContent = document.documentElement.classList.contains("dark") ? "☀️" : "🌙"; }
+      syncIcon();
+      toggle.addEventListener("click", function () {
+        var isDark = document.documentElement.classList.toggle("dark");
+        try { localStorage.setItem("fo_landing_theme", isDark ? "dark" : "light"); } catch (e) {}
+        document.querySelector('meta[name="theme-color"]').setAttribute("content", isDark ? "#171d29" : "#e4e9f1");
+        syncIcon();
+      });
+
+      // Lightbox
+      var lb = document.getElementById("lightbox");
+      var lbImg = document.getElementById("lightbox-img");
+      document.querySelectorAll("figure.shot img").forEach(function (img) {
+        img.addEventListener("click", function () {
+          lbImg.src = img.src; lbImg.alt = img.alt; lb.classList.add("open");
+        });
+      });
+      lb.addEventListener("click", function () { lb.classList.remove("open"); lbImg.src = ""; });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape") { lb.classList.remove("open"); lbImg.src = ""; } });
+    </script>
+  </body>
+</html>
