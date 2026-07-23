@@ -232,6 +232,60 @@ Lần đầu tự pull image từ GHCR. Ứng dụng khả dụng tại:
 
 Dữ liệu lưu bền vững tại `./data/` trên máy host.
 
+### 🌐 Bonus — Truy Cập Từ Xa Qua Tailscale (ra ngoài vẫn dùng được)
+
+Mặc định app chỉ chạy trong **mạng nội bộ (LAN)** — ở nhà thì tiện, nhưng ra ngoài
+đường là không vào được. Giải pháp gọn và an toàn nhất là **Tailscale**: nó tạo một
+mạng riêng ảo giữa các thiết bị của bạn, **không cần mở cổng router, không cần IP
+tĩnh, không lộ app ra Internet công cộng**. Miễn phí cho nhu cầu gia đình.
+
+> 💡 **Ý tưởng:** cài Tailscale lên *máy chủ (Pi)* và lên *điện thoại/laptop* của các
+> thành viên. Chúng "nhìn thấy" nhau như đang cùng một mạng, dù bạn đang ở bất cứ đâu.
+
+**Bước 1 — Tạo tài khoản Tailscale:** đăng ký miễn phí tại [tailscale.com](https://tailscale.com) (đăng nhập bằng Google/Microsoft/GitHub).
+
+**Bước 2 — Cài Tailscale lên máy chủ (Pi/mini PC):**
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+
+Chạy xong, terminal hiện một đường link — mở link đó bằng trình duyệt để đăng nhập và
+xác nhận thiết bị. Kiểm tra địa chỉ IP Tailscale (dạng `100.x.x.x`) của máy:
+
+```bash
+tailscale ip -4
+```
+
+**Bước 3 — Cài Tailscale lên điện thoại/laptop:** tải app **Tailscale** trên
+App Store / Google Play (hoặc bản desktop), đăng nhập *cùng một tài khoản*, rồi bật kết nối.
+
+**Bước 4 — Vào app từ bất cứ đâu:** chỉ cần điện thoại đã bật Tailscale, mở trình duyệt:
+
+```text
+http://100.x.x.x:3001
+```
+
+(thay `100.x.x.x` bằng IP Tailscale của Pi ở Bước 2). Cứ để mở bằng địa chỉ này là
+dùng được cả khi ở nhà lẫn khi ra ngoài — không cần đổi qua lại IP LAN nữa.
+
+#### (Tùy chọn) Có HTTPS + tên đẹp để bật thông báo đẩy trên iPhone
+
+Thông báo đẩy PWA trên iPhone **yêu cầu HTTPS**. Tailscale cấp sẵn HTTPS miễn phí qua
+lệnh `tailscale serve` — trỏ tên miền `*.ts.net` của bạn về app:
+
+```bash
+sudo tailscale serve --bg 3001
+```
+
+Sau đó vào app bằng địa chỉ HTTPS mà lệnh in ra (dạng `https://ten-may.ten-tailnet.ts.net`).
+Dùng chính địa chỉ HTTPS này khi **Cài lên màn hình chính (PWA)** và đặt vào biến
+`APP_URL` trong `.env` để deep-link trong thông báo đẩy hoạt động đúng.
+
+> ⚠️ **Đừng dùng `tailscale funnel`** trừ khi bạn thực sự muốn mở app ra Internet công
+> khai. `serve` chỉ chia sẻ trong mạng riêng của bạn — đúng nhu cầu gia đình và an toàn hơn.
+
 ### Cập nhật
 
 **Qua giao diện (khuyến nghị):** Settings → Phiên bản & Cập nhật → **Cập nhật ngay**
