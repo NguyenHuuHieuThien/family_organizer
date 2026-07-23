@@ -846,22 +846,17 @@ export class FamilyDB {
 
       db.tasks[idx] = updatedTask;
 
-      // Mở lại việc đã hoàn thành → gỡ điểm đã tự cộng cho việc này để ledger đúng thực
-      // tế; hoàn thành lại sẽ được cộng lại từ đầu (tránh kẹt "đã cộng" mà không cộng mới).
+      // Mở lại việc đã hoàn thành = bắt đầu một LƯỢT MỚI (dùng lại 1 task thay vì tạo mới):
+      // reset cờ chờ duyệt/bằng chứng để làm lại từ đầu. Điểm đã cộng ở lượt trước GIỮ NGUYÊN —
+      // mỗi lần hoàn thành là một lượt được thưởng riêng, cộng dồn.
       const isReopening = oldTask.status === "completed" && updatedTask.status !== "completed";
       if (isReopening) {
-        const removed = db.rewardLedger.filter(e => e.taskId === updatedTask.id);
-        if (removed.length > 0) {
-          db.rewardLedger = db.rewardLedger.filter(e => e.taskId !== updatedTask.id);
-          const recipientId = removed[0].userId;
-          const totalRemoved = removed.reduce((s, e) => s + e.points, 0);
-          this.addNotificationInternal(db, recipientId, "↩️ Điểm tạm gỡ", `Việc "${updatedTask.title}" được mở lại nên tạm gỡ ${totalRemoved} điểm; hoàn thành lại sẽ được cộng lại.`, "task");
-        }
-        // Việc mở lại thì bỏ luôn cờ chờ duyệt / bằng chứng cũ (bắt đầu lại từ đầu).
         updatedTask.pendingApproval = false;
         updatedTask.submittedById = null;
         updatedTask.submittedAt = null;
         updatedTask.rejectionReason = null;
+        updatedTask.proofImage = null;
+        updatedTask.proofNote = null;
       }
 
       if (needsApproval) {
@@ -874,8 +869,10 @@ export class FamilyDB {
         // trẻ đã làm chứ không phải người duyệt; nếu không có thì dùng người được giao / người bấm.
         const awardUserId = updatedTask.submittedById || updatedTask.assigneeId || userId;
         const awardUser = db.users.find(u => u.id === awardUserId);
-        const alreadyAwarded = db.rewardLedger.some(e => e.taskId === updatedTask.id && e.userId === awardUserId);
-        if (awardUser?.role === UserRole.CHILD && !alreadyAwarded) {
+        // Mỗi lần chuyển sang "hoàn thành" là một lượt thưởng riêng (cộng dồn qua các lần
+        // mở lại). Chốt effectiveCompleting = chỉ cộng đúng lúc CHUYỂN trạng thái nên không
+        // bị cộng trùng khi chỉ sửa/lưu lại một task vốn đã hoàn thành.
+        if (awardUser?.role === UserRole.CHILD) {
           db.rewardLedger.unshift({
             id: `reward_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
             userId: awardUserId,
