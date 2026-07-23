@@ -4,6 +4,79 @@ Hệ thống quản lý gia đình tất-cả-trong-một — tài chính, lịc
 
 ---
 
+## 🏠 Chạy Ngay Tại Nhà Bạn (Self-hosted / Homelab)
+
+Đây **không phải** dịch vụ trên mây thuê bao hàng tháng. Family Organizer chạy trên
+**chính chiếc máy nhỏ đặt trong nhà bạn** — giống một "máy chủ gia đình" tí hon cắm
+điện góc nhà, chạy êm 24/7. Toàn bộ dữ liệu (tài chính, sức khỏe, giấy tờ, ảnh hóa
+đơn…) **nằm trên ổ đĩa nhà bạn**, không gửi lên máy chủ của bên thứ ba nào.
+
+### Chạy được trên thiết bị gì?
+
+Bất kỳ máy nào cài được **Docker** — chọn theo túi tiền và nhu cầu:
+
+| Thiết bị | Phù hợp với | Ghi chú |
+| :--- | :--- | :--- |
+| **Raspberry Pi 5** (hoặc Pi 4) | Đa số gia đình | Nhỏ bằng lòng bàn tay, điện ~5W, êm và mát |
+| **Mini PC** (Intel N100, NUC…) | Cần nhanh hơn, nhiều người dùng | Mạnh hơn Pi, vẫn tiết kiệm điện |
+| **NAS** (Synology, TrueNAS…) | Nhà đã có sẵn NAS | Chạy chung như một ứng dụng Docker |
+| **Máy tính cũ / Linux server** | Tận dụng máy sẵn có | Cài Docker là chạy |
+
+> Không cần máy khủng: một chiếc **Pi mini ~1–2 triệu** là đủ cho cả gia đình dùng thoải mái.
+
+### Vì sao chọn cách này?
+
+- 🔒 **Riêng tư tuyệt đối** — dữ liệu ở nhà bạn, không ai khác đọc được.
+- 💸 **Không phí thuê bao** — mua máy một lần, tiền điện mỗi tháng chỉ vài nghìn đồng.
+- 📶 **Dùng mọi lúc mọi nơi** — trong nhà truy cập qua Wi-Fi/LAN; khi ra ngoài dùng
+  **Tailscale** để vào an toàn mà *không cần mở cổng router hay IP tĩnh*.
+- 📱 **Như một app điện thoại** — cài lên màn hình chính iPhone/Android (PWA), có
+  thông báo đẩy, chạy toàn màn hình như ứng dụng thật.
+- ♻️ **Tự cập nhật & tự sao lưu** — Watchtower tự nâng cấp khi có bản mới; backup tự
+  động mỗi đêm, có thể gửi kèm ra Telegram để cất offsite.
+
+Xem hướng dẫn cài đặt chi tiết ở mục [🚀 Triển Khai Production (Raspberry Pi)](#-triển-khai-production-raspberry-pi) bên dưới.
+
+---
+
+## 📸 Ảnh Màn Hình
+
+### Tổng quan — Sáng & Tối
+
+Giao diện Neumorphism, hỗ trợ Light / Dark mode với hiệu ứng chuyển cảnh mượt.
+
+| ☀️ Light | 🌙 Dark |
+| :---: | :---: |
+| ![Dashboard sáng](assets/dashboard-light.png) | ![Dashboard tối](assets/dashboard-dark.png) |
+
+### Chi tiêu & Tài sản
+
+| Thu chi & Ngân sách | Tài sản gia đình | Xu hướng & So sánh |
+| :---: | :---: | :---: |
+| ![Chi tiêu](assets/finance-overview.png) | ![Tài sản](assets/finance-assets.png) | ![Xu hướng chi tiêu](assets/finance-trends.png) |
+
+### Nhiệm vụ, Lịch & Sức khỏe
+
+| Nhóm Task + Điểm thưởng | Sức khỏe — Thẻ khẩn cấp | Sức khỏe — Tăng trưởng |
+| :---: | :---: | :---: |
+| ![Nhiệm vụ và điểm thưởng](assets/tasks-rewards.png) | ![Thẻ y tế khẩn cấp](assets/health-emergency-card.png) | ![Biểu đồ tăng trưởng](assets/health-growth.png) |
+
+| Tạo nhiệm vụ | Đăng ký lịch trình | Giấy tờ gia đình |
+| :---: | :---: | :---: |
+| ![Modal tạo việc](assets/task-create-modal.png) | ![Modal tạo lịch](assets/plan-create-modal.png) | ![Kho giấy tờ](assets/documents.png) |
+
+### Quản trị (Admin)
+
+| Thành viên & Phân quyền | Hồ sơ cá nhân | Sao lưu & Khôi phục |
+| :---: | :---: | :---: |
+| ![Thành viên và phân quyền](assets/members-rbac.png) | ![Hồ sơ cá nhân](assets/settings-profile.png) | ![Backup và khôi phục](assets/settings-backup.png) |
+
+| Quản lý Server — Sáng | Quản lý Server — Tối |
+| :---: | :---: |
+| ![Server monitor sáng](assets/server-monitor-light.png) | ![Server monitor tối](assets/server-monitor-dark.png) |
+
+---
+
 ## ✨ Tính Năng
 
 ### 📊 Tổng Quan (Dashboard)
