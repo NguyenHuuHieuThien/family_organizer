@@ -11,6 +11,7 @@ import { optimizeAndUpload } from "../utils/uploadImage.js";
 import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
 import { debtPaid, debtRemaining } from "../utils/debt.js";
+import { useTranslation } from "react-i18next";
 
 interface DebtTrackerProps {
   currentUser: User;
@@ -24,7 +25,7 @@ interface DebtTrackerProps {
 
 const fmtMoney = (n: number) => n.toLocaleString("vi-VN");
 const parseMoney = (s: string) => Number(s.replace(/[^\d]/g, "")) || 0;
-const paidOf = debtPaid; // logic thuần dùng chung với server (src/utils/debt)
+const paidOf = debtPaid;
 
 function daysLeft(dateStr?: string): number | null {
   if (!dateStr) return null;
@@ -45,6 +46,7 @@ export function DebtTracker({
   onAddDebtPayment,
   onRemoveDebtPayment
 }: DebtTrackerProps) {
+  const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
   const [direction, setDirection] = useState<"borrowed" | "lent">("borrowed");
   const [counterparty, setCounterparty] = useState("");
@@ -83,13 +85,11 @@ export function DebtTracker({
     setAttachments([]); setAmount(0); setLoanDate(new Date().toISOString().slice(0, 10)); setDueDate(""); setNote(""); setError("");
   };
 
-  // Bấm "+ Khoản nợ": luôn mở form ở chế độ tạo mới (reset mọi field, kể cả khi đang sửa).
   const toggleCreateForm = () => {
     if (showForm) { resetForm(); setShowForm(false); }
     else { resetForm(); setShowForm(true); }
   };
 
-  // Bấm bút chì trên thẻ: nạp dữ liệu khoản nợ vào form để chỉnh sửa.
   const handleEdit = (debt: Debt) => {
     setEditingId(debt.id);
     setDirection(debt.direction === "lent" ? "lent" : "borrowed");
@@ -106,7 +106,6 @@ export function DebtTracker({
     setShowForm(true);
   };
 
-  // Đính kèm ảnh (giấy tờ vay, biên nhận chuyển khoản) — tối ưu trong trình duyệt rồi lưu file.
   const handleAttach = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     e.target.value = "";
@@ -126,7 +125,7 @@ export function DebtTracker({
         setAttachments(prev => [...prev, uploaded.url]);
       }
     } catch (err: any) {
-      setError(err.message || "Không tải được ảnh đính kèm.");
+      setError(err.message || t("debtTracker.errUploadImage"));
     } finally {
       setUploading(false);
     }
@@ -135,11 +134,11 @@ export function DebtTracker({
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!counterparty.trim()) { setError("Nhập tên người / tổ chức."); return; }
-    if (amount <= 0) { setError("Số tiền phải lớn hơn 0."); return; }
-    if (!loanDate) { setError("Chọn ngày mượn / cho mượn."); return; }
-    if (!dueDate) { setError("Chọn ngày hẹn trả."); return; }
-    if (dueDate < loanDate) { setError("Ngày hẹn trả phải sau hoặc bằng ngày mượn."); return; }
+    if (!counterparty.trim()) { setError(t("debtTracker.errCounterpartyRequired")); return; }
+    if (amount <= 0) { setError(t("debtTracker.errAmountZero")); return; }
+    if (!loanDate) { setError(t("debtTracker.errLoanDateRequired")); return; }
+    if (!dueDate) { setError(t("debtTracker.errDueDateRequired")); return; }
+    if (dueDate < loanDate) { setError(t("debtTracker.errDueDateOrder")); return; }
     setSaving(true);
     try {
       await onSaveDebt({
@@ -158,7 +157,7 @@ export function DebtTracker({
       resetForm();
       setShowForm(false);
     } catch (err: any) {
-      setError(err.message || "Không lưu được khoản nợ.");
+      setError(err.message || t("debtTracker.errSaveFailed"));
     } finally {
       setSaving(false);
     }
@@ -172,7 +171,7 @@ export function DebtTracker({
       await onAddDebtPayment(debt.id, amt, new Date().toISOString().slice(0, 10));
       setPayDraft(prev => ({ ...prev, [debt.id]: "" }));
     } catch (err) {
-      console.error("Không ghi nhận được khoản trả", err);
+      console.error("payment failed", err);
     } finally {
       setBusy(null);
     }
@@ -193,9 +192,8 @@ export function DebtTracker({
             <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5 truncate">
               {isBorrowed ? <ArrowDownLeft className="w-3.5 h-3.5 text-rose-400 shrink-0" /> : <ArrowUpRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
               {debt.counterparty}
-              {settled && <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded font-bold">Tất toán ✓</span>}
+              {settled && <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded font-bold">{t("debtTracker.settledBadge")}</span>}
             </p>
-            {/* Thông tin liên hệ (nếu có) */}
             {(debt.bankName || debt.phone || debt.address) && (
               <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 mt-1 text-[10px] text-slate-500">
                 {debt.bankName && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" /> {debt.bankName}</span>}
@@ -206,23 +204,22 @@ export function DebtTracker({
             {debt.note && <p className="text-[10px] text-slate-500 mt-0.5 truncate">{debt.note}</p>}
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
-            <button onClick={() => handleEdit(debt)} className="p-1.5 text-slate-500 hover:text-amber-400 cursor-pointer" title="Chỉnh sửa khoản nợ">
+            <button onClick={() => handleEdit(debt)} className="p-1.5 text-slate-500 hover:text-amber-400 cursor-pointer" title={t("debtTracker.editTooltip")}>
               <Pencil className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => onDeleteDebt(debt.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer" title="Xóa khoản nợ">
+            <button onClick={() => onDeleteDebt(debt.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer" title={t("debtTracker.deleteTooltip")}>
               <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
 
-        {/* Ảnh đính kèm */}
         {debt.attachments && debt.attachments.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {debt.attachments.map((url, i) => (
               <img
                 key={url}
                 src={url}
-                alt={`giấy tờ ${i + 1}`}
+                alt={t("debtTracker.attachmentAlt", { n: i + 1 })}
                 onClick={() => setLightbox(url)}
                 className="w-12 h-12 object-cover rounded-lg neu-btn cursor-pointer hover:border-amber-500 transition-colors"
                 referrerPolicy="no-referrer"
@@ -235,15 +232,15 @@ export function DebtTracker({
           <div className={`h-full ${settled ? "bg-emerald-500" : isBorrowed ? "bg-rose-500" : "bg-sky-500"} transition-all`} style={{ width: `${pct}%` }} />
         </div>
         <div className="flex items-center justify-between text-[11px]">
-          <span className="font-mono text-slate-300">Còn {fmtMoney(remaining)} / {fmtMoney(debt.amount)} đ</span>
+          <span className="font-mono text-slate-300">{t("debtTracker.remaining", { remaining: fmtMoney(remaining), total: fmtMoney(debt.amount) })}</span>
           {dleft !== null && !settled && (
             <span className={`flex items-center gap-1 font-mono ${dleft < 0 ? "text-rose-400" : dleft <= 7 ? "text-amber-400" : "text-slate-500"}`}>
-              <Calendar className="w-3 h-3" /> {dleft < 0 ? `trễ ${-dleft}d` : `còn ${dleft}d`}
+              <Calendar className="w-3 h-3" />
+              {dleft < 0 ? t("debtTracker.lateDays", { n: -dleft }) : t("debtTracker.daysLeft", { n: dleft })}
             </span>
           )}
         </div>
 
-        {/* Mốc ngày: ngày mượn → ngày hẹn trả */}
         {(debt.loanDate || debt.dueDate) && (
           <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-mono">
             <Calendar className="w-3 h-3 shrink-0" />
@@ -259,11 +256,11 @@ export function DebtTracker({
               inputMode="numeric"
               value={payDraft[debt.id] || ""}
               onChange={e => setPayDraft(prev => ({ ...prev, [debt.id]: e.target.value }))}
-              placeholder={isBorrowed ? "Số tiền đã trả" : "Số tiền đã thu"}
+              placeholder={isBorrowed ? t("debtTracker.payPlaceholderBorrowed") : t("debtTracker.payPlaceholderLent")}
               className="flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-1.5 text-slate-200 outline-none focus:border-sky-500 text-[11px]"
             />
             <button disabled={busy === debt.id} onClick={() => handlePay(debt)} className="bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50">
-              {isBorrowed ? "Đã trả" : "Đã thu"}
+              {isBorrowed ? t("debtTracker.payBtnBorrowed") : t("debtTracker.payBtnLent")}
             </button>
           </div>
         )}
@@ -271,7 +268,10 @@ export function DebtTracker({
         {debt.payments.length > 0 && (
           <div>
             <button onClick={() => setExpanded(prev => ({ ...prev, [debt.id]: !prev[debt.id] }))} className="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer">
-              {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />} {debt.payments.length} lần {isBorrowed ? "trả" : "thu"}
+              {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {isBorrowed
+                ? t("debtTracker.paymentsCountBorrowed", { n: debt.payments.length })
+                : t("debtTracker.paymentsCountLent", { n: debt.payments.length })}
             </button>
             {isOpen && (
               <div className="mt-1.5 space-y-1 max-h-32 overflow-y-auto">
@@ -282,7 +282,7 @@ export function DebtTracker({
                       <span className="font-mono text-slate-400">{formatDateVN(p.date)}</span>
                       <span className="font-bold text-emerald-400">{fmtMoney(p.amount)}đ</span>
                       <span className="text-slate-500 truncate max-w-[70px]">{by?.fullName || ""}</span>
-                      <button onClick={() => onRemoveDebtPayment(debt.id, p.id)} className="text-slate-600 hover:text-rose-400 cursor-pointer" title="Xóa">
+                      <button onClick={() => onRemoveDebtPayment(debt.id, p.id)} className="text-slate-600 hover:text-rose-400 cursor-pointer" title={t("common.delete")}>
                         <X className="w-3 h-3" />
                       </button>
                     </div>
@@ -304,14 +304,16 @@ export function DebtTracker({
       <ShimmerLine accent="amber" />
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-          <IconChip accent="amber"><HandCoins className="w-4 h-4" /></IconChip> Vay / Cho mượn
+          <IconChip accent="amber"><HandCoins className="w-4 h-4" /></IconChip> {t("debtTracker.title")}
         </h3>
         <div className="flex items-center gap-2 flex-wrap">
           {(totals.owe > 0 || totals.lent > 0) && (
-            <span className="text-[10px] font-mono text-slate-500">Nợ <span className="text-rose-400 font-bold">{fmtMoney(totals.owe)}</span> · Cho mượn <span className="text-emerald-400 font-bold">{fmtMoney(totals.lent)}</span></span>
+            <span className="text-[10px] font-mono text-slate-500">
+              {t("debtTracker.totalOwed")} <span className="text-rose-400 font-bold">{fmtMoney(totals.owe)}</span> · {t("debtTracker.totalLent")} <span className="text-emerald-400 font-bold">{fmtMoney(totals.lent)}</span>
+            </span>
           )}
           <button onClick={toggleCreateForm} className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-lg px-2.5 py-1.5 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
-            <Plus className="w-3.5 h-3.5" /> Khoản nợ
+            <Plus className="w-3.5 h-3.5" /> {t("debtTracker.addBtn")}
           </button>
         </div>
       </div>
@@ -324,53 +326,52 @@ export function DebtTracker({
           >
             {editingId && (
               <div className="sm:col-span-2 flex items-center gap-1.5 text-[11px] font-bold text-amber-400">
-                <Pencil className="w-3.5 h-3.5" /> Đang chỉnh sửa khoản nợ
+                <Pencil className="w-3.5 h-3.5" /> {t("debtTracker.editingIndicator")}
               </div>
             )}
             <div className="sm:col-span-2 grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-lg neu-pressed-sm font-bold text-center">
-              <button type="button" onClick={() => setDirection("borrowed")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "borrowed" ? "bg-rose-500 text-slate-950" : "text-slate-400"}`}>Mình nợ (vay)</button>
-              <button type="button" onClick={() => setDirection("lent")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "lent" ? "bg-emerald-500 text-slate-950" : "text-slate-400"}`}>Cho mượn</button>
+              <button type="button" onClick={() => setDirection("borrowed")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "borrowed" ? "bg-rose-500 text-slate-950" : "text-slate-400"}`}>{t("debtTracker.directionBorrowed")}</button>
+              <button type="button" onClick={() => setDirection("lent")} className={`py-1.5 rounded-md cursor-pointer transition-all ${direction === "lent" ? "bg-emerald-500 text-slate-950" : "text-slate-400"}`}>{t("debtTracker.directionLent")}</button>
             </div>
             <div className="sm:col-span-2 space-y-1">
-              <label className="text-[10px] text-slate-500 font-semibold">Tên người / tổ chức <span className="text-rose-400">*</span></label>
-              <input value={counterparty} onChange={e => setCounterparty(e.target.value)} placeholder={direction === "borrowed" ? "VD: Anh Ba, Ngân hàng ACB..." : "VD: Chú Tư, bạn Lan..."} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <label className="text-[10px] text-slate-500 font-semibold">{t("debtTracker.counterpartyLabel")} <span className="text-rose-400">*</span></label>
+              <input value={counterparty} onChange={e => setCounterparty(e.target.value)} placeholder={direction === "borrowed" ? t("debtTracker.counterpartyPlaceholderBorrowed") : t("debtTracker.counterpartyPlaceholderLent")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
-            <input inputMode="numeric" value={amount > 0 ? fmtMoney(amount) : ""} onChange={e => setAmount(parseMoney(e.target.value))} placeholder="Số tiền" className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+            <input inputMode="numeric" value={amount > 0 ? fmtMoney(amount) : ""} onChange={e => setAmount(parseMoney(e.target.value))} placeholder={t("debtTracker.amountPlaceholder")} className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             <div className="space-y-1">
-              <label className="text-[10px] text-slate-500 font-semibold">{direction === "borrowed" ? "Ngày mượn" : "Ngày cho mượn"} <span className="text-rose-400">*</span></label>
+              <label className="text-[10px] text-slate-500 font-semibold">{direction === "borrowed" ? t("debtTracker.loanDateBorrowed") : t("debtTracker.loanDateLent")} <span className="text-rose-400">*</span></label>
               <DateInputDMY value={loanDate} max={dueDate || undefined} onChange={setLoanDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] text-slate-500 font-semibold">Ngày hẹn trả <span className="text-rose-400">*</span></label>
+              <label className="text-[10px] text-slate-500 font-semibold">{t("debtTracker.dueDateLabel")} <span className="text-rose-400">*</span></label>
               <DateInputDMY value={dueDate} min={loanDate || undefined} onChange={setDueDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
             </div>
 
             <div className="relative">
               <Building2 className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input value={bankName} onChange={e => setBankName(e.target.value)} placeholder="Ngân hàng / số TK" className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <input value={bankName} onChange={e => setBankName(e.target.value)} placeholder={t("debtTracker.bankPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
             <div className="relative">
               <Phone className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Số điện thoại" className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <input inputMode="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder={t("debtTracker.phonePlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
             <div className="sm:col-span-2 relative">
               <MapPin className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input value={address} onChange={e => setAddress(e.target.value)} placeholder="Địa chỉ (tùy chọn)" className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+              <input value={address} onChange={e => setAddress(e.target.value)} placeholder={t("debtTracker.addressPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg pl-8 pr-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
             </div>
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder="Ghi chú (tùy chọn)" className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+            <input value={note} onChange={e => setNote(e.target.value)} placeholder={t("debtTracker.notePlaceholder")} className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
 
-            {/* Ảnh đính kèm: giấy tờ vay, biên nhận chuyển khoản */}
             <div className="sm:col-span-2 space-y-2 bg-slate-950/40 neu-pressed-sm rounded-lg p-2.5">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1"><Paperclip className="w-3 h-3" /> Ảnh giấy tờ / chuyển khoản</label>
+                <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1"><Paperclip className="w-3 h-3" /> {t("debtTracker.attachmentsLabel")}</label>
                 <span className="text-[9px] text-slate-600 font-mono">{attachments.length}/12</span>
               </div>
               {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {attachments.map((url, i) => (
                     <div key={url} className="relative group">
-                      <img src={url} alt={`đính kèm ${i + 1}`} onClick={() => setLightbox(url)} className="w-14 h-14 object-cover rounded-lg border border-slate-700 cursor-pointer" referrerPolicy="no-referrer" />
-                      <button type="button" onClick={() => setAttachments(prev => prev.filter(u => u !== url))} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 shadow cursor-pointer" title="Bỏ ảnh">
+                      <img src={url} alt={t("debtTracker.attachmentFormAlt", { n: i + 1 })} onClick={() => setLightbox(url)} className="w-14 h-14 object-cover rounded-lg border border-slate-700 cursor-pointer" referrerPolicy="no-referrer" />
+                      <button type="button" onClick={() => setAttachments(prev => prev.filter(u => u !== url))} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 shadow cursor-pointer" title={t("debtTracker.removeAttachmentTitle")}>
                         <X className="w-3 h-3" />
                       </button>
                     </div>
@@ -380,34 +381,35 @@ export function DebtTracker({
               {attachments.length < 12 && (
                 <input type="file" accept="image/*,.heic,.heif" multiple onChange={handleAttach} disabled={uploading} className="w-full text-slate-400 font-mono text-[10px] file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-amber-400 file:cursor-pointer disabled:opacity-50" />
               )}
-              {uploading && <p className="text-[10px] text-amber-400">Đang tối ưu & tải ảnh...</p>}
+              {uploading && <p className="text-[10px] text-amber-400">{t("debtTracker.uploading")}</p>}
             </div>
 
             {error && <p className="sm:col-span-2 text-[11px] text-rose-400">{error}</p>}
             <div className="sm:col-span-2 flex gap-2">
-              <button type="submit" disabled={saving || uploading} className="bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold cursor-pointer">{saving ? "Đang lưu..." : editingId ? "Cập nhật" : "Lưu khoản nợ"}</button>
-              <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg px-3 py-2 font-bold cursor-pointer">Hủy</button>
+              <button type="submit" disabled={saving || uploading} className="bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold cursor-pointer">
+                {saving ? t("debtTracker.saving") : editingId ? t("debtTracker.updateBtn") : t("debtTracker.saveBtn")}
+              </button>
+              <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg px-3 py-2 font-bold cursor-pointer">{t("common.cancel")}</button>
             </div>
           </motion.form>
         )}
       </AnimatePresence>
 
       {debts.length === 0 ? (
-        <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có khoản vay/cho mượn nào.</p>
+        <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">{t("debtTracker.empty")}</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           <div className="space-y-2">
-            <p className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1"><ArrowDownLeft className="w-3.5 h-3.5" /> Mình đang nợ</p>
-            {borrowed.length === 0 ? <p className="text-[10px] text-slate-600 px-1">Không có.</p> : borrowed.map(renderDebt)}
+            <p className="text-[11px] font-bold text-rose-400 uppercase tracking-wider flex items-center gap-1"><ArrowDownLeft className="w-3.5 h-3.5" /> {t("debtTracker.sectionBorrowed")}</p>
+            {borrowed.length === 0 ? <p className="text-[10px] text-slate-600 px-1">{t("debtTracker.sectionEmpty")}</p> : borrowed.map(renderDebt)}
           </div>
           <div className="space-y-2">
-            <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1"><ArrowUpRight className="w-3.5 h-3.5" /> Cho người khác mượn</p>
-            {lent.length === 0 ? <p className="text-[10px] text-slate-600 px-1">Không có.</p> : lent.map(renderDebt)}
+            <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1"><ArrowUpRight className="w-3.5 h-3.5" /> {t("debtTracker.sectionLent")}</p>
+            {lent.length === 0 ? <p className="text-[10px] text-slate-600 px-1">{t("debtTracker.sectionEmpty")}</p> : lent.map(renderDebt)}
           </div>
         </div>
       )}
 
-      {/* Lightbox xem ảnh đính kèm */}
       <AnimatePresence>
         {lightbox && (
           <motion.div
@@ -416,8 +418,8 @@ export function DebtTracker({
             className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 cursor-pointer"
           >
             <div className="relative max-w-full max-h-[85vh] p-1.5 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
-              <img src={lightbox} alt="Ảnh đính kèm khoản nợ" className="max-w-full max-h-[80vh] object-contain rounded-xl" referrerPolicy="no-referrer" />
-              <button onClick={() => setLightbox(null)} className="absolute top-3 right-3 bg-slate-950/80 hover:bg-slate-800 p-2 text-slate-200 neu-btn rounded-lg cursor-pointer" title="Đóng">
+              <img src={lightbox} alt={t("debtTracker.lightboxAlt")} className="max-w-full max-h-[80vh] object-contain rounded-xl" referrerPolicy="no-referrer" />
+              <button onClick={() => setLightbox(null)} className="absolute top-3 right-3 bg-slate-950/80 hover:bg-slate-800 p-2 text-slate-200 neu-btn rounded-lg cursor-pointer" title={t("common.close")}>
                 <X className="w-4 h-4" />
               </button>
             </div>
