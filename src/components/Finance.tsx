@@ -103,6 +103,7 @@ const niceCeil = (v: number): number => {
 // Biểu đồ cột thu/chi 12 tháng — SVG thuần, tự co theo bề rộng thẻ.
 // Cột emerald = thu, cột rose = chi; <title> từng cột hiện số đầy đủ khi chạm/hover.
 function MonthlyTrendChart({ points }: { points: MonthlyPoint[] }) {
+  const { t } = useTranslation();
   const W = 520, H = 132; // gọn — chart phụ trong nhóm So sánh, không phải khối chính
   const M = { top: 8, right: 6, bottom: 20, left: 40 };
   const iw = W - M.left - M.right;
@@ -115,7 +116,7 @@ function MonthlyTrendChart({ points }: { points: MonthlyPoint[] }) {
   const ticks = [0, 0.5, 1].map(f => f * yMax);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label="Biểu đồ thu chi 12 tháng">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img" aria-label={t("finance.chartAriaLabel")}>
       {ticks.map(v => (
         <g key={v}>
           <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} className="stroke-slate-800" strokeWidth="1" strokeDasharray="3 5" />
@@ -192,29 +193,10 @@ const BILL_CATEGORIES = [
 ] as const;
 
 function translateBillCategory(value: string): string {
-  return BILL_CATEGORIES.find(c => c.value === value)?.label ?? value;
+  return i18n.t(`categories.${value}`, { defaultValue: value });
 }
 
-// Hạng mục CHI (kèm emoji) — dùng chung cho bộ lọc, form thu chi, ngân sách
-const EXPENSE_CATEGORY_OPTIONS = [
-  { value: "food", label: "Ăn uống 🍲" },
-  { value: "education2", label: "Học tập 📚" },
-  { value: "utilities", label: "Điện nước ⚡" },
-  { value: "shopping", label: "Mua sắm 🛍️" },
-  { value: "medical", label: "Y tế 💊" },
-  { value: "transport", label: "Đi lại 🚗" },
-  { value: "debt_bank", label: "Trả nợ ngân hàng 🏦" },
-  { value: "debt_personal", label: "Trả nợ cá nhân 🤝" },
-  { value: "funeral", label: "Ma chay 🌸" },
-  { value: "ceremony", label: "Hiếu hỉ 🎁" },
-  { value: "other", label: "Khoản khác 🏷️" }
-];
-
-const BILL_FREQUENCY_OPTIONS = [
-  { value: "weekly", label: "Hàng tuần" },
-  { value: "monthly", label: "Hàng tháng" },
-  { value: "yearly", label: "Hàng năm" }
-];
+// EXPENSE_CATEGORY_OPTIONS và BILL_FREQUENCY_OPTIONS được tạo trong component (useMemo) để dịch ngôn ngữ.
 
 // ─── Nhập tiền thông minh: cho phép gõ biểu thức cộng dồn ───────────────────
 // Ví dụ đi chợ: "50000+20000" → 70.000; "5*10000" → 50.000; "50000+5*3000" → 65.000.
@@ -263,6 +245,7 @@ interface MoneyInputProps {
  * kết quả "= 70.000 đ". Quy tắc chung cho mọi ô tiền trong app.
  */
 function MoneyInput({ value, onChange, placeholder, className, id, autoFocus, operators }: MoneyInputProps) {
+  const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
   const [raw, setRaw] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -314,12 +297,12 @@ function MoneyInput({ value, onChange, placeholder, className, id, autoFocus, op
         {operators && (
           <div className="flex gap-1 shrink-0">
             <button
-              type="button" tabIndex={-1} aria-label="Cộng thêm một khoản"
+              type="button" tabIndex={-1} aria-label={t("finance.moneyAddPlus")}
               onPointerDown={(e) => e.preventDefault()} onClick={() => appendOp("+")}
               className="w-9 grid place-items-center rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 font-bold text-lg leading-none transition-colors"
             >+</button>
             <button
-              type="button" tabIndex={-1} aria-label="Nhân số lượng"
+              type="button" tabIndex={-1} aria-label={t("finance.moneyMulTimes")}
               onPointerDown={(e) => e.preventDefault()} onClick={() => appendOp("*")}
               className="w-9 grid place-items-center rounded-lg bg-slate-800 hover:bg-sky-500/20 text-slate-300 hover:text-sky-400 font-bold text-sm leading-none transition-colors"
             >×</button>
@@ -362,9 +345,9 @@ function isAlreadyPaidThisPeriod(bill: RecurringBill): boolean {
 }
 
 function payButtonLabel(frequency: RecurringBill["frequency"]): string {
-  if (frequency === "weekly") return "Trả tuần này";
-  if (frequency === "yearly") return "Trả năm này";
-  return "Trả tháng này";
+  if (frequency === "weekly") return i18n.t("finance.dueWeek");
+  if (frequency === "yearly") return i18n.t("finance.dueYear");
+  return i18n.t("finance.dueMonth");
 }
 
 // ─── Kỳ xem: Tháng (mặc định) / Quý / Năm ────────────────────────────────
@@ -401,7 +384,33 @@ export function Finance({
   onSaveAsset,
   onDeleteAsset
 }: FinanceProps) {
-  const { t } = useTranslation();
+  const { t, i18n: i18nHook } = useTranslation();
+
+  const expenseCategoryOptions = useMemo(() => [
+    { value: "food",          label: t("categories.food") + " 🍲" },
+    { value: "education2",    label: t("categories.education2") + " 📚" },
+    { value: "utilities",     label: t("categories.utilities") + " ⚡" },
+    { value: "shopping",      label: t("categories.shopping") + " 🛍️" },
+    { value: "medical",       label: t("categories.medical") + " 💊" },
+    { value: "transport",     label: t("categories.transport") + " 🚗" },
+    { value: "debt_bank",     label: t("categories.debt_bank") + " 🏦" },
+    { value: "debt_personal", label: t("categories.debt_personal") + " 🤝" },
+    { value: "funeral",       label: t("categories.funeral") + " 🌸" },
+    { value: "ceremony",      label: t("categories.ceremony") + " 🎁" },
+    { value: "other",         label: t("categories.other") + " 🏷️" }
+  ], [i18nHook.language]);
+
+  const billFrequencyOptions = useMemo(() => [
+    { value: "weekly",  label: t("finance.billFreqWeekly") },
+    { value: "monthly", label: t("finance.billFreqMonthly") },
+    { value: "yearly",  label: t("finance.billFreqYearly") }
+  ], [i18nHook.language]);
+
+  const billCategoryOptions = useMemo(() => BILL_CATEGORIES.map(c => ({
+    value: c.value,
+    label: i18n.t(`categories.${c.value}`, { defaultValue: c.label })
+  })), [i18nHook.language]);
+
   const [financeView, setFinanceView] = useState<"cashflow" | "assets">("cashflow");
   // Kỳ xem (Tháng/Quý/Năm) + mốc ngày trong kỳ + bật bảng so sánh 2 cột
   const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
@@ -495,7 +504,7 @@ export function Finance({
   // Nút nổi thêm nhanh — chỉ hiện ở view thu chi, ẩn khi đang mở form
   useTabFab(
     canAccessFinance(currentUser.role) && financeView === "cashflow" && !isFormOpen
-      ? { id: "finance", color: "emerald", title: "Thêm khoản thu chi nhanh", icon: Wallet, onClick: openCreateForm }
+      ? { id: "finance", color: "emerald", title: t("finance.addFab"), icon: Wallet, onClick: openCreateForm }
       : null
   );
 
@@ -582,13 +591,13 @@ export function Finance({
 
   // Xuất danh sách giao dịch (theo bộ lọc đang xem) ra file CSV (mở được bằng Excel).
   const exportTransactionsCsv = () => {
-    const header = ["Ngày", "Loại", "Hạng mục", "Ví", "Số tiền", "Nội dung", "Người tạo"];
+    const header = [t("finance.csvColDate"), t("finance.csvColType"), t("finance.csvColCat"), t("finance.csvColWallet"), t("finance.csvColAmount"), t("finance.csvColDesc"), t("finance.csvColCreator")];
     const esc = (v: string) => `"${String(v).replace(/"/g, '""')}"`;
     const rows = filteredTransactions.map(tx => {
       const creator = users.find(u => u.id === tx.creatorId);
       return [
         tx.date,
-        tx.type === "income" ? "Thu" : "Chi",
+        tx.type === "income" ? t("finance.csvIncome") : t("finance.csvExpense"),
         translateCategory(tx.category),
         translateAccount(tx.account),
         String(tx.amount),
@@ -623,9 +632,9 @@ export function Finance({
           .map(([cat, amount]) => ({ label: translateCategory(cat), amount })),
         // Nhãn thuần chữ (không emoji) — font PDF không có glyph emoji
         accountBalances: [
-          { key: "cash", label: "Tiền mặt" },
-          { key: "bank", label: "Ngân hàng" },
-          { key: "e_wallet", label: "Ví điện tử" }
+          { key: "cash",     label: t("accounts.cash") },
+          { key: "bank",     label: t("accounts.bank") },
+          { key: "e_wallet", label: t("accounts.e_wallet") }
         ].map(a => ({ label: a.label, amount: accountBalances[a.key] || 0 })),
         transactions: [...periodTx]
           .sort((a, b) => b.date.localeCompare(a.date))
@@ -633,7 +642,7 @@ export function Finance({
             date: tx.date,
             type: tx.type as "income" | "expense",
             category: translateCategory(tx.category),
-            account: tx.account === "cash" ? "Tiền mặt" : tx.account === "bank" ? "Ngân hàng" : tx.account === "e_wallet" ? "Ví điện tử" : tx.account,
+            account: translateAccount(tx.account),
             amount: tx.amount,
             description: tx.description,
             creator: users.find(u => u.id === tx.creatorId)?.fullName || ""
@@ -713,7 +722,7 @@ export function Finance({
       });
       setFormReceiptBase64(uploaded.url);
     } catch (err: any) {
-      setFormError(err.message || "Không xử lý được ảnh hóa đơn.");
+      setFormError(err.message || t("finance.errImageProcess"));
     } finally {
       setReceiptProcessing(false);
     }
@@ -740,11 +749,11 @@ export function Finance({
     setFormError("");
 
     if (formAmount <= 0) {
-      setFormError("Số tiền phải lớn hơn 0đ!");
+      setFormError(t("finance.errAmountZero"));
       return;
     }
     if (!formDesc.trim()) {
-      setFormError("Vui lòng nhập nội dung chi tiêu!");
+      setFormError(t("finance.errDescRequired"));
       return;
     }
 
@@ -770,7 +779,7 @@ export function Finance({
       setEditingTx(null);
       setIsFormOpen(false);
     } catch (err: any) {
-      setFormError(err.message || "Không thể lưu giao dịch này");
+      setFormError(err.message || t("finance.errSaveTx"));
     }
   };
 
@@ -778,14 +787,14 @@ export function Finance({
     e.preventDefault();
     setBudgetError("");
     if (budgetLimit <= 0) {
-      setBudgetError("Hạn mức phải lớn hơn 0");
+      setBudgetError(t("finance.errBudgetZero"));
       return;
     }
     try {
       await onSaveBudget({ month: anchorMonthKey, category: budgetCategory, limit: Number(budgetLimit) });
       setBudgetLimit(0);
     } catch (err: any) {
-      setBudgetError(err.message || "Không lưu được ngân sách");
+      setBudgetError(err.message || t("finance.errSaveBudget"));
     }
   };
 
@@ -808,7 +817,7 @@ export function Finance({
     e.preventDefault();
     setBillError("");
     if (!billTitle.trim() || billAmount <= 0) {
-      setBillError("Nhập tên hóa đơn và số tiền hợp lệ");
+      setBillError(t("finance.errBillInvalid"));
       return;
     }
     try {
@@ -824,7 +833,7 @@ export function Finance({
       setBillTitle("");
       setBillAmount(0);
     } catch (err: any) {
-      setBillError(err.message || "Không lưu được hóa đơn");
+      setBillError(err.message || t("finance.errSaveBill"));
     }
   };
 
@@ -843,7 +852,7 @@ export function Finance({
     if (!editingBill) return;
     setEditError("");
     if (!editTitle.trim() || editAmount <= 0) {
-      setEditError("Nhập tên và số tiền hợp lệ");
+      setEditError(t("finance.errEditInvalid"));
       return;
     }
     try {
@@ -857,15 +866,15 @@ export function Finance({
       });
       setEditingBill(null);
     } catch (err: any) {
-      setEditError(err.message || "Không thể lưu thay đổi");
+      setEditError(err.message || t("finance.errSaveEdit"));
     }
   };
 
   const handleDeleteClick = async (txId: string) => {
     const ok = await confirm({
-      title: "Xóa bản ghi chi tiêu?",
-      message: "Bản ghi tài chính này sẽ bị xóa vĩnh viễn khỏi sổ quỹ gia đình. Bạn có chắc chắn muốn tiếp tục không?",
-      confirmLabel: "Xóa bản ghi",
+      title: t("finance.deleteTxTitle"),
+      message: t("finance.deleteTxMsg"),
+      confirmLabel: t("finance.deleteTxConfirm"),
       tone: "danger"
     });
     if (ok) {
@@ -1138,7 +1147,7 @@ export function Finance({
           <div className="bg-slate-900 neu-raised rounded-2xl p-4 space-y-2" id="finance-compare">
           <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
             <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
-            So sánh: {periodLabel(periodMode, anchor)} ↔ {periodLabel(periodMode, prevAnchor)}
+            {t("finance.compare")}: {periodLabel(periodMode, anchor)} ↔ {periodLabel(periodMode, prevAnchor)}
           </h3>
           {/* Chiều cao cố định vừa phải — nội dung dài thì cuộn bên trong, không kéo
               giãn cả hàng làm thẻ Xu hướng 12 tháng bên cạnh trống trải */}
@@ -1146,17 +1155,17 @@ export function Finance({
             <table className="w-full text-xs border-collapse">
               <thead className="sticky top-0 bg-slate-900 z-10">
                 <tr className="text-slate-500 text-[10px] uppercase tracking-wider border-b border-slate-800">
-                  <th className="text-left font-semibold py-2 pr-2">Hạng mục</th>
+                  <th className="text-left font-semibold py-2 pr-2">{t("finance.compareColCat")}</th>
                   <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">{periodLabel(periodMode, anchor)}</th>
                   <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">{periodLabel(periodMode, prevAnchor)}</th>
-                  <th className="text-right font-semibold py-2 pl-2">Chênh lệch</th>
+                  <th className="text-right font-semibold py-2 pl-2">{t("finance.compareColDiff")}</th>
                 </tr>
               </thead>
               <tbody className="font-mono">
                 {([
-                  { label: "Tổng thu", cur: metrics.totalIncome, prev: prevMetrics.totalIncome, higherIsGood: true },
-                  { label: "Tổng chi", cur: metrics.totalExpense, prev: prevMetrics.totalExpense, higherIsGood: false },
-                  { label: "Cân đối", cur: metrics.balance, prev: prevMetrics.balance, higherIsGood: true }
+                  { label: t("finance.compareTotalIncome"), cur: metrics.totalIncome, prev: prevMetrics.totalIncome, higherIsGood: true },
+                  { label: t("finance.compareTotalExpense"), cur: metrics.totalExpense, prev: prevMetrics.totalExpense, higherIsGood: false },
+                  { label: t("finance.compareBalance"), cur: metrics.balance, prev: prevMetrics.balance, higherIsGood: true }
                 ]).map(row => {
                   const diff = row.cur - row.prev;
                   const good = row.higherIsGood ? diff >= 0 : diff <= 0;
@@ -1173,7 +1182,7 @@ export function Finance({
                 })}
                 {compareCatKeys.length > 0 && (
                   <tr>
-                    <td colSpan={4} className="pt-3 pb-1 text-[10px] uppercase tracking-wider text-slate-500 font-sans">Chi tiết chi theo hạng mục</td>
+                    <td colSpan={4} className="pt-3 pb-1 text-[10px] uppercase tracking-wider text-slate-500 font-sans">{t("finance.compareCatDetail")}</td>
                   </tr>
                 )}
                 {compareCatKeys.map(cat => {
@@ -1194,7 +1203,7 @@ export function Finance({
               </tbody>
             </table>
           </div>
-          <p className="text-[10px] text-slate-500">Chênh lệch chi tiêu màu đỏ = chi nhiều hơn kỳ trước; màu xanh = tiết kiệm hơn.</p>
+          <p className="text-[10px] text-slate-500">{t("finance.compareHint")}</p>
           </div>
         </div>
       )}
@@ -1203,9 +1212,9 @@ export function Finance({
         <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
           <ShimmerLine accent="sky" />
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-200">Ngân sách {periodLabel(periodMode, anchor)}</h3>
+            <h3 className="text-sm font-bold text-slate-200">{t("finance.budgetTitle")} {periodLabel(periodMode, anchor)}</h3>
             <span className="text-[10px] text-slate-500 font-mono">
-              {(periodMode === "month" ? monthBudgets.length : aggregatedBudgets.length)} hạn mức
+              {t("finance.budgetHintLimitCount", { n: periodMode === "month" ? monthBudgets.length : aggregatedBudgets.length })}
             </span>
           </div>
 
@@ -1215,31 +1224,31 @@ export function Finance({
                 <FancySelect
                   value={budgetCategory}
                   onChange={setBudgetCategory}
-                  ariaLabel="Hạng mục ngân sách"
-                  options={EXPENSE_CATEGORY_OPTIONS}
+                  ariaLabel={t("finance.budgetCatAriaLabel")}
+                  options={expenseCategoryOptions}
                 />
                 <MoneyInput
                   value={budgetLimit}
                   onChange={setBudgetLimit}
-                  placeholder="Hạn mức"
+                  placeholder={t("finance.budgetLimitPlaceholder")}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
                 />
                 <button type="submit" className="bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl px-3 py-2 font-bold">
-                  Lưu
+                  {t("common.save")}
                 </button>
               </form>
               {budgetError && <p className="text-[11px] text-rose-400">{budgetError}</p>}
             </>
           ) : (
             <p className="text-[11px] text-slate-500 bg-slate-950/60 neu-pressed-sm rounded-xl px-3 py-2">
-              Ngân sách đặt theo tháng — đang tổng hợp {periodMonthsList.length} tháng trong kỳ. Chuyển về chế độ <b className="text-slate-300">Tháng</b> để thêm/sửa hạn mức.
+              {t("finance.budgetPeriodHint", { n: periodMonthsList.length })}
             </p>
           )}
 
           <div className="space-y-2 max-h-80 overflow-y-auto pr-1 -mr-1 scrollbar-thin">
             {periodMode === "month" ? (
               monthBudgets.length === 0 ? (
-                <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có ngân sách cho kỳ này.</p>
+                <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">{t("finance.budgetEmptyMonth")}</p>
               ) : monthBudgets.map(b => {
                 const used = budgetUsage[b.category] || 0;
                 const pct = Math.min(100, Math.round((used / b.limit) * 100));
@@ -1253,15 +1262,15 @@ export function Finance({
                       </span>
                       {isEditing ? (
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => saveEditBudget(b)} className="text-emerald-400 hover:text-emerald-300 font-bold text-[11px]">Lưu</button>
-                          <button onClick={() => setEditingBudgetId(null)} className="text-slate-500 hover:text-slate-300 font-bold text-[11px]">Hủy</button>
+                          <button onClick={() => saveEditBudget(b)} className="text-emerald-400 hover:text-emerald-300 font-bold text-[11px]">{t("finance.budgetEditSave")}</button>
+                          <button onClick={() => setEditingBudgetId(null)} className="text-slate-500 hover:text-slate-300 font-bold text-[11px]">{t("finance.budgetEditCancel")}</button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 shrink-0">
-                          <button onClick={() => startEditBudget(b)} className="text-slate-500 hover:text-sky-400" title="Sửa hạn mức">
+                          <button onClick={() => startEditBudget(b)} className="text-slate-500 hover:text-sky-400" title={t("finance.budgetEditTitle")}>
                             <Pencil className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => onDeleteBudget(b.id)} className="text-slate-500 hover:text-rose-400" title="Xóa hạn mức">
+                          <button onClick={() => onDeleteBudget(b.id)} className="text-slate-500 hover:text-rose-400" title={t("finance.budgetDeleteTitle")}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -1272,7 +1281,7 @@ export function Finance({
                         value={editingBudgetLimit}
                         onChange={setEditingBudgetLimit}
                         autoFocus
-                        placeholder="Hạn mức mới"
+                        placeholder={t("finance.budgetEditPlaceholder")}
                         className="w-full bg-slate-950 border border-sky-800 rounded-lg px-3 py-1.5 text-slate-200 text-xs outline-none focus:border-sky-500"
                       />
                     ) : (
@@ -1288,7 +1297,7 @@ export function Finance({
               })
             ) : (
               aggregatedBudgets.length === 0 ? (
-                <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có ngân sách nào trong kỳ này.</p>
+                <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">{t("finance.budgetEmptyPeriod")}</p>
               ) : aggregatedBudgets.map(b => {
                 const used = budgetUsage[b.category] || 0;
                 const pct = Math.min(100, Math.round((used / b.limit) * 100));
@@ -1299,7 +1308,7 @@ export function Finance({
                         <span className={`shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5 ${catBar(b.category).text}`}>{categoryIcon(b.category)}</span>
                         <span className="truncate">{translateCategory(b.category)}</span>
                       </span>
-                      <span className="text-[10px] text-slate-500 font-mono">gộp {periodMonthsList.length} tháng</span>
+                      <span className="text-[10px] text-slate-500 font-mono">{t("finance.budgetAggMonths", { n: periodMonthsList.length })}</span>
                     </div>
                     <div className="h-2 bg-slate-900 rounded-full overflow-hidden">
                       <div className={`h-full rounded-full bg-gradient-to-r ${used > b.limit ? "from-rose-500 to-rose-400" : catBar(b.category).bar}`} style={{ width: `${pct}%` }} />
@@ -1315,31 +1324,31 @@ export function Finance({
         <Reveal delay={0.16} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
           <ShimmerLine accent="emerald" />
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-200">Hóa đơn định kỳ</h3>
-            <span className="text-[10px] text-slate-500 font-mono">{recurringBills.length} khoản</span>
+            <h3 className="text-sm font-bold text-slate-200">{t("finance.billTitle")}</h3>
+            <span className="text-[10px] text-slate-500 font-mono">{t("finance.billCount", { n: recurringBills.length })}</span>
           </div>
           <form onSubmit={handleCreateBill} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <input value={billTitle} onChange={(e) => setBillTitle(e.target.value)} placeholder="Tên hóa đơn" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-            <input type="text" inputMode="numeric" value={formatMoneyInput(billAmount)} onChange={(e) => setBillAmount(parseMoneyInput(e.target.value))} placeholder="Số tiền" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+            <input value={billTitle} onChange={(e) => setBillTitle(e.target.value)} placeholder={t("finance.billNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+            <input type="text" inputMode="numeric" value={formatMoneyInput(billAmount)} onChange={(e) => setBillAmount(parseMoneyInput(e.target.value))} placeholder={t("finance.billAmountPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
             <DateInputDMY value={billDueDate} onChange={setBillDueDate} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none font-mono" />
             <FancySelect
               value={billFrequency}
               onChange={(v) => setBillFrequency(v as RecurringBill["frequency"])}
-              ariaLabel="Tần suất hóa đơn"
-              options={BILL_FREQUENCY_OPTIONS}
+              ariaLabel={t("finance.billFreqAriaLabel")}
+              options={billFrequencyOptions}
             />
             <FancySelect
               value={billCategory}
               onChange={setBillCategory}
-              ariaLabel="Hạng mục hóa đơn"
-              options={BILL_CATEGORIES}
+              ariaLabel={t("finance.billCatAriaLabel")}
+              options={billCategoryOptions}
             />
-            <button type="submit" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl px-3 py-2 font-bold">Thêm hóa đơn</button>
+            <button type="submit" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl px-3 py-2 font-bold">{t("common.save")}</button>
           </form>
           {billError && <p className="text-[11px] text-rose-400">{billError}</p>}
           <div className="space-y-2 max-h-80 overflow-y-auto pr-1 -mr-1 scrollbar-thin">
             {recurringBills.length === 0 ? (
-              <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có hóa đơn lặp lại.</p>
+              <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">{t("finance.billEmpty")}</p>
             ) : recurringBills.map(b => (
               <div key={b.id} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 flex items-center justify-between gap-3">
                 <div className="min-w-0">
@@ -1349,7 +1358,7 @@ export function Finance({
                 <div className="flex items-center gap-1.5 shrink-0">
                   {isAlreadyPaidThisPeriod(b) ? (
                     <span className="flex items-center gap-1 px-2.5 py-1.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-lg text-[10px] font-bold">
-                      <CheckCircle2 className="w-3 h-3" /> Đã thanh toán
+                      <CheckCircle2 className="w-3 h-3" /> {t("finance.billPaid")}
                     </span>
                   ) : (
                     <button
@@ -1368,9 +1377,9 @@ export function Finance({
                   <button
                     onClick={async () => {
                       const ok = await confirm({
-                        title: "Xóa hóa đơn định kỳ?",
-                        message: `Xóa "${b.title}" sẽ không thể hoàn tác. Các giao dịch đã ghi nhận trước đó vẫn được giữ lại.`,
-                        confirmLabel: "Xóa hóa đơn",
+                        title: t("finance.billDeleteTitle"),
+                        message: t("finance.billDeleteMsg"),
+                        confirmLabel: t("finance.billDeleteConfirm"),
                         tone: "danger"
                       });
                       if (ok) onDeleteRecurringBill(b.id);
@@ -1418,7 +1427,7 @@ export function Finance({
           {/* Phân hóa hạng mục: thanh gradient màu theo hạng mục, track lõm, chạy mượt khi hiện */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-              <span>Phân hóa hạng mục tiêu dùng</span>
+              <span>{t("finance.compareCatDetail")}</span>
             </h4>
             <div className="space-y-3 max-h-[190px] overflow-y-auto pr-1">
               {chartCategoryDistribution.map(({ name, value }, i) => {
@@ -1462,7 +1471,7 @@ export function Finance({
             const expLen = total > 0 ? Math.max(0, (metrics.totalExpense / total) * C - gap) : 0;
             return (
               <div className="flex flex-col items-center justify-center gap-4 bg-slate-950/40 neu-pressed-sm p-4 rounded-xl">
-                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Cán cân Thu / Chi</span>
+                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">{t("finance.chartBalanceLabel")}</span>
                 <div className="relative w-36 h-36">
                   <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                     <circle cx="50" cy="50" r="38" fill="none" strokeWidth="8" className="stroke-slate-800" />
@@ -1525,7 +1534,7 @@ export function Finance({
             <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Tìm miêu tả khoản chi, mua đồ đạc gia đình..."
+              placeholder={t("finance.filterSearch")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
@@ -1536,56 +1545,56 @@ export function Finance({
         {/* Filters lists */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-1 text-[11px]">
           <div>
-            <label className="text-slate-500 block mb-1">Loại quỹ</label>
+            <label className="text-slate-500 block mb-1">{t("finance.filterTypeLbl")}</label>
             <FancySelect
               value={typeFilter}
               onChange={(v) => setTypeFilter(v as any)}
-              ariaLabel="Lọc theo loại quỹ"
+              ariaLabel={t("finance.filterTypeAriaLabel")}
               options={[
-                { value: "all", label: "Khoản thu & chi" },
-                { value: "income", label: "Chỉ khoản Thu nhập (+)" },
-                { value: "expense", label: "Chỉ khoản Chi tiêu (-)" }
+                { value: "all",     label: t("finance.filterTypeAll") },
+                { value: "income",  label: t("finance.filterTypeIncome") },
+                { value: "expense", label: t("finance.filterTypeExpense") }
               ]}
             />
           </div>
 
           <div>
-            <label className="text-slate-500 block mb-1">Hạng mục chi</label>
+            <label className="text-slate-500 block mb-1">{t("finance.filterCatLbl")}</label>
             <FancySelect
               value={categoryFilter}
               onChange={setCategoryFilter}
-              ariaLabel="Lọc theo hạng mục"
+              ariaLabel={t("finance.filterCatAriaLabel")}
               options={[
-                { value: "all", label: "Mọi hạng mục" },
-                ...EXPENSE_CATEGORY_OPTIONS,
-                { value: "Bán tài sản", label: "Bán tài sản 🪙" }
+                { value: "all", label: t("finance.filterCatAll") },
+                ...expenseCategoryOptions,
+                { value: "Bán tài sản", label: t("finance.filterCatAssetSale") }
               ]}
             />
           </div>
 
           <div>
-            <label className="text-slate-500 block mb-1">Ví tài khoản</label>
+            <label className="text-slate-500 block mb-1">{t("finance.filterAccountLbl")}</label>
             <FancySelect
               value={accountFilter}
               onChange={setAccountFilter}
-              ariaLabel="Lọc theo ví tài khoản"
+              ariaLabel={t("finance.filterAccountAriaLabel")}
               options={[
-                { value: "all", label: "Mọi ví tài khoản" },
-                { value: "cash", label: "Tiền mặt 💵" },
-                { value: "bank", label: "Ngân hàng 💳" },
-                { value: "e_wallet", label: "Ví điện tử 📱" }
+                { value: "all",      label: t("finance.filterAccountAll") },
+                { value: "cash",     label: t("accounts.cashEmoji") },
+                { value: "bank",     label: t("accounts.bankEmoji") },
+                { value: "e_wallet", label: t("accounts.eWalletEmoji") }
               ]}
             />
           </div>
 
           <div>
-            <label className="text-slate-500 block mb-1">Thành viên thực hiện</label>
+            <label className="text-slate-500 block mb-1">{t("finance.filterMemberLbl")}</label>
             <FancySelect
               value={memberFilter}
               onChange={setMemberFilter}
-              ariaLabel="Lọc theo thành viên"
+              ariaLabel={t("finance.filterMemberAriaLabel")}
               options={[
-                { value: "all", label: "Cả gia đình" },
+                { value: "all", label: t("finance.filterMemberAll") },
                 ...users.map(u => ({ value: u.id, label: u.fullName }))
               ]}
             />
@@ -1596,30 +1605,32 @@ export function Finance({
       {/* Transactions Details List */}
       {filteredTransactions.length === 0 ? (
         <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl py-12 text-center" id="empty-transactions">
-          <p className="text-sm text-slate-500">Không có giao dịch nào trong <b className="text-slate-300">{periodLabel(periodMode, anchor)}</b> khớp bộ lọc.</p>
+          <p className="text-sm text-slate-500">
+            {t("finance.txListEmpty", { period: periodLabel(periodMode, anchor) })}
+          </p>
         </div>
       ) : (
         <div className="relative bg-slate-900 neu-raised rounded-2xl overflow-hidden" id="transactions-table">
           <ShimmerLine accent="sky" />
           <div className="bg-slate-950 p-4 border-b border-slate-800 text-xs text-slate-400 font-semibold uppercase tracking-wider flex justify-between items-center gap-2">
-            <span>Dòng tiền {periodLabel(periodMode, anchor)} ({filteredTransactions.length} bản ghi)</span>
+            <span>{t("finance.txListHeader", { period: periodLabel(periodMode, anchor), count: filteredTransactions.length })}</span>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={exportTransactionsCsv}
                 className="flex items-center gap-1 normal-case bg-slate-900 hover:bg-slate-800 neu-btn text-sky-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
-                title="Xuất danh sách đang lọc ra file CSV (Excel)"
+                title={t("finance.exportCsvTitle")}
               >
-                <FileText className="w-3.5 h-3.5" /> Xuất CSV
+                <FileText className="w-3.5 h-3.5" /> {t("finance.exportCsv")}
               </button>
               <button
                 type="button"
                 onClick={exportReportPdf}
                 disabled={exportingPdf}
                 className="flex items-center gap-1 normal-case bg-slate-900 hover:bg-slate-800 neu-btn text-indigo-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-60"
-                title="Xuất báo cáo PDF của kỳ đang xem (tổng quan + hạng mục + giao dịch)"
+                title={t("finance.exportPdfTitle")}
               >
-                <FileDown className="w-3.5 h-3.5" /> {exportingPdf ? "Đang xuất..." : "Xuất PDF"}
+                <FileDown className="w-3.5 h-3.5" /> {exportingPdf ? t("finance.exportingPdf") : t("finance.exportPdf")}
               </button>
             </div>
           </div>
@@ -1627,24 +1638,24 @@ export function Finance({
           {/* Chú thích màu sắc icon */}
           <div className="px-4 py-2.5 border-b border-slate-800/60 bg-slate-950/50 overflow-x-auto">
             <div className="flex items-center gap-3 min-w-max text-[10px] font-semibold">
-              <span className="text-slate-600 uppercase tracking-wider shrink-0">Màu icon:</span>
-              <span className="flex items-center gap-1 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" /> Thu nhập</span>
+              <span className="text-slate-600 uppercase tracking-wider shrink-0">{t("finance.iconLegendLabel")}</span>
+              <span className="flex items-center gap-1 text-emerald-400"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" /> {t("finance.iconLegendIncome")}</span>
               <span className="w-px h-3 bg-slate-800" />
-              <span className="flex items-center gap-1 text-orange-400"><span className="w-2 h-2 rounded-full bg-orange-400 inline-block" /> Ăn uống</span>
-              <span className="flex items-center gap-1 text-amber-400"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> Điện nước</span>
-              <span className="flex items-center gap-1 text-pink-400"><span className="w-2 h-2 rounded-full bg-pink-400 inline-block" /> Mua sắm</span>
-              <span className="flex items-center gap-1 text-rose-400"><span className="w-2 h-2 rounded-full bg-rose-400 inline-block" /> Y tế</span>
-              <span className="flex items-center gap-1 text-sky-400"><span className="w-2 h-2 rounded-full bg-sky-400 inline-block" /> Đi lại</span>
-              <span className="flex items-center gap-1 text-violet-400"><span className="w-2 h-2 rounded-full bg-violet-400 inline-block" /> Học tập</span>
-              <span className="flex items-center gap-1 text-indigo-400"><span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" /> Thuê nhà</span>
-              <span className="flex items-center gap-1 text-cyan-400"><span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" /> Internet</span>
-              <span className="flex items-center gap-1 text-purple-400"><span className="w-2 h-2 rounded-full bg-purple-400 inline-block" /> Điện thoại</span>
-              <span className="flex items-center gap-1 text-slate-300"><span className="w-2 h-2 rounded-full bg-slate-400 inline-block" /> Bảo hiểm</span>
-              <span className="flex items-center gap-1 text-red-400"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Trả nợ NH</span>
-              <span className="flex items-center gap-1 text-teal-400"><span className="w-2 h-2 rounded-full bg-teal-400 inline-block" /> Trả nợ CN</span>
-              <span className="flex items-center gap-1 text-zinc-400"><span className="w-2 h-2 rounded-full bg-zinc-400 inline-block" /> Ma chay</span>
-              <span className="flex items-center gap-1 text-yellow-400"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" /> Hiếu hỉ</span>
-              <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-slate-500 inline-block" /> Khác</span>
+              <span className="flex items-center gap-1 text-orange-400"><span className="w-2 h-2 rounded-full bg-orange-400 inline-block" /> {t("categories.food")}</span>
+              <span className="flex items-center gap-1 text-amber-400"><span className="w-2 h-2 rounded-full bg-amber-400 inline-block" /> {t("categories.utilities")}</span>
+              <span className="flex items-center gap-1 text-pink-400"><span className="w-2 h-2 rounded-full bg-pink-400 inline-block" /> {t("categories.shopping")}</span>
+              <span className="flex items-center gap-1 text-rose-400"><span className="w-2 h-2 rounded-full bg-rose-400 inline-block" /> {t("categories.medical")}</span>
+              <span className="flex items-center gap-1 text-sky-400"><span className="w-2 h-2 rounded-full bg-sky-400 inline-block" /> {t("categories.transport")}</span>
+              <span className="flex items-center gap-1 text-violet-400"><span className="w-2 h-2 rounded-full bg-violet-400 inline-block" /> {t("categories.education2")}</span>
+              <span className="flex items-center gap-1 text-indigo-400"><span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" /> {t("categories.rent")}</span>
+              <span className="flex items-center gap-1 text-cyan-400"><span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" /> {t("categories.internet")}</span>
+              <span className="flex items-center gap-1 text-purple-400"><span className="w-2 h-2 rounded-full bg-purple-400 inline-block" /> {t("categories.phone")}</span>
+              <span className="flex items-center gap-1 text-slate-300"><span className="w-2 h-2 rounded-full bg-slate-400 inline-block" /> {t("categories.insurance")}</span>
+              <span className="flex items-center gap-1 text-red-400"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> {t("categories.debt_bank")}</span>
+              <span className="flex items-center gap-1 text-teal-400"><span className="w-2 h-2 rounded-full bg-teal-400 inline-block" /> {t("categories.debt_personal")}</span>
+              <span className="flex items-center gap-1 text-zinc-400"><span className="w-2 h-2 rounded-full bg-zinc-400 inline-block" /> {t("categories.funeral")}</span>
+              <span className="flex items-center gap-1 text-yellow-400"><span className="w-2 h-2 rounded-full bg-yellow-400 inline-block" /> {t("categories.ceremony")}</span>
+              <span className="flex items-center gap-1 text-slate-400"><span className="w-2 h-2 rounded-full bg-slate-500 inline-block" /> {t("categories.other")}</span>
             </div>
           </div>
 
@@ -1667,7 +1678,7 @@ export function Finance({
                         <p className="text-slate-200 font-semibold text-sm leading-snug">{tx.description}</p>
                         {/* Badge THU / CHI */}
                         <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md shrink-0 ${isIncome ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400"}`}>
-                          {isIncome ? <span className="flex items-center gap-0.5"><ArrowUpRight className="w-2.5 h-2.5" />THU</span> : <span className="flex items-center gap-0.5"><ArrowDownRight className="w-2.5 h-2.5" />CHI</span>}
+                          {isIncome ? <span className="flex items-center gap-0.5"><ArrowUpRight className="w-2.5 h-2.5" />{t("finance.txIncomeBadge")}</span> : <span className="flex items-center gap-0.5"><ArrowDownRight className="w-2.5 h-2.5" />{t("finance.txExpenseBadge")}</span>}
                         </span>
                       </div>
 
@@ -1683,7 +1694,7 @@ export function Finance({
                             {translateCategory(tx.category).split(" ")[0]}
                           </span>
                         )}
-                        {isIncome && tx.category === "Bán tài sản" && <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-semibold">🪙 Bán tài sản</span>}
+                        {isIncome && tx.category === "Bán tài sản" && <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-semibold">{t("finance.assetSaleBadge")}</span>}
                         {/* Member user */}
                         {creator && <span className="text-[10px] font-semibold text-sky-400">@{creator.username}</span>}
                       </div>
@@ -1697,9 +1708,9 @@ export function Finance({
                       <button 
                         onClick={() => setSelectedReceipt(tx.receiptImage!)}
                         className="flex items-center gap-1 bg-slate-950 text-sky-400 hover:bg-slate-850 neu-btn text-[10px] px-2 py-1 rounded-lg cursor-pointer"
-                        title="Xem ảnh hóa đơn"
+                        title={t("finance.txViewReceiptTitle")}
                       >
-                        <ImageIcon className="w-3.5 h-3.5" /> Xem HĐ
+                        <ImageIcon className="w-3.5 h-3.5" /> {t("finance.txViewReceiptTitle")}
                       </button>
                     ) : null}
 
@@ -1716,14 +1727,14 @@ export function Finance({
                         <button
                           onClick={() => openEditTransaction(tx)}
                           className="p-1.5 bg-slate-950 neu-btn hover:text-sky-400 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
-                          title="Sửa giao dịch này"
+                          title={t("finance.txEditTitle")}
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDeleteClick(tx.id)}
                           className="p-1.5 bg-slate-950 neu-btn hover:text-rose-450 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
-                          title="Xóa giao dịch này"
+                          title={t("finance.txDeleteTitle")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -1756,8 +1767,8 @@ export function Finance({
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
                 {editingTx
-                  ? <><Pencil className="w-5 h-5 text-sky-400" /> Chỉnh sửa giao dịch</>
-                  : <><CreditCard className="w-5 h-5 text-sky-400" /> Ghi biên lai tài chính mới</>}
+                  ? <><Pencil className="w-5 h-5 text-sky-400" /> {t("finance.formTitleEdit")}</>
+                  : <><CreditCard className="w-5 h-5 text-sky-400" /> {t("finance.formTitleNew")}</>}
               </h3>
               <button
                 onClick={closeForm}
@@ -1782,23 +1793,23 @@ export function Finance({
                   onClick={() => { setFormType(TransactionType.EXPENSE); setFormCategory(ExpenseCategory.FOOD); }}
                   className={`py-2 rounded-lg cursor-pointer transition-all ${formType === TransactionType.EXPENSE ? "bg-rose-500 text-slate-950" : "text-slate-400"}`}
                 >
-                  Ghi nhận CHI TIÊU (-)
+                  {t("finance.formExpenseBtn")}
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => { setFormType(TransactionType.INCOME); setFormCategory("Lương tháng"); }}
                   className={`py-2 rounded-lg cursor-pointer transition-all ${formType === TransactionType.INCOME ? "bg-emerald-500 text-slate-950" : "text-slate-400"}`}
                 >
-                  Ghi nhận KHOẢN THU (+)
+                  {t("finance.formIncomeBtn")}
                 </button>
               </div>
 
               {/* Description Input */}
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Nội dung ghi chép <span className="text-rose-400">*</span></label>
-                <input 
-                  type="text" 
-                  placeholder={formType === TransactionType.EXPENSE ? "Ví dụ: Đi chợ mua cá lóc, thanh toán hóa đơn điện nước..." : "Ví dụ: Nhận thưởng hoàn thành dự án, nhận lương tháng..."}
+                <label className="text-slate-400 block font-semibold">{t("finance.formDescLabel")} <span className="text-rose-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder={formType === TransactionType.EXPENSE ? t("finance.formDescPlaceholderExpense") : t("finance.formDescPlaceholderIncome")}
                   value={formDesc}
                   onChange={(e) => setFormDesc(e.target.value)}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
@@ -1808,15 +1819,15 @@ export function Finance({
               {/* Amount — hàng riêng cho thoáng (kèm nút cộng dồn khi chi tiêu) */}
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">
-                  Số lượng (VNĐ) <span className="text-rose-400">*</span>
+                  {t("finance.formAmountLabel")} <span className="text-rose-400">*</span>
                   {formType === TransactionType.EXPENSE && (
-                    <span className="ml-1 text-[10px] font-normal text-slate-500">— gõ 50.000+20.000 để cộng dồn</span>
+                    <span className="ml-1 text-[10px] font-normal text-slate-500">{t("finance.formAmountHint")}</span>
                   )}
                 </label>
                 <MoneyInput
                   value={formAmount}
                   onChange={setFormAmount}
-                  placeholder="Điền số giá trị..."
+                  placeholder={t("finance.formAmountPlaceholder")}
                   operators={formType === TransactionType.EXPENSE}
                   className="w-full min-w-0 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-bold"
                 />
@@ -1824,7 +1835,7 @@ export function Finance({
 
               {/* Date — hàng riêng */}
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Mốc ngày sự kiện</label>
+                <label className="text-slate-400 block font-semibold">{t("finance.formDateLabel")}</label>
                 <DateInputDMY
                   value={formDate}
                   onChange={setFormDate}
@@ -1835,29 +1846,29 @@ export function Finance({
               {/* Categorization and Wallet */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1 min-w-0">
-                  <label className="text-slate-400 block font-semibold">Hạng mục {formType === TransactionType.EXPENSE ? "chi phí" : "nguồn tiền"}</label>
+                  <label className="text-slate-400 block font-semibold">{formType === TransactionType.EXPENSE ? t("finance.formCatExpenseLabel") : t("finance.formCatIncomeLabel")}</label>
                   {formType === TransactionType.EXPENSE ? (
                     <FancySelect
                       value={formCategory as string}
                       onChange={setFormCategory}
-                      ariaLabel="Hạng mục chi phí"
-                      options={EXPENSE_CATEGORY_OPTIONS}
+                      ariaLabel={t("finance.formCatExpenseAriaLabel")}
+                      options={expenseCategoryOptions}
                     />
                   ) : (
                     <div className="space-y-2">
                       <FancySelect
                         value={isPresetIncome(formCategory as string) ? (formCategory as string) : INCOME_CUSTOM}
                         onChange={(v) => setFormCategory(v === INCOME_CUSTOM ? "" : v)}
-                        ariaLabel="Nguồn thu"
+                        ariaLabel={t("finance.formCatIncomeAriaLabel")}
                         options={[
                           ...INCOME_CATEGORIES.map(c => ({ value: c, label: c })),
-                          { value: INCOME_CUSTOM, label: "Khác (tự nhập)…" }
+                          { value: INCOME_CUSTOM, label: t("finance.formCatOther") }
                         ]}
                       />
                       {!isPresetIncome(formCategory as string) && (
                         <input
                           type="text"
-                          placeholder="Nhập nguồn thu khác: trúng số, tiền lì xì..."
+                          placeholder={t("finance.formCatOtherPlaceholder")}
                           value={formCategory}
                           onChange={(e) => setFormCategory(e.target.value)}
                           className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
@@ -1869,15 +1880,15 @@ export function Finance({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-400 block font-semibold">Hình thức giao dịch</label>
+                  <label className="text-slate-400 block font-semibold">{t("finance.formAccountLabel")}</label>
                   <FancySelect
                     value={formAccount}
                     onChange={(v) => setFormAccount(v as AccountType)}
-                    ariaLabel="Hình thức giao dịch"
+                    ariaLabel={t("finance.formAccountAriaLabel")}
                     options={[
-                      { value: "bank", label: "Tài khoản Ngân hàng 💳" },
-                      { value: "cash", label: "Tiền mặt thủ công 💵" },
-                      { value: "e_wallet", label: "Ví điện tử MoMo/ZaloPay 📱" }
+                      { value: "bank",     label: t("finance.formAccountBank") },
+                      { value: "cash",     label: t("finance.formAccountCash") },
+                      { value: "e_wallet", label: t("finance.formAccountEWallet") }
                     ]}
                   />
                 </div>
@@ -1885,7 +1896,7 @@ export function Finance({
 
               {/* Receipt File upload */}
               <div className="space-y-1 bg-slate-950/40 p-4 neu-pressed-sm rounded-xl">
-                <label className="text-slate-400 block font-semibold mb-1">Đính kèm ảnh chụp hóa đơn (tự tối ưu trước khi lưu — dán Ctrl+V được)</label>
+                <label className="text-slate-400 block font-semibold mb-1">{t("finance.formReceiptLabel")}</label>
                 <input
                   type="file"
                   accept="image/*,.heic,.heif"
@@ -1893,11 +1904,11 @@ export function Finance({
                   disabled={receiptProcessing}
                   className="w-full text-slate-400 font-mono text-[10px] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-sky-400 file:cursor-pointer hover:file:bg-slate-755 disabled:opacity-50"
                 />
-                {receiptProcessing && <p className="text-[10px] text-sky-400 mt-1">Đang tối ưu & tải ảnh hóa đơn...</p>}
+                {receiptProcessing && <p className="text-[10px] text-sky-400 mt-1">{t("finance.formReceiptUploading")}</p>}
                 
                 {formReceiptBase64 && (
                   <div className="mt-3 flex items-center justify-between bg-slate-900 p-2 border border-slate-800 rounded-lg">
-                    <span className="text-emerald-400 text-[10px] flex items-center gap-1">✔ Đã tải ảnh hóa đơn</span>
+                    <span className="text-emerald-400 text-[10px] flex items-center gap-1">{t("finance.formReceiptDone")}</span>
                     <button 
                       type="button" 
                       onClick={() => setFormReceiptBase64("")}
@@ -1917,13 +1928,13 @@ export function Finance({
                   onClick={closeForm}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
-                  Đóng lại
+                  {t("finance.formClose")}
                 </button>
                 <button
                   type="submit"
                   className={`px-4 py-2 rounded-xl font-bold transition-all cursor-pointer ${formType === TransactionType.EXPENSE ? "bg-rose-500 hover:bg-rose-450 text-slate-950" : "bg-emerald-500 hover:bg-emerald-450 text-slate-950"}`}
                 >
-                  {editingTx ? "Lưu thay đổi" : "Lưu giao dịch"}
+                  {editingTx ? t("finance.formSaveEdit") : t("finance.formSave")}
                 </button>
               </div>
             </form>
@@ -1938,10 +1949,10 @@ export function Finance({
           className="fixed inset-0 bg-slate-950/90 backdrop-blur-xs flex items-center justify-center z-50 p-4 cursor-pointer"
           id="receipt-preview-modal"
         >
-          <div ref={receiptRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Xem hóa đơn" className="relative max-w-full max-h-[85vh] p-1.5 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl outline-none">
+          <div ref={receiptRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t("finance.receiptDialogAriaLabel")} className="relative max-w-full max-h-[85vh] p-1.5 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl outline-none">
             <img
               src={selectedReceipt}
-              alt="Hóa đơn thanh toán" 
+              alt={t("finance.receiptAlt")} 
               className="max-w-full max-h-[80vh] object-contain rounded-xl"
               referrerPolicy="no-referrer"
             />
@@ -1963,7 +1974,7 @@ export function Finance({
         <div onClick={() => setEditingBill(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div ref={billEditorRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl outline-none">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-slate-100">Chỉnh sửa hóa đơn định kỳ</h3>
+              <h3 className="text-sm font-bold text-slate-100">{t("finance.editBillDialogTitle")}</h3>
               <button onClick={() => setEditingBill(null)} className="text-slate-500 hover:text-slate-300 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
@@ -1972,7 +1983,7 @@ export function Finance({
               <input
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
-                placeholder="Tên hóa đơn"
+                placeholder={t("finance.editBillNamePlaceholder")}
                 className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
               />
               <input
@@ -1980,7 +1991,7 @@ export function Finance({
                 inputMode="numeric"
                 value={formatMoneyInput(editAmount)}
                 onChange={e => setEditAmount(parseMoneyInput(e.target.value))}
-                placeholder="Số tiền"
+                placeholder={t("finance.editBillAmountPlaceholder")}
                 className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
               />
               <DateInputDMY
@@ -1991,30 +2002,30 @@ export function Finance({
               <FancySelect
                 value={editFrequency}
                 onChange={(v) => setEditFrequency(v as RecurringBill["frequency"])}
-                ariaLabel="Tần suất hóa đơn"
-                options={BILL_FREQUENCY_OPTIONS}
+                ariaLabel={t("finance.editBillFreqAriaLabel")}
+                options={billFrequencyOptions}
               />
               <FancySelect
                 value={editCategory}
                 onChange={setEditCategory}
-                ariaLabel="Hạng mục hóa đơn"
-                options={BILL_CATEGORIES}
+                ariaLabel={t("finance.editBillCatAriaLabel")}
+                options={billCategoryOptions}
               />
               {editError && <p className="text-[11px] text-rose-400">{editError}</p>}
-              <p className="text-[10px] text-slate-500">Thay đổi không ảnh hưởng đến các kỳ đã thanh toán trước đó.</p>
+              <p className="text-[10px] text-slate-500">{t("finance.editBillHint")}</p>
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => setEditingBill(null)}
                   className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl px-3 py-2 font-bold cursor-pointer"
                 >
-                  Hủy
+                  {t("finance.editBillCancel")}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl px-3 py-2 font-bold cursor-pointer"
                 >
-                  Lưu thay đổi
+                  {t("finance.editBillSave")}
                 </button>
               </div>
             </form>
