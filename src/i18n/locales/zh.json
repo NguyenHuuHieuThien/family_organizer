@@ -72,6 +72,30 @@
     "loan": "偿还银行贷款",
     "other": "其他"
   },
+  "accounts": {
+    "cash": "现金",
+    "bank": "银行",
+    "e_wallet": "电子钱包",
+    "cashEmoji": "现金 💵",
+    "bankEmoji": "银行 💳",
+    "eWalletEmoji": "电子钱包 📱"
+  },
+  "finance": {
+    "tabTransactions": "收支与预算",
+    "tabAssets": "家庭资产",
+    "compare": "对比",
+    "prevPeriod": "上一期",
+    "nextPeriod": "下一期",
+    "backToCurrent": "回到本期",
+    "currentPeriod": "本期",
+    "vsPrev": "较上期",
+    "balanceThisPeriod": "本期结余",
+    "incomeThisPeriod": "本期收入",
+    "expenseThisPeriod": "本期支出",
+    "walletCash": "现金 💵",
+    "walletBank": "银行 💳",
+    "walletEWallet": "电子钱包 📱"
+  },
   "dashboard": {
     "greetPrefix": "你好，",
     "greetMorning": "早上好！",

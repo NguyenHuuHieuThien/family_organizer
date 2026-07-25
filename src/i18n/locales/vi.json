@@ -72,6 +72,30 @@
     "loan": "Trả nợ ngân hàng",
     "other": "Khoản khác"
   },
+  "accounts": {
+    "cash": "Tiền mặt",
+    "bank": "Ngân hàng",
+    "e_wallet": "Ví điện tử",
+    "cashEmoji": "Tiền mặt 💵",
+    "bankEmoji": "Ngân hàng 💳",
+    "eWalletEmoji": "Ví điện tử 📱"
+  },
+  "finance": {
+    "tabTransactions": "Thu chi & ngân sách",
+    "tabAssets": "Tài sản gia đình",
+    "compare": "So sánh",
+    "prevPeriod": "Kỳ trước",
+    "nextPeriod": "Kỳ sau",
+    "backToCurrent": "Về kỳ hiện tại",
+    "currentPeriod": "Kỳ hiện tại",
+    "vsPrev": "so kỳ trước",
+    "balanceThisPeriod": "Cân đối kỳ này",
+    "incomeThisPeriod": "Nguồn thu trong kỳ",
+    "expenseThisPeriod": "Chi tiêu trong kỳ",
+    "walletCash": "Tiền mặt 💵",
+    "walletBank": "Ngân hàng 💳",
+    "walletEWallet": "Ví điện tử 📱"
+  },
   "dashboard": {
     "greetPrefix": "Xin chào,",
     "greetMorning": "Chào buổi sáng!",

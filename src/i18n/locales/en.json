@@ -72,6 +72,30 @@
     "loan": "Bank loan repayment",
     "other": "Other"
   },
+  "accounts": {
+    "cash": "Cash",
+    "bank": "Bank",
+    "e_wallet": "E-wallet",
+    "cashEmoji": "Cash 💵",
+    "bankEmoji": "Bank 💳",
+    "eWalletEmoji": "E-wallet 📱"
+  },
+  "finance": {
+    "tabTransactions": "Spending & budgets",
+    "tabAssets": "Family assets",
+    "compare": "Compare",
+    "prevPeriod": "Previous period",
+    "nextPeriod": "Next period",
+    "backToCurrent": "Back to current period",
+    "currentPeriod": "Current period",
+    "vsPrev": "vs previous",
+    "balanceThisPeriod": "Balance this period",
+    "incomeThisPeriod": "Income this period",
+    "expenseThisPeriod": "Spending this period",
+    "walletCash": "Cash 💵",
+    "walletBank": "Bank 💳",
+    "walletEWallet": "E-wallet 📱"
+  },
   "dashboard": {
     "greetPrefix": "Hello,",
     "greetMorning": "Good morning!",

@@ -58,6 +58,8 @@ import {
 } from "../utils/financePeriod.js";
 import { useTabFab } from "./FabHost.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n/index.js";
 
 // Rút gọn số tiền cho nhãn trục/tooltip biểu đồ: 12tr, 1,5 tỷ, 500k.
 const fmtShortMoney = (n: number): string => {
@@ -399,6 +401,7 @@ export function Finance({
   onSaveAsset,
   onDeleteAsset
 }: FinanceProps) {
+  const { t } = useTranslation();
   const [financeView, setFinanceView] = useState<"cashflow" | "assets">("cashflow");
   // Kỳ xem (Tháng/Quý/Năm) + mốc ngày trong kỳ + bật bảng so sánh 2 cột
   const [periodMode, setPeriodMode] = useState<PeriodMode>("month");
@@ -871,35 +874,14 @@ export function Finance({
   };
 
   // Naming converters
-  const translateCategory = (cat: string) => {
-    switch (cat) {
-      // Hạng mục chi tiêu thông thường
-      case "food":          return "Ăn uống";
-      case "education2":    return "Học tập";
-      case "utilities":     return "Điện nước";
-      case "shopping":      return "Mua sắm";
-      case "medical":       return "Y tế";
-      case "transport":     return "Đi lại";
-      case "debt_bank":     return "Trả nợ NH";
-      case "debt_personal": return "Trả nợ CN";
-      case "funeral":       return "Ma chay";
-      case "ceremony":      return "Hiếu hỉ";
-      // Hạng mục từ hóa đơn định kỳ (bill.category → transaction.category)
-      case "rent":          return "Thuê nhà";
-      case "internet":      return "Cước Internet";
-      case "phone":         return "Điện thoại";
-      case "insurance":     return "Bảo hiểm";
-      case "loan":          return "Trả nợ NH";
-      case "other":         return "Khác";
-      default: return cat;
-    }
-  };
+  // Nhãn hạng mục dùng chung namespace "categories"; hạng mục tự đặt giữ tên gốc.
+  const translateCategory = (cat: string) => t(`categories.${cat}`, { defaultValue: cat });
 
   const translateAccount = (acc: string) => {
     switch (acc) {
-      case "cash": return "Tiền mặt 💵";
-      case "bank": return "Ngân hàng chuyển khoản 💳";
-      case "e_wallet": return "Ví điện tử MoMo/ZaloPay 📱";
+      case "cash": return t("accounts.cashEmoji");
+      case "bank": return t("accounts.bankEmoji");
+      case "e_wallet": return t("accounts.eWalletEmoji");
       default: return acc;
     }
   };
@@ -950,12 +932,12 @@ export function Finance({
   // false (chi): tăng = xấu (đỏ).
   const DeltaBadge = ({ cur, prev, higherIsGood }: { cur: number; prev: number; higherIsGood: boolean }) => {
     const d = pctDelta(cur, prev);
-    if (d === 0) return <span className="text-[10px] text-slate-500 font-mono">— so kỳ trước</span>;
+    if (d === 0) return <span className="text-[10px] text-slate-500 font-mono">— {t("finance.vsPrev")}</span>;
     const up = d > 0;
     const good = higherIsGood ? up : !up;
     return (
       <span className={`text-[10px] font-mono font-bold ${good ? "text-emerald-400" : "text-rose-400"}`}>
-        {up ? "▲" : "▼"} {Math.abs(d)}% <span className="text-slate-500 font-normal">so kỳ trước</span>
+        {up ? "▲" : "▼"} {Math.abs(d)}% <span className="text-slate-500 font-normal">{t("finance.vsPrev")}</span>
       </span>
     );
   };
@@ -968,14 +950,14 @@ export function Finance({
           onClick={() => setFinanceView("cashflow")}
           className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-[box-shadow,color] duration-200 ${financeView === "cashflow" ? "bg-slate-900 neu-raised-sm text-emerald-400" : "text-slate-400 hover:text-slate-200"}`}
         >
-          <Wallet className="w-4 h-4" /> Thu chi & ngân sách
+          <Wallet className="w-4 h-4" /> {t("finance.tabTransactions")}
         </button>
         <button
           type="button"
           onClick={() => setFinanceView("assets")}
           className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-[box-shadow,color] duration-200 ${financeView === "assets" ? "bg-slate-900 neu-raised-sm text-amber-400" : "text-slate-400 hover:text-slate-200"}`}
         >
-          <FileText className="w-4 h-4" /> Tài sản gia đình
+          <FileText className="w-4 h-4" /> {t("finance.tabAssets")}
         </button>
       </Reveal>
 
@@ -1011,9 +993,9 @@ export function Finance({
             type="button"
             onClick={() => setShowCompare(s => !s)}
             className={`flex items-center gap-1 px-3 py-2 rounded-xl text-[11px] font-bold transition-[box-shadow,color] duration-200 cursor-pointer ${showCompare ? "bg-slate-900 neu-raised-sm text-violet-400" : "bg-slate-950 neu-pressed-sm text-slate-400 hover:text-slate-200"}`}
-            title="Bật/tắt bảng so sánh với kỳ liền trước"
+            title={t("finance.compare")}
           >
-            <BarChart3 className="w-3.5 h-3.5" /> So sánh
+            <BarChart3 className="w-3.5 h-3.5" /> {t("finance.compare")}
           </button>
         </div>
 
@@ -1022,7 +1004,7 @@ export function Finance({
             type="button"
             onClick={() => setAnchor(a => stepAnchor(periodMode, a, -1))}
             className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-300 hover:text-sky-400 transition-colors cursor-pointer"
-            title="Kỳ trước"
+            title={t("finance.prevPeriod")}
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -1035,11 +1017,11 @@ export function Finance({
                 onClick={() => setAnchor(new Date())}
                 className="inline-flex items-center gap-1 text-[11px] text-sky-400 hover:text-sky-300 font-semibold cursor-pointer"
               >
-                <RotateCcw className="w-3 h-3" /> Về kỳ hiện tại
+                <RotateCcw className="w-3 h-3" /> {t("finance.backToCurrent")}
               </button>
             ) : (
               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Kỳ hiện tại
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> {t("finance.currentPeriod")}
               </span>
             )}
           </div>
@@ -1049,7 +1031,7 @@ export function Finance({
             onClick={() => canGoNext && setAnchor(a => stepAnchor(periodMode, a, 1))}
             disabled={!canGoNext}
             className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-300 hover:text-sky-400 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-slate-300"
-            title="Kỳ sau"
+            title={t("finance.nextPeriod")}
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -1063,7 +1045,7 @@ export function Finance({
         <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl flex flex-col justify-between">
           <ShimmerLine via={metrics.balance >= 0 ? "via-emerald-500/50" : "via-rose-500/50"} />
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-semibold">Cân đối kỳ này</span>
+            <span className="text-slate-400 text-xs font-semibold">{t("finance.balanceThisPeriod")}</span>
             <div className={`p-2 rounded-xl ${metrics.balance >= 0 ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
               <Wallet className="w-5 h-5" />
             </div>
@@ -1080,7 +1062,7 @@ export function Finance({
         <Reveal delay={0.15} className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-md flex flex-col justify-between">
           <ShimmerLine accent="emerald" />
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-semibold">Nguồn thu trong kỳ</span>
+            <span className="text-slate-400 text-xs font-semibold">{t("finance.incomeThisPeriod")}</span>
             <div className="bg-emerald-500/10 p-2 rounded-xl text-emerald-400">
               <TrendingUp className="w-5 h-5" />
             </div>
@@ -1097,7 +1079,7 @@ export function Finance({
         <Reveal delay={0.2} className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-md flex flex-col justify-between">
           <ShimmerLine accent="rose" />
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-semibold">Chi tiêu trong kỳ</span>
+            <span className="text-slate-400 text-xs font-semibold">{t("finance.expenseThisPeriod")}</span>
             <div className="bg-rose-500/10 p-2 rounded-xl text-rose-400">
               <ArrowDownRight className="w-5 h-5" />
             </div>
@@ -1114,9 +1096,9 @@ export function Finance({
       {/* Số dư theo từng ví (tính từ giao dịch) */}
       <div className="grid grid-cols-3 gap-2.5 sm:gap-4 md:gap-x-6" id="account-balances">
         {[
-          { key: "cash", label: "Tiền mặt 💵" },
-          { key: "bank", label: "Ngân hàng 💳" },
-          { key: "e_wallet", label: "Ví điện tử 📱" }
+          { key: "cash", label: t("finance.walletCash") },
+          { key: "bank", label: t("finance.walletBank") },
+          { key: "e_wallet", label: t("finance.walletEWallet") }
         ].map(acc => {
           const v = accountBalances[acc.key] || 0;
           return (
