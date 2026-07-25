@@ -1022,5 +1022,22 @@
     "uptimeDay": "{{d}} ngày {{h}} giờ",
     "uptimeHour": "{{h}} giờ {{m}} phút",
     "uptimeMin": "{{m}} phút"
+  },
+  "globalSearch": {
+    "btnTitle": "Tìm kiếm toàn cục (Ctrl+K)",
+    "btnAria": "Tìm kiếm toàn cục",
+    "dialogAria": "Tìm kiếm toàn cục",
+    "placeholder": "Tìm công việc, ghi chú, thu chi, giấy tờ...",
+    "searching": "Đang tìm...",
+    "closeAria": "Đóng tìm kiếm",
+    "hintText": "Gõ từ 2 ký tự để tìm — không cần gõ dấu, \"giay to\" vẫn khớp \"Giấy tờ\".",
+    "noResults": "Không tìm thấy kết quả nào cho \"{{q}}\".",
+    "kbdClose": "đóng",
+    "kbdToggle": "mở/đóng",
+    "kindTask": "Công việc",
+    "kindPlan": "Lịch & sự kiện",
+    "kindNote": "Ghi chú",
+    "kindTransaction": "Thu chi",
+    "kindDocument": "Giấy tờ"
   }
 }

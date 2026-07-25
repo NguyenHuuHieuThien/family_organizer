@@ -8,10 +8,11 @@
 // Ghi chú + Thu chi + Giấy tờ. Bấm kết quả → nhảy sang tab tương ứng.
 // So khớp phía server đã bỏ dấu tiếng Việt ("giay to" khớp "Giấy tờ").
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, CheckSquare, Calendar, FileText, Wallet, FolderLock, CornerDownLeft } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useModalA11y } from "../hooks/useModalA11y.js";
+import { useTranslation } from "react-i18next";
 
 interface SearchResultItem {
   kind: "task" | "plan" | "note" | "transaction" | "document";
@@ -22,14 +23,6 @@ interface SearchResultItem {
   tab: string;
 }
 
-// Nhóm hiển thị: icon + nhãn + accent theo ngữ nghĩa màu của DESIGN.md
-const KIND_META: Record<SearchResultItem["kind"], { label: string; icon: React.ElementType; accent: string }> = {
-  task: { label: "Công việc", icon: CheckSquare, accent: "text-sky-400" },
-  plan: { label: "Lịch & sự kiện", icon: Calendar, accent: "text-amber-400" },
-  note: { label: "Ghi chú", icon: FileText, accent: "text-indigo-400" },
-  transaction: { label: "Thu chi", icon: Wallet, accent: "text-emerald-400" },
-  document: { label: "Giấy tờ", icon: FolderLock, accent: "text-rose-400" }
-};
 const KIND_ORDER: SearchResultItem["kind"][] = ["task", "plan", "note", "transaction", "document"];
 
 // "2026-07-18 09:30" / "2026-07-18T..." → "18/07/2026"
@@ -44,6 +37,7 @@ interface GlobalSearchProps {
 }
 
 export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNavigate }) => {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResultItem[]>([]);
@@ -53,6 +47,15 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<number | null>(null);
   const reducedMotion = useReducedMotion();
+
+  // Nhóm hiển thị: icon + nhãn + accent theo ngữ nghĩa màu của DESIGN.md
+  const KIND_META = useMemo(() => ({
+    task:        { label: t("globalSearch.kindTask"),        icon: CheckSquare, accent: "text-sky-400" },
+    plan:        { label: t("globalSearch.kindPlan"),        icon: Calendar,    accent: "text-amber-400" },
+    note:        { label: t("globalSearch.kindNote"),        icon: FileText,    accent: "text-indigo-400" },
+    transaction: { label: t("globalSearch.kindTransaction"), icon: Wallet,      accent: "text-emerald-400" },
+    document:    { label: t("globalSearch.kindDocument"),    icon: FolderLock,  accent: "text-rose-400" }
+  } as Record<SearchResultItem["kind"], { label: string; icon: React.ElementType; accent: string }>), [t]);
 
   // App tạo lại getAuthHeader mỗi render — giữ qua ref để effect debounce
   // không re-run (tự tìm lại) mỗi khi App re-render vì SSE/polling.
@@ -133,8 +136,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
       <button
         onClick={() => setOpen(true)}
         className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none cursor-pointer flex items-center justify-center"
-        title="Tìm kiếm toàn cục (Ctrl+K)"
-        aria-label="Tìm kiếm toàn cục"
+        title={t("globalSearch.btnTitle")}
+        aria-label={t("globalSearch.btnAria")}
       >
         <Search className="w-4.5 h-4.5" />
       </button>
@@ -149,7 +152,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
               ref={dialogRef}
               role="dialog"
               aria-modal="true"
-              aria-label="Tìm kiếm toàn cục"
+              aria-label={t("globalSearch.dialogAria")}
               initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95, y: -8 }}
               animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
               exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
@@ -164,16 +167,16 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
                   autoFocus
                   value={query}
                   onChange={e => setQuery(e.target.value)}
-                  placeholder="Tìm công việc, ghi chú, thu chi, giấy tờ..."
+                  placeholder={t("globalSearch.placeholder")}
                   className="flex-1 bg-transparent text-slate-200 placeholder:text-slate-500 outline-none min-w-0"
                 />
                 {loading && (
-                  <span className="w-4 h-4 border-2 border-slate-800 border-t-sky-500 rounded-full animate-spin shrink-0" aria-label="Đang tìm..." />
+                  <span className="w-4 h-4 border-2 border-slate-800 border-t-sky-500 rounded-full animate-spin shrink-0" aria-label={t("globalSearch.searching")} />
                 )}
                 <button
                   onClick={close}
                   className="p-1.5 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-slate-200 cursor-pointer shrink-0"
-                  aria-label="Đóng tìm kiếm"
+                  aria-label={t("globalSearch.closeAria")}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -183,11 +186,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
               <div className="max-h-[min(60vh,26rem)] overflow-y-auto overscroll-contain">
                 {query.trim().length < 2 ? (
                   <p className="text-center text-xs text-slate-500 py-10 px-4">
-                    Gõ từ 2 ký tự để tìm — không cần gõ dấu, <span className="font-mono">"giay to"</span> vẫn khớp <span className="font-semibold">"Giấy tờ"</span>.
+                    {t("globalSearch.hintText")}
                   </p>
                 ) : grouped.length === 0 && !loading && searchedFor ? (
                   <p className="text-center text-xs text-slate-500 py-10 px-4">
-                    Không tìm thấy kết quả nào cho "<span className="text-slate-300 font-semibold">{searchedFor}</span>".
+                    {t("globalSearch.noResults", { q: searchedFor })}
                   </p>
                 ) : (
                   <div className="py-2">
@@ -227,8 +230,8 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
 
               {/* Chân modal: gợi ý phím tắt (ẩn trên mobile) */}
               <div className="hidden sm:flex items-center justify-end gap-3 px-4 py-2 border-t border-slate-800 text-[10px] text-slate-500 font-mono">
-                <span><kbd className="px-1 py-0.5 bg-slate-950 neu-pressed-sm rounded">Esc</kbd> đóng</span>
-                <span><kbd className="px-1 py-0.5 bg-slate-950 neu-pressed-sm rounded">Ctrl K</kbd> mở/đóng</span>
+                <span><kbd className="px-1 py-0.5 bg-slate-950 neu-pressed-sm rounded">Esc</kbd> {t("globalSearch.kbdClose")}</span>
+                <span><kbd className="px-1 py-0.5 bg-slate-950 neu-pressed-sm rounded">Ctrl K</kbd> {t("globalSearch.kbdToggle")}</span>
               </div>
             </motion.div>
           </div>

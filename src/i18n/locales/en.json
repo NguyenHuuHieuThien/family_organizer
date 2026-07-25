@@ -1022,5 +1022,22 @@
     "uptimeDay": "{{d}} days {{h}} hrs",
     "uptimeHour": "{{h}} hrs {{m}} min",
     "uptimeMin": "{{m}} min"
+  },
+  "globalSearch": {
+    "btnTitle": "Global search (Ctrl+K)",
+    "btnAria": "Global search",
+    "dialogAria": "Global search",
+    "placeholder": "Search tasks, notes, transactions, documents...",
+    "searching": "Searching...",
+    "closeAria": "Close search",
+    "hintText": "Type 2+ characters — no diacritics needed, \"giay to\" matches \"Giấy tờ\".",
+    "noResults": "No results found for \"{{q}}\".",
+    "kbdClose": "close",
+    "kbdToggle": "open/close",
+    "kindTask": "Tasks",
+    "kindPlan": "Schedule & Events",
+    "kindNote": "Notes",
+    "kindTransaction": "Transactions",
+    "kindDocument": "Documents"
   }
 }

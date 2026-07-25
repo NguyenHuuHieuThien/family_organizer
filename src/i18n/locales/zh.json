@@ -1022,5 +1022,22 @@
     "uptimeDay": "{{d}} 天 {{h}} 小时",
     "uptimeHour": "{{h}} 小时 {{m}} 分",
     "uptimeMin": "{{m}} 分"
+  },
+  "globalSearch": {
+    "btnTitle": "全局搜索 (Ctrl+K)",
+    "btnAria": "全局搜索",
+    "dialogAria": "全局搜索",
+    "placeholder": "搜索任务、笔记、收支、文件...",
+    "searching": "搜索中...",
+    "closeAria": "关闭搜索",
+    "hintText": "输入2个以上字符开始搜索。",
+    "noResults": "未找到「{{q}}」的相关结果。",
+    "kbdClose": "关闭",
+    "kbdToggle": "开/关",
+    "kindTask": "任务",
+    "kindPlan": "日程与活动",
+    "kindNote": "笔记",
+    "kindTransaction": "收支",
+    "kindDocument": "文件"
   }
 }
