@@ -31,36 +31,42 @@ import { QuickNudge } from "./QuickNudge.js";
 import { ShimmerLine, IconChip } from "./Lively.js";
 import { getVietnamHolidaysForMonth } from "../utils/vietnamHolidays.js";
 import { expandRecurringOccurrences } from "../utils/recurrence.js";
+import { useTranslation } from "react-i18next";
+import i18n from "../i18n/index.js";
 
 // Full Markdown (GFM) renderer — lazy-loaded, shared with the Notes tab so
 // pinned-note previews render formatted content instead of raw text.
 const MarkdownView = lazy(() => import("./Markdown.js"));
 const MarkdownFallback = () => <p className="text-slate-600 text-[11px]">Đang hiển thị…</p>;
 
-// Nhãn + emoji + màu thanh cho hạng mục CHI — khớp bộ màu ở tab Tài chính,
-// dùng cho top hạng mục tiêu dùng trong card Tổng quan.
-const EXPENSE_CAT_META: Record<string, { label: string; emoji: string; bar: string }> = {
-  food:          { label: "Ăn uống",           emoji: "🍲", bar: "from-orange-500 to-orange-400" },
-  education2:    { label: "Học tập",           emoji: "📚", bar: "from-violet-500 to-violet-400" },
-  utilities:     { label: "Điện nước",         emoji: "⚡", bar: "from-amber-500 to-amber-400" },
-  shopping:      { label: "Mua sắm",           emoji: "🛍️", bar: "from-pink-500 to-pink-400" },
-  medical:       { label: "Y tế",              emoji: "💊", bar: "from-rose-500 to-rose-400" },
-  transport:     { label: "Đi lại",            emoji: "🚗", bar: "from-sky-500 to-sky-400" },
-  debt_bank:     { label: "Trả nợ ngân hàng",  emoji: "🏦", bar: "from-red-500 to-red-400" },
-  debt_personal: { label: "Trả nợ cá nhân",    emoji: "🤝", bar: "from-teal-500 to-teal-400" },
-  funeral:       { label: "Ma chay",           emoji: "🌸", bar: "from-zinc-500 to-zinc-400" },
-  ceremony:      { label: "Hiếu hỉ",           emoji: "🎁", bar: "from-yellow-500 to-yellow-400" },
-  rent:          { label: "Thuê nhà",          emoji: "🏠", bar: "from-indigo-500 to-indigo-400" },
-  internet:      { label: "Internet",          emoji: "🌐", bar: "from-cyan-500 to-cyan-400" },
-  phone:         { label: "Điện thoại",        emoji: "📱", bar: "from-purple-500 to-purple-400" },
-  insurance:     { label: "Bảo hiểm",          emoji: "🛡️", bar: "from-slate-500 to-slate-400" },
-  loan:          { label: "Trả nợ ngân hàng",  emoji: "🏦", bar: "from-red-500 to-red-400" },
-  other:         { label: "Khoản khác",        emoji: "🏷️", bar: "from-slate-600 to-slate-500" },
+// Emoji + màu thanh cho hạng mục CHI — khớp bộ màu ở tab Tài chính. Nhãn dịch qua
+// i18n (namespace "categories"); hạng mục tự đặt → giữ nguyên tên gốc.
+const EXPENSE_CAT_STYLE: Record<string, { emoji: string; bar: string }> = {
+  food:          { emoji: "🍲", bar: "from-orange-500 to-orange-400" },
+  education2:    { emoji: "📚", bar: "from-violet-500 to-violet-400" },
+  utilities:     { emoji: "⚡", bar: "from-amber-500 to-amber-400" },
+  shopping:      { emoji: "🛍️", bar: "from-pink-500 to-pink-400" },
+  medical:       { emoji: "💊", bar: "from-rose-500 to-rose-400" },
+  transport:     { emoji: "🚗", bar: "from-sky-500 to-sky-400" },
+  debt_bank:     { emoji: "🏦", bar: "from-red-500 to-red-400" },
+  debt_personal: { emoji: "🤝", bar: "from-teal-500 to-teal-400" },
+  funeral:       { emoji: "🌸", bar: "from-zinc-500 to-zinc-400" },
+  ceremony:      { emoji: "🎁", bar: "from-yellow-500 to-yellow-400" },
+  rent:          { emoji: "🏠", bar: "from-indigo-500 to-indigo-400" },
+  internet:      { emoji: "🌐", bar: "from-cyan-500 to-cyan-400" },
+  phone:         { emoji: "📱", bar: "from-purple-500 to-purple-400" },
+  insurance:     { emoji: "🛡️", bar: "from-slate-500 to-slate-400" },
+  loan:          { emoji: "🏦", bar: "from-red-500 to-red-400" },
+  other:         { emoji: "🏷️", bar: "from-slate-600 to-slate-500" },
 };
-// Không có trong bảng (vd hạng mục do người dùng tự đặt) → giữ nguyên tên gốc,
-// khớp với cách tab Tài chính hiển thị (translateCategory: default trả về cat).
-const expenseCatMeta = (cat: string) =>
-  EXPENSE_CAT_META[cat] || { label: cat || "Khoản khác", emoji: "🏷️", bar: "from-slate-600 to-slate-500" };
+const expenseCatMeta = (cat: string) => {
+  const style = EXPENSE_CAT_STYLE[cat];
+  return {
+    label: i18n.t(`categories.${cat}`, { defaultValue: cat || i18n.t("categories.other") }),
+    emoji: style?.emoji || "🏷️",
+    bar: style?.bar || "from-slate-600 to-slate-500",
+  };
+};
 
 interface DashboardProps {
   currentUser: User;
@@ -75,60 +81,48 @@ interface DashboardProps {
   onNavigate: (tab: string) => void;
 }
 
-// WMO weather code → Vietnamese label + emoji
-const WEATHER_CODES: Record<number, { label: string; icon: string }> = {
-  0: { label: "Trời quang", icon: "☀️" },
-  1: { label: "Ít mây", icon: "🌤️" },
-  2: { label: "Có mây", icon: "⛅" },
-  3: { label: "Nhiều mây", icon: "☁️" },
-  45: { label: "Sương mù", icon: "🌫️" },
-  48: { label: "Sương muối", icon: "🌫️" },
-  51: { label: "Mưa phùn nhẹ", icon: "🌦️" },
-  53: { label: "Mưa phùn", icon: "🌦️" },
-  55: { label: "Mưa phùn dày", icon: "🌧️" },
-  61: { label: "Mưa nhẹ", icon: "🌦️" },
-  63: { label: "Mưa vừa", icon: "🌧️" },
-  65: { label: "Mưa to", icon: "🌧️" },
-  80: { label: "Mưa rào", icon: "🌦️" },
-  81: { label: "Mưa rào", icon: "🌧️" },
-  82: { label: "Mưa rào dữ dội", icon: "⛈️" },
-  95: { label: "Dông", icon: "⛈️" },
-  96: { label: "Dông kèm mưa đá", icon: "⛈️" },
-  99: { label: "Dông mạnh", icon: "⛈️" }
+// WMO weather code → emoji (nhãn dịch qua i18n: dashboard.weather.codes.<code>)
+const WEATHER_ICONS: Record<number, string> = {
+  0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 45: "🌫️", 48: "🌫️",
+  51: "🌦️", 53: "🌦️", 55: "🌧️", 61: "🌦️", 63: "🌧️", 65: "🌧️",
+  80: "🌦️", 81: "🌧️", 82: "⛈️", 95: "⛈️", 96: "⛈️", 99: "⛈️"
 };
-const describeWeather = (code: number) => WEATHER_CODES[code] || { label: "—", icon: "🌡️" };
+const describeWeather = (code: number) => ({
+  icon: WEATHER_ICONS[code] || "🌡️",
+  label: i18n.t(`dashboard.weather.codes.${code}`, { defaultValue: "—" }),
+});
 
 // "cách đây" gọn gàng cho mốc thời gian động đất (nhận epoch ms từ USGS).
 const timeAgoVi = (ms: number | null | undefined): string => {
   if (!ms) return "";
   const diff = Date.now() - ms;
   const mins = Math.round(diff / 60000);
-  if (mins < 60) return `${Math.max(1, mins)} phút trước`;
+  if (mins < 60) return i18n.t("dashboard.timeAgoMin", { n: Math.max(1, mins) });
   const hours = Math.round(mins / 60);
-  if (hours < 24) return `${hours} giờ trước`;
+  if (hours < 24) return i18n.t("dashboard.timeAgoHour", { n: hours });
   const days = Math.round(hours / 24);
-  return `${days} ngày trước`;
+  return i18n.t("dashboard.timeAgoDay", { n: days });
 };
 
 // Aurora look of the hero banner per time of day. Blob tints are fixed accents
 // at low opacity so they read as soft pastels on the light theme and as glow on dark.
 const AURORA = {
   morning: {
-    greet: "Chào buổi sáng!",
+    greetKey: "greetMorning",
     blobs: ["bg-amber-400/25", "bg-rose-400/20", "bg-orange-300/20"],
     nameGradient: "from-amber-500 via-rose-500 to-orange-500",
     shimmer: "via-amber-500/60",
     emblem: "sun"
   },
   afternoon: {
-    greet: "Chào buổi chiều!",
+    greetKey: "greetAfternoon",
     blobs: ["bg-sky-500/20", "bg-cyan-400/20", "bg-violet-500/20"],
     nameGradient: "from-sky-500 via-violet-500 to-cyan-500",
     shimmer: "via-sky-500/60",
     emblem: "sun"
   },
   evening: {
-    greet: "Chào buổi tối!",
+    greetKey: "greetEvening",
     blobs: ["bg-violet-500/25", "bg-fuchsia-500/15", "bg-indigo-500/25"],
     nameGradient: "from-violet-500 via-fuchsia-500 to-sky-500",
     shimmer: "via-violet-500/60",
@@ -136,40 +130,14 @@ const AURORA = {
   }
 } as const;
 
-// Lời chúc gia đình xoay vòng theo NGÀY — cả nhà thấy cùng một câu trong ngày,
-// mỗi ngày đổi một câu để trang Tổng quan luôn tươi mới.
-const DAILY_GREETINGS = [
-  "Gia đình là nơi bình yên nhất để trở về. 🏡",
-  "Yêu thương cho đi là yêu thương còn mãi. 💞",
-  "Một nụ cười của cả nhà đáng giá hơn ngàn lời nói. 😊",
-  "Hôm nay hãy ôm người thân một cái thật chặt nhé! 🤗",
-  "Bữa cơm gia đình là liều thuốc bổ cho tâm hồn. 🍚",
-  "Chậm lại một chút để lắng nghe nhau nhiều hơn. 🌿",
-  "Sức khỏe của cả nhà là tài sản quý nhất. 💪",
-  "Mỗi ngày bên nhau là một món quà. 🎁",
-  "Gia đình đồng lòng, việc khó hóa dễ. 🤝",
-  "Hãy để lời yêu thương được nói ra hôm nay. 💌",
-  "Niềm vui nhân đôi khi được sẻ chia. ✨",
-  "Nhà là nơi trái tim luôn hướng về. ❤️",
-  "Cùng nhau cố gắng, cùng nhau hạnh phúc. 🌈",
-  "Việc nhỏ làm bằng tình yêu lớn. 🌟",
-  "Giữ lửa yêu thương từ những điều giản dị. 🔥",
-  "Hôm nay uống đủ nước và cười thật tươi nhé! 💧",
-  "Kiên nhẫn với nhau, dịu dàng với chính mình. 🕊️",
-  "Thành công lớn bắt đầu từ một gia đình ấm êm. 🏆",
-  "Biết ơn những điều bình dị mỗi ngày. 🙏",
-  "Cùng nhau vượt qua, không ai bị bỏ lại phía sau. 🫶",
-  "Dành thời gian cho nhau là món quà vô giá. ⏳",
-  "Một gia đình gọn gàng, một tâm trí thảnh thơi. 🧹",
-  "Yêu thương là ngôn ngữ mọi trái tim đều hiểu. 💗",
-  "Chúc cả nhà một ngày tràn đầy năng lượng! ⚡"
-] as const;
-
 // Chọn lời chúc theo số thứ tự ngày trong năm → ổn định trong ngày, đổi mỗi ngày.
+// Danh sách câu chúc nằm trong i18n (dashboard.greetings) để dịch được đa ngôn ngữ.
 function greetingOfDay(d = new Date()): string {
   const start = new Date(d.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((d.getTime() - start.getTime()) / 86400000);
-  return DAILY_GREETINGS[dayOfYear % DAILY_GREETINGS.length];
+  const list = i18n.t("dashboard.greetings", { returnObjects: true }) as string[];
+  if (!Array.isArray(list) || list.length === 0) return "";
+  return list[dayOfYear % list.length];
 }
 
 // Biểu tượng thời gian trong ngày: mặt trời toả tia (xoay chậm) hoặc trăng + sao lấp lánh.
@@ -336,7 +304,7 @@ function TrendRow({ values }: { values: number[] }) {
         />
       </div>
       <p className={`text-[9px] font-mono ${up ? "text-emerald-400" : "text-rose-400"}`}>
-        {up ? "▲" : "▼"} {pct >= 0 ? "+" : ""}{pct.toFixed(1).replace(".", ",")}% · 7 ngày
+        {up ? "▲" : "▼"} {pct >= 0 ? "+" : ""}{pct.toFixed(1).replace(".", ",")}% · {i18n.t("dashboard.spark7d")}
       </p>
     </div>
   );
@@ -354,6 +322,7 @@ export function Dashboard({
   onViewPlan,
   onNavigate
 }: DashboardProps) {
+  const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
 
   // Entrance animation preset: cards slide up in sequence; plain fade when the
@@ -435,7 +404,6 @@ export function Dashboard({
     const windowEnd = new Date(startOfToday.getTime() + 86400000 * WINDOW_DAYS);
     const pad2 = (n: number) => String(n).padStart(2, "0");
     const fmtDate = (d: Date) => `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}`;
-    const recurLabel = (t?: string) => t === "daily" ? "Hằng ngày" : t === "weekly" ? "Hằng tuần" : t === "monthly" ? "Hằng tháng" : t === "yearly" ? "Hằng năm" : "";
 
     type UpcomingItem = {
       key: string; planId: string; title: string; description: string; color: string;
@@ -448,7 +416,7 @@ export function Dashboard({
       const start = new Date(`${plan.startDate.slice(0, 10)}T00:00:00`);
       if (isNaN(start.getTime())) return;
       const timeLabel = (plan.startDate.split(" ")[1] || "").slice(0, 5);
-      const recur = plan.isRecurring && plan.recurrenceType && plan.recurrenceType !== "none" ? recurLabel(plan.recurrenceType) : "";
+      const recur = plan.isRecurring && plan.recurrenceType && plan.recurrenceType !== "none" ? plan.recurrenceType : "";
 
       const pushOcc = (day: Date) => {
         if (day < startOfToday || day > windowEnd) return;
@@ -559,7 +527,7 @@ export function Dashboard({
       if (isNaN(dob.getTime())) return;
       let bd = new Date(today.getFullYear(), dob.getMonth(), dob.getDate());
       if (bd.getTime() < todayMid) bd = new Date(today.getFullYear() + 1, dob.getMonth(), dob.getDate());
-      items.push({ key: `b-${u.id}`, icon: "🎂", title: `Sinh nhật ${u.fullName}`, daysUntil: daysTo(bd), dateLabel: fmt(bd), accent: "pink" });
+      items.push({ key: `b-${u.id}`, icon: "🎂", title: i18n.t("dashboard.birthdayCountdown", { name: u.fullName }), daysUntil: daysTo(bd), dateLabel: fmt(bd), accent: "pink" });
     });
 
     // Sự kiện đánh dấu "Quan trọng" (một lần) chưa diễn ra
@@ -572,7 +540,7 @@ export function Dashboard({
     });
 
     return items.sort((a, b) => a.daysUntil - b.daysUntil).slice(0, 4);
-  }, [users, plans]);
+  }, [users, plans, i18n.language]);
 
   // Time of day drives both the greeting and the hero's aurora palette.
   const aurora = useMemo(() => {
@@ -581,8 +549,8 @@ export function Dashboard({
     if (hours >= 12 && hours < 18) return AURORA.afternoon;
     return AURORA.evening;
   }, []);
-  // Lời chúc gia đình đổi theo ngày (ổn định trong phiên).
-  const dailyGreeting = useMemo(() => greetingOfDay(), []);
+  // Lời chúc gia đình đổi theo ngày (ổn định trong phiên; đổi lại khi đổi ngôn ngữ).
+  const dailyGreeting = useMemo(() => greetingOfDay(), [i18n.language]);
 
   // Chuỗi giá 7 ngày cho sparkline từng card (server chụp ~10 phút/lần).
   const marketSeries = useMemo(() => {
@@ -650,14 +618,14 @@ export function Dashboard({
             </div>
             <div className="space-y-1 min-w-0">
               <h2 className="text-xl md:text-2xl font-extrabold text-slate-100 truncate">
-                Xin chào,{" "}
+                {t("dashboard.greetPrefix")}{" "}
                 <span className={`bg-gradient-to-r ${aurora.nameGradient} bg-clip-text text-transparent`}>
                   {currentUser.fullName}
                 </span>
                 !
               </h2>
               <p className="text-slate-300 text-sm md:text-base">
-                <span className="font-semibold text-slate-200">{aurora.greet}</span> {dailyGreeting}
+                <span className="font-semibold text-slate-200">{t(`dashboard.${aurora.greetKey}`)}</span> {dailyGreeting}
               </p>
             </div>
           </div>
@@ -684,7 +652,7 @@ export function Dashboard({
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-slate-300 truncate" title={c.title}>{c.title}</p>
                   <p className={`text-sm font-extrabold ${a.text} leading-tight`}>
-                    {c.daysUntil === 0 ? "Hôm nay!" : `Còn ${c.daysUntil} ngày`}
+                    {c.daysUntil === 0 ? t("dashboard.countdown.today") : t("dashboard.countdown.inDays", { n: c.daysUntil })}
                     <span className="text-[10px] font-mono font-medium text-slate-500 ml-1.5">{c.dateLabel}</span>
                   </p>
                 </div>
@@ -718,7 +686,7 @@ export function Dashboard({
               {/* Địa phương (đổi trong Thiết lập → Hồ sơ của tôi) */}
               <div className="relative flex items-center gap-1.5 mb-1">
                 <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                <p className="text-xs text-slate-400 font-semibold truncate">{hasW ? w.city : "Thời tiết"}</p>
+                <p className="text-xs text-slate-400 font-semibold truncate">{hasW ? w.city : t("dashboard.weather.title")}</p>
               </div>
 
               <div className="relative flex items-start justify-between">
@@ -731,7 +699,7 @@ export function Dashboard({
                     <Skeleton className="h-8 w-24 mt-1.5" />
                   )}
                   {hasW ? (
-                    <p className="text-xs text-slate-400 mt-0.5">{cur!.label} • Cảm giác {Math.round(w.current.apparent_temperature)}°</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{cur!.label} • {t("dashboard.weather.feelsLike")} {Math.round(w.current.apparent_temperature)}°</p>
                   ) : (
                     <Skeleton className="h-3 w-32 mt-2" />
                   )}
@@ -743,10 +711,10 @@ export function Dashboard({
               <div className="relative grid grid-cols-2 gap-1.5 mt-2.5 pt-2.5 border-t border-slate-800/60 text-[11px] text-slate-300">
                 {hasW ? (
                   <>
-                    <span className="inline-flex items-center gap-1.5"><Droplets className="w-3.5 h-3.5 text-sky-400 shrink-0" />Độ ẩm {w.current.relative_humidity_2m}%</span>
-                    <span className="inline-flex items-center gap-1.5"><Wind className="w-3.5 h-3.5 text-cyan-400 shrink-0" />Giật {Math.round(w.current.wind_gusts_10m ?? w.current.wind_speed_10m)} km/h</span>
-                    {uvToday != null && <span className="inline-flex items-center gap-1.5"><Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />UV {Math.round(uvToday)}</span>}
-                    {rainToday != null && <span className="inline-flex items-center gap-1.5"><CloudRain className="w-3.5 h-3.5 text-indigo-400 shrink-0" />Mưa {Math.round(rainToday)}%</span>}
+                    <span className="inline-flex items-center gap-1.5"><Droplets className="w-3.5 h-3.5 text-sky-400 shrink-0" />{t("dashboard.weather.humidity")} {w.current.relative_humidity_2m}%</span>
+                    <span className="inline-flex items-center gap-1.5"><Wind className="w-3.5 h-3.5 text-cyan-400 shrink-0" />{t("dashboard.weather.gust")} {Math.round(w.current.wind_gusts_10m ?? w.current.wind_speed_10m)} km/h</span>
+                    {uvToday != null && <span className="inline-flex items-center gap-1.5"><Sun className="w-3.5 h-3.5 text-amber-400 shrink-0" />{t("dashboard.weather.uv")} {Math.round(uvToday)}</span>}
+                    {rainToday != null && <span className="inline-flex items-center gap-1.5"><CloudRain className="w-3.5 h-3.5 text-indigo-400 shrink-0" />{t("dashboard.weather.rain")} {Math.round(rainToday)}%</span>}
                   </>
                 ) : (
                   <Skeleton className="h-3 w-40 col-span-2" />
@@ -759,7 +727,7 @@ export function Dashboard({
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold leading-tight">{storm.label}</p>
-                    {storm.detail && <p className="text-[10px] opacity-80 leading-tight mt-0.5">{storm.detail} · ước lượng</p>}
+                    {storm.detail && <p className="text-[10px] opacity-80 leading-tight mt-0.5">{storm.detail} · {t("dashboard.weather.estimate")}</p>}
                   </div>
                 </div>
               )}
@@ -768,7 +736,7 @@ export function Dashboard({
                 {hasW && w.daily?.time ? (
                   w.daily.time.slice(0, 3).map((d: string, i: number) => {
                     const dc = describeWeather(w.daily.weather_code[i]);
-                    const dayLabel = i === 0 ? "Hôm nay" : new Date(d).toLocaleDateString("vi-VN", { weekday: "short" });
+                    const dayLabel = i === 0 ? t("dashboard.weather.today") : new Date(d).toLocaleDateString(i18n.language, { weekday: "short" });
                     return (
                       <div key={d} className="flex-1 text-center bg-slate-950/40 backdrop-blur-sm rounded-lg py-1.5 hover:bg-slate-950/60 transition-colors">
                         <p className="text-[10px] text-slate-500">{dayLabel}</p>
@@ -792,19 +760,19 @@ export function Dashboard({
               <div className="relative mt-2.5 pt-2.5 border-t border-slate-800/60">
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1">
                   <Waves className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-                  Động đất gần đây {quakes?.radiusKm ? `(bán kính ${quakes.radiusKm}km)` : ""}
+                  {t("dashboard.weather.quakeTitle")} {quakes?.radiusKm ? t("dashboard.weather.quakeRadius", { km: quakes.radiusKm }) : ""}
                 </div>
                 {quakeList.length > 0 ? (
                   <div className="space-y-1">
                     {quakeList.slice(0, 2).map((q, i) => (
                       <div key={i} className="flex items-center gap-2 text-[11px]">
                         <span className={`font-mono font-bold shrink-0 ${q.mag >= 5 ? "text-rose-400" : q.mag >= 4 ? "text-amber-400" : "text-slate-300"}`}>M{Number(q.mag).toFixed(1)}</span>
-                        <span className="text-slate-400 truncate min-w-0 flex-1">{q.distanceKm != null ? `cách ~${q.distanceKm}km` : "gần đây"} · {timeAgoVi(q.time)}</span>
+                        <span className="text-slate-400 truncate min-w-0 flex-1">{q.distanceKm != null ? t("dashboard.weather.quakeAway", { km: q.distanceKm }) : t("dashboard.weather.quakeRecent")} · {timeAgoVi(q.time)}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-[11px] text-slate-500">Không có động đất đáng kể gần đây.</p>
+                  <p className="text-[11px] text-slate-500">{t("dashboard.weather.noQuake")}</p>
                 )}
               </div>
             </div>
@@ -867,7 +835,7 @@ export function Dashboard({
           <div className="relative overflow-hidden bg-gradient-to-br from-yellow-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
             <ShimmerLine via="via-yellow-500/50" />
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-yellow-500">🪙 {widgets?.gold?.source || "Vàng"}</span>
+              <span className="text-xs font-bold text-yellow-500">🪙 {widgets?.gold?.source || t("dashboard.market.gold")}</span>
               {widgets?.gold ? changeBadge(widgets.gold.changePct) : null}
             </div>
             <div className="mt-3">
@@ -876,17 +844,17 @@ export function Dashboard({
                   widgets.gold.sell ? (
                     <>
                       <p className="text-sm font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.sell} format={fmtVnd} /></p>
-                      <p className="text-[10px] text-slate-500 truncate">Bán /lượng{widgets.gold.buy ? ` • Mua ${fmtVnd(widgets.gold.buy)}` : ""}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.goldSell")}{widgets.gold.buy ? ` • ${t("dashboard.market.goldBuy")} ${fmtVnd(widgets.gold.buy)}` : ""}</p>
                     </>
                   ) : widgets.gold.vndPerTael ? (
                     <>
                       <p className="text-sm font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.vndPerTael} format={fmtVnd} /></p>
-                      <p className="text-[10px] text-slate-500 truncate">≈ /lượng (tham khảo)</p>
+                      <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.goldTael")}</p>
                     </>
                   ) : (
                     <>
                       <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.usdPerOz} format={fmtUsd} /><span className="text-[10px] text-slate-500"> /oz</span></p>
-                      <p className="text-[10px] text-slate-500 truncate">Thế giới</p>
+                      <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.goldWorld")}</p>
                     </>
                   )
                 ) : (
@@ -911,7 +879,7 @@ export function Dashboard({
                 {widgets?.fx?.usdVnd ? (
                   <>
                     <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.fx.usdVnd} format={fmtVnd} /></p>
-                    <p className="text-[10px] text-slate-500 truncate">Tỷ giá 1 USD</p>
+                    <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.usdRate")}</p>
                   </>
                 ) : (
                   <>
@@ -935,14 +903,14 @@ export function Dashboard({
             <ShimmerLine via="via-sky-500/50" />
             <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-sky-500/10 blur-2xl group-hover:bg-sky-500/20 transition-colors duration-500" />
             <div className="relative flex items-center justify-between">
-              <span className="text-slate-400 text-xs font-medium">Task của tôi</span>
+              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.myTasks")}</span>
               <div className="bg-gradient-to-br from-sky-500/25 to-sky-500/5 ring-1 ring-sky-500/20 p-2 rounded-xl text-sky-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                 <CheckSquare className="w-5 h-5" />
               </div>
             </div>
             <div className="relative mt-3">
               <span className="text-2xl font-bold text-slate-100 tabular-nums">{myRemainingTasks.length}</span>
-              <p className="text-slate-500 text-xs mt-1">Đang cần giải quyết</p>
+              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.myTasksSub")}</p>
             </div>
           </motion.div>
 
@@ -957,14 +925,14 @@ export function Dashboard({
             <ShimmerLine via="via-rose-500/50" />
             <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-rose-500/10 blur-2xl group-hover:bg-rose-500/20 transition-colors duration-500" />
             <div className="relative flex items-center justify-between">
-              <span className="text-slate-400 text-xs font-medium">Nhiệm vụ khẩn cấp</span>
+              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.urgent")}</span>
               <div className="bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 p-2 rounded-xl text-rose-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                 <AlertCircle className={`w-5 h-5 ${urgentTasksCount > 0 && !reduceMotion ? "animate-bounce" : ""}`} />
               </div>
             </div>
             <div className="relative mt-3">
               <span className="text-2xl font-bold text-rose-400 tabular-nums">{urgentTasksCount}</span>
-              <p className="text-slate-500 text-xs mt-1">Mức ưu tiên cao</p>
+              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.urgentSub")}</p>
             </div>
           </motion.div>
 
@@ -979,7 +947,7 @@ export function Dashboard({
             <ShimmerLine via={balancePositive ? "via-emerald-500/50" : "via-rose-500/50"} />
             <div aria-hidden className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl transition-colors duration-500 ${balancePositive ? "bg-emerald-500/10 group-hover:bg-emerald-500/20" : "bg-rose-500/10 group-hover:bg-rose-500/20"}`} />
             <div className="relative flex items-center justify-between">
-              <span className="text-slate-400 text-xs font-medium">Số dư tháng này</span>
+              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.balance")}</span>
               <div className={`p-2 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ${balancePositive ? "bg-gradient-to-br from-emerald-500/25 to-emerald-500/5 ring-1 ring-emerald-500/20 text-emerald-400" : "bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 text-rose-400"}`}>
                 <Wallet className="w-5 h-5" />
               </div>
@@ -988,7 +956,7 @@ export function Dashboard({
               <span className={`text-lg md:text-xl font-bold tabular-nums ${balancePositive ? "text-emerald-400" : "text-rose-400"}`}>
                 {financialSummary.balance.toLocaleString()}đ
               </span>
-              <p className="text-slate-500 text-xs mt-1">Thu nhập trừ chi tiêu</p>
+              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.balanceSub")}</p>
             </div>
           </motion.div>
 
@@ -1003,14 +971,14 @@ export function Dashboard({
             <ShimmerLine via="via-amber-500/50" />
             <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-amber-500/10 blur-2xl group-hover:bg-amber-500/20 transition-colors duration-500" />
             <div className="relative flex items-center justify-between">
-              <span className="text-slate-400 text-xs font-medium">Lịch 20 ngày tới</span>
+              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.schedule")}</span>
               <div className="bg-gradient-to-br from-amber-500/25 to-amber-500/5 ring-1 ring-amber-500/20 p-2 rounded-xl text-amber-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
                 <Calendar className="w-5 h-5" />
               </div>
             </div>
             <div className="relative mt-3">
               <span className="text-2xl font-bold text-slate-100 tabular-nums">{upcomingPlans.length}</span>
-              <p className="text-slate-500 text-xs mt-1">Sự kiện/Lịch trình</p>
+              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.scheduleSub")}</p>
             </div>
           </motion.div>
         </div>
@@ -1028,20 +996,20 @@ export function Dashboard({
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <IconChip accent="amber"><Calendar className="w-4 h-4" /></IconChip>
-                Sự kiện sắp diễn ra
+                {t("dashboard.plans.title")}
               </h3>
               <button
                 onClick={() => onNavigate("plans")}
                 className="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 group cursor-pointer"
               >
-                Xem chi tiết
+                {t("dashboard.plans.detail")}
                 <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </button>
             </div>
 
             {upcomingPlans.length === 0 ? (
               <div className="bg-slate-950/40 border border-dashed border-slate-800 p-6 rounded-xl text-center">
-                <p className="text-sm text-slate-500">Không có sự kiện nào trong 20 ngày tới.</p>
+                <p className="text-sm text-slate-500">{t("dashboard.plans.empty")}</p>
               </div>
             ) : (
               <div className="space-y-3 max-h-72 overflow-y-auto overscroll-contain scrollbar-thin pr-1">
@@ -1061,20 +1029,20 @@ export function Dashboard({
                       role={clickable ? "button" : undefined}
                       tabIndex={clickable ? 0 : undefined}
                       onKeyDown={clickable ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onViewPlan(item.planId); } } : undefined}
-                      title={clickable ? "Xem chi tiết sự kiện" : undefined}
+                      title={clickable ? t("dashboard.plans.viewEvent") : undefined}
                       className={`p-3 rounded-xl flex items-center justify-between ${colorMap[item.color] || "border-l-4 border-slate-600 bg-slate-800/10"} hover:bg-slate-800/30 hover:translate-x-1 transition-all duration-300 ${clickable ? "cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40" : ""}`}
                     >
                       <div className="space-y-0.5 max-w-[70%] min-w-0">
                         <span className="text-sm font-semibold text-slate-200 flex items-center gap-1.5 min-w-0">
                           <span className="truncate">{item.title}</span>
-                          {item.isHoliday && <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">Lễ</span>}
-                          {item.recur && <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">{item.recur}</span>}
+                          {item.isHoliday && <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/25">{t("dashboard.plans.holiday")}</span>}
+                          {item.recur && <span className="shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-400 border border-sky-500/20">{t(`dashboard.recur.${item.recur}`)}</span>}
                         </span>
-                        <p className="text-xs text-slate-500 truncate">{item.description || "Không có miêu tả"}</p>
+                        <p className="text-xs text-slate-500 truncate">{item.description || t("dashboard.plans.noDesc")}</p>
                       </div>
                       <div className="text-right flex flex-col justify-center shrink-0">
                         <span className="text-xs font-semibold text-slate-300 font-mono">{item.dateLabel}</span>
-                        <span className="text-[10px] font-mono text-amber-400/80">{item.isHoliday ? "Cả ngày" : item.timeLabel}</span>
+                        <span className="text-[10px] font-mono text-amber-400/80">{item.isHoliday ? t("dashboard.plans.allDay") : item.timeLabel}</span>
                       </div>
                     </div>
                   );
@@ -1089,7 +1057,7 @@ export function Dashboard({
               <ShimmerLine via="via-pink-500/50" />
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <IconChip accent="pink"><Cake className="w-4 h-4" /></IconChip>
-                Sinh nhật sắp tới
+                {t("dashboard.birthdays.title")}
               </h3>
               <div className="space-y-2.5">
                 {upcomingBirthdays.map(b => (
@@ -1098,11 +1066,11 @@ export function Dashboard({
                       <Avatar user={b.user} className="w-9 h-9 rounded-xl text-sm" extraClass="shrink-0" />
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-slate-200 truncate">{b.user.fullName}</p>
-                        <p className="text-[11px] text-slate-500">Tròn {b.turningAge} tuổi • ngày {b.day}/{b.month}</p>
+                        <p className="text-[11px] text-slate-500">{t("dashboard.birthdays.turns", { age: b.turningAge, day: b.day, month: b.month })}</p>
                       </div>
                     </div>
                     <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0 ${b.daysUntil === 0 ? "bg-pink-500/15 text-pink-400" : "bg-slate-800 text-slate-300"}`}>
-                      {b.daysUntil === 0 ? "Hôm nay 🎉" : `Còn ${b.daysUntil} ngày`}
+                      {b.daysUntil === 0 ? t("dashboard.birthdays.today") : t("dashboard.birthdays.inDays", { n: b.daysUntil })}
                     </span>
                   </div>
                 ))}
@@ -1120,20 +1088,20 @@ export function Dashboard({
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <IconChip accent="sky"><FileText className="w-4 h-4" /></IconChip>
-                Ghi chú gia đình nổi bật
+                {t("dashboard.notes.title")}
               </h3>
               <button
                 onClick={() => onNavigate("notes")}
                 className="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 group cursor-pointer"
               >
-                Tất cả ghi chú
+                {t("dashboard.notes.all")}
                 <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </button>
             </div>
 
             {pinnedNotes.length === 0 ? (
               <div className="bg-slate-950/40 border border-dashed border-slate-800 p-6 rounded-xl text-center">
-                <p className="text-sm text-slate-500">Chưa có ghi chú nào được pin lên màn hình chính.</p>
+                <p className="text-sm text-slate-500">{t("dashboard.notes.empty")}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
@@ -1158,8 +1126,8 @@ export function Dashboard({
                         </div>
                       </div>
                       <div className="pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500">
-                        <span>{creator ? creator.fullName.split(" ")[0] : "Thành viên"}</span>
-                        <span>{new Date(note.updatedAt).toLocaleDateString("vi-VN", { month: "numeric", day: "numeric" })}</span>
+                        <span>{creator ? creator.fullName.split(" ")[0] : t("dashboard.notes.member")}</span>
+                        <span>{new Date(note.updatedAt).toLocaleDateString(i18n.language, { month: "numeric", day: "numeric" })}</span>
                       </div>
                     </div>
                   );
@@ -1178,13 +1146,13 @@ export function Dashboard({
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <IconChip accent="emerald"><Wallet className="w-4 h-4" /></IconChip>
-                Tài chính chi tiêu tháng {new Date().getMonth() + 1}
+                {t("dashboard.finance.title", { month: new Date().getMonth() + 1 })}
               </h3>
               <button
                 onClick={() => onNavigate("finance")}
                 className="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 group cursor-pointer"
               >
-                Xem quỹ
+                {t("dashboard.finance.fund")}
                 <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </button>
             </div>
@@ -1193,11 +1161,11 @@ export function Dashboard({
             <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/50 space-y-3.5">
               <div className="flex items-center justify-between text-xs text-slate-400">
                 <div className="space-y-1">
-                  <span className="flex items-center gap-1 text-[11px]"><TrendingUp className="w-3 h-3 text-emerald-400" /> Tổng Thu</span>
+                  <span className="flex items-center gap-1 text-[11px]"><TrendingUp className="w-3 h-3 text-emerald-400" /> {t("dashboard.finance.income")}</span>
                   <p className="text-sm font-bold text-slate-200 font-mono">{financialSummary.income.toLocaleString()}đ</p>
                 </div>
                 <div className="text-right space-y-1">
-                  <span className="flex items-center gap-1 justify-end text-[11px]"><TrendingDown className="w-3 h-3 text-rose-400" /> Tổng Chi</span>
+                  <span className="flex items-center gap-1 justify-end text-[11px]"><TrendingDown className="w-3 h-3 text-rose-400" /> {t("dashboard.finance.expense")}</span>
                   <p className="text-sm font-bold text-slate-200 font-mono">{financialSummary.expense.toLocaleString()}đ</p>
                 </div>
               </div>
@@ -1225,8 +1193,8 @@ export function Dashboard({
                   )}
                 </div>
                 <div className="flex justify-between text-[9px] text-slate-500 font-mono">
-                  <span>{financeTotal > 0 ? `${Math.round(incomePct)}% Thu` : "0% Thu"}</span>
-                  <span>{financeTotal > 0 ? `${Math.round(expensePct)}% Chi` : "0% Chi"}</span>
+                  <span>{t("dashboard.finance.pctIncome", { pct: financeTotal > 0 ? Math.round(incomePct) : 0 })}</span>
+                  <span>{t("dashboard.finance.pctExpense", { pct: financeTotal > 0 ? Math.round(expensePct) : 0 })}</span>
                 </div>
               </div>
             </div>
@@ -1235,7 +1203,7 @@ export function Dashboard({
             {topExpenseCategories.length > 0 && (
               <div className="space-y-2.5">
                 <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
-                  <TrendingDown className="w-3.5 h-3.5 text-rose-400" /> Top hạng mục tiêu dùng
+                  <TrendingDown className="w-3.5 h-3.5 text-rose-400" /> {t("dashboard.finance.topCategories")}
                 </div>
                 <div className="space-y-2">
                   {topExpenseCategories.map(({ category, amount, pct }, i) => {
@@ -1271,12 +1239,12 @@ export function Dashboard({
             <ShimmerLine via="via-indigo-500/50" />
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="indigo"><Activity className="w-4 h-4" /></IconChip>
-              Nhật ký gia đình
+              {t("dashboard.activity.title")}
             </h3>
 
             <div className="bg-slate-950 p-2 rounded-xl neu-pressed-sm max-h-[178px] overflow-y-auto space-y-2 font-mono scrollbar-thin">
               {activityLogs.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-500">Chưa có hoạt động hệ thống.</div>
+                <div className="py-8 text-center text-xs text-slate-500">{t("dashboard.activity.empty")}</div>
               ) : (
                 activityLogs.map((log) => {
                   const formatTime = (isoString: string) => {

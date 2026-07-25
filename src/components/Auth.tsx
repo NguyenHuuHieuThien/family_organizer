@@ -6,6 +6,7 @@
 import React, { useState } from "react";
 import { Lock, User as UserIcon, Home, AlertCircle, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Sun, Moon } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 interface AuthProps {
   onLoginSuccess: (user: any, token: string) => void;
@@ -26,6 +27,7 @@ const PARTICLES = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProps) {
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -38,7 +40,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
     setErrorStatus("");
 
     if (!username.trim() || !password) {
-      setErrorStatus("Vui lòng điền tài khoản và mật khẩu!");
+      setErrorStatus(t("auth.errorEmpty"));
       return;
     }
 
@@ -55,12 +57,12 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || "Mật khẩu không chính xác!");
+        throw new Error(data.error || t("auth.errorInvalid"));
       }
 
       onLoginSuccess(data.user, data.token);
     } catch (err: any) {
-      setErrorStatus(err.message || "Không thể kết nối đến máy chủ");
+      setErrorStatus(err.message || t("auth.errorConnect"));
     } finally {
       setLoading(false);
     }
@@ -120,8 +122,8 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
         <button
           type="button"
           onClick={onToggleTheme}
-          title={theme === "light" ? "Chuyển sang Giao diện Tối" : "Chuyển sang Giao diện Sáng"}
-          aria-label={theme === "light" ? "Chuyển sang Giao diện Tối" : "Chuyển sang Giao diện Sáng"}
+          title={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
+          aria-label={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
           className="absolute right-4 top-[calc(env(safe-area-inset-top)_+_1rem)] z-20 p-2.5 text-slate-400 hover:text-slate-100 bg-slate-900 neu-btn rounded-xl leading-none cursor-pointer group flex items-center justify-center"
         >
           {theme === "light" ? (
@@ -153,9 +155,9 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
           </div>
           <div className="space-y-1">
             <h2 className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-sky-400 via-sky-300 to-indigo-400 bg-clip-text text-transparent">
-              Family Organizer
+              {t("auth.title")}
             </h2>
-            <p className="text-slate-500 text-xs text-balance">Hệ thống cộng tác hằng ngày của gia đình thân thương</p>
+            <p className="text-slate-500 text-xs text-balance">{t("auth.subtitle")}</p>
           </div>
         </motion.div>
 
@@ -173,12 +175,12 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
         {/* Biểu mẫu */}
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div className="space-y-1.5">
-            <label className="text-slate-400 block font-semibold">Tên tài khoản</label>
+            <label className="text-slate-400 block font-semibold">{t("auth.usernameLabel")}</label>
             <div className="relative group">
               <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-sky-400 transition-colors" />
               <input
                 type="text"
-                placeholder="Nhập tên đăng nhập gia đình..."
+                placeholder={t("auth.usernamePlaceholder")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
@@ -188,12 +190,12 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-slate-400 block font-semibold">Mật khẩu</label>
+            <label className="text-slate-400 block font-semibold">{t("auth.passwordLabel")}</label>
             <div className="relative group">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-sky-400 transition-colors" />
               <input
                 type={showPwd ? "text" : "password"}
-                placeholder="Mật khẩu của từng thành viên..."
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
@@ -203,7 +205,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
                 type="button"
                 onClick={() => setShowPwd(s => !s)}
                 tabIndex={-1}
-                aria-label={showPwd ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                aria-label={showPwd ? t("auth.hidePassword") : t("auth.showPassword")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-500 hover:text-slate-300 rounded-lg transition-colors cursor-pointer"
               >
                 {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -219,11 +221,11 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Đang xác thực...
+                {t("auth.submitting")}
               </>
             ) : (
               <>
-                Đăng nhập Gia Đình
+                {t("auth.submit")}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </>
             )}
@@ -233,7 +235,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
         {/* Chân trang: nhấn mạnh tính riêng tư của server gia đình */}
         <p className="text-center text-[10px] text-slate-600 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500/70" />
-          Dữ liệu riêng tư • Chạy trên máy chủ của gia đình
+          {t("auth.footer")}
         </p>
       </motion.div>
     </div>

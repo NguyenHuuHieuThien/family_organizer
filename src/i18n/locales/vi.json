@@ -1,0 +1,188 @@
+{
+  "common": {
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "close": "Đóng",
+    "delete": "Xóa",
+    "edit": "Chỉnh sửa",
+    "loading": "Đang tải…"
+  },
+  "language": {
+    "name": "Ngôn ngữ",
+    "description": "Chọn ngôn ngữ hiển thị của ứng dụng. Cài đặt được lưu trên thiết bị này.",
+    "vi": "Tiếng Việt",
+    "en": "English",
+    "zh": "中文 (Tiếng Trung)"
+  },
+  "theme": {
+    "toDark": "Chuyển sang Giao diện Tối",
+    "toLight": "Chuyển sang Giao diện Sáng"
+  },
+  "auth": {
+    "title": "Family Organizer",
+    "subtitle": "Hệ thống cộng tác hằng ngày của gia đình thân thương",
+    "usernameLabel": "Tên tài khoản",
+    "usernamePlaceholder": "Nhập tên đăng nhập gia đình...",
+    "passwordLabel": "Mật khẩu",
+    "passwordPlaceholder": "Mật khẩu của từng thành viên...",
+    "showPassword": "Hiện mật khẩu",
+    "hidePassword": "Ẩn mật khẩu",
+    "submit": "Đăng nhập Gia Đình",
+    "submitting": "Đang xác thực...",
+    "footer": "Dữ liệu riêng tư • Chạy trên máy chủ của gia đình",
+    "errorEmpty": "Vui lòng điền tài khoản và mật khẩu!",
+    "errorInvalid": "Mật khẩu không chính xác!",
+    "errorConnect": "Không thể kết nối đến máy chủ"
+  },
+  "nav": {
+    "dashboard": "Tổng quan",
+    "tasks": "Nhóm Task",
+    "finance": "Chi tiêu",
+    "plans": "Lập Lịch",
+    "notes": "Ghi chú",
+    "shopping": "Đi chợ",
+    "childHealth": "Sức khỏe gia đình",
+    "documents": "Giấy tờ",
+    "server": "Quản lý Server",
+    "settings": "Thiết lập"
+  },
+  "settings": {
+    "tabs": {
+      "profile": "Hồ sơ của tôi",
+      "members": "Thành viên và Phân quyền",
+      "system": "Hệ thống & Sao lưu",
+      "logs": "Nhật ký hệ thống"
+    }
+  },
+  "categories": {
+    "food": "Ăn uống",
+    "education2": "Học tập",
+    "utilities": "Điện nước",
+    "shopping": "Mua sắm",
+    "medical": "Y tế",
+    "transport": "Đi lại",
+    "debt_bank": "Trả nợ ngân hàng",
+    "debt_personal": "Trả nợ cá nhân",
+    "funeral": "Ma chay",
+    "ceremony": "Hiếu hỉ",
+    "rent": "Thuê nhà",
+    "internet": "Internet",
+    "phone": "Điện thoại",
+    "insurance": "Bảo hiểm",
+    "loan": "Trả nợ ngân hàng",
+    "other": "Khoản khác"
+  },
+  "dashboard": {
+    "greetPrefix": "Xin chào,",
+    "greetMorning": "Chào buổi sáng!",
+    "greetAfternoon": "Chào buổi chiều!",
+    "greetEvening": "Chào buổi tối!",
+    "timeAgoMin": "{{n}} phút trước",
+    "timeAgoHour": "{{n}} giờ trước",
+    "timeAgoDay": "{{n}} ngày trước",
+    "spark7d": "7 ngày",
+    "recur": { "daily": "Hằng ngày", "weekly": "Hằng tuần", "monthly": "Hằng tháng", "yearly": "Hằng năm" },
+    "countdown": { "today": "Hôm nay!", "inDays": "Còn {{n}} ngày" },
+    "birthdayCountdown": "Sinh nhật {{name}}",
+    "weather": {
+      "title": "Thời tiết",
+      "feelsLike": "Cảm giác",
+      "humidity": "Độ ẩm",
+      "gust": "Giật",
+      "rain": "Mưa",
+      "uv": "UV",
+      "estimate": "ước lượng",
+      "today": "Hôm nay",
+      "quakeTitle": "Động đất gần đây",
+      "quakeRadius": "(bán kính {{km}}km)",
+      "quakeAway": "cách ~{{km}}km",
+      "quakeRecent": "gần đây",
+      "noQuake": "Không có động đất đáng kể gần đây.",
+      "codes": {
+        "0": "Trời quang", "1": "Ít mây", "2": "Có mây", "3": "Nhiều mây",
+        "45": "Sương mù", "48": "Sương muối", "51": "Mưa phùn nhẹ", "53": "Mưa phùn",
+        "55": "Mưa phùn dày", "61": "Mưa nhẹ", "63": "Mưa vừa", "65": "Mưa to",
+        "80": "Mưa rào", "81": "Mưa rào", "82": "Mưa rào dữ dội", "95": "Dông",
+        "96": "Dông kèm mưa đá", "99": "Dông mạnh"
+      }
+    },
+    "market": {
+      "gold": "Vàng",
+      "goldSell": "Bán /lượng",
+      "goldBuy": "Mua",
+      "goldTael": "≈ /lượng (tham khảo)",
+      "goldWorld": "Thế giới",
+      "usdRate": "Tỷ giá 1 USD"
+    },
+    "stats": {
+      "myTasks": "Task của tôi",
+      "myTasksSub": "Đang cần giải quyết",
+      "urgent": "Nhiệm vụ khẩn cấp",
+      "urgentSub": "Mức ưu tiên cao",
+      "balance": "Số dư tháng này",
+      "balanceSub": "Thu nhập trừ chi tiêu",
+      "schedule": "Lịch 20 ngày tới",
+      "scheduleSub": "Sự kiện/Lịch trình"
+    },
+    "plans": {
+      "title": "Sự kiện sắp diễn ra",
+      "detail": "Xem chi tiết",
+      "empty": "Không có sự kiện nào trong 20 ngày tới.",
+      "viewEvent": "Xem chi tiết sự kiện",
+      "holiday": "Lễ",
+      "noDesc": "Không có miêu tả",
+      "allDay": "Cả ngày"
+    },
+    "birthdays": {
+      "title": "Sinh nhật sắp tới",
+      "turns": "Tròn {{age}} tuổi • ngày {{day}}/{{month}}",
+      "today": "Hôm nay 🎉",
+      "inDays": "Còn {{n}} ngày"
+    },
+    "notes": {
+      "title": "Ghi chú gia đình nổi bật",
+      "all": "Tất cả ghi chú",
+      "empty": "Chưa có ghi chú nào được pin lên màn hình chính.",
+      "member": "Thành viên"
+    },
+    "finance": {
+      "title": "Tài chính chi tiêu tháng {{month}}",
+      "fund": "Xem quỹ",
+      "income": "Tổng Thu",
+      "expense": "Tổng Chi",
+      "topCategories": "Top hạng mục tiêu dùng",
+      "pctIncome": "{{pct}}% Thu",
+      "pctExpense": "{{pct}}% Chi"
+    },
+    "activity": {
+      "title": "Nhật ký gia đình",
+      "empty": "Chưa có hoạt động hệ thống."
+    },
+    "greetings": [
+      "Gia đình là nơi bình yên nhất để trở về. 🏡",
+      "Yêu thương cho đi là yêu thương còn mãi. 💞",
+      "Một nụ cười của cả nhà đáng giá hơn ngàn lời nói. 😊",
+      "Hôm nay hãy ôm người thân một cái thật chặt nhé! 🤗",
+      "Bữa cơm gia đình là liều thuốc bổ cho tâm hồn. 🍚",
+      "Chậm lại một chút để lắng nghe nhau nhiều hơn. 🌿",
+      "Sức khỏe của cả nhà là tài sản quý nhất. 💪",
+      "Mỗi ngày bên nhau là một món quà. 🎁",
+      "Gia đình đồng lòng, việc khó hóa dễ. 🤝",
+      "Hãy để lời yêu thương được nói ra hôm nay. 💌",
+      "Niềm vui nhân đôi khi được sẻ chia. ✨",
+      "Nhà là nơi trái tim luôn hướng về. ❤️",
+      "Cùng nhau cố gắng, cùng nhau hạnh phúc. 🌈",
+      "Việc nhỏ làm bằng tình yêu lớn. 🌟",
+      "Giữ lửa yêu thương từ những điều giản dị. 🔥",
+      "Hôm nay uống đủ nước và cười thật tươi nhé! 💧",
+      "Kiên nhẫn với nhau, dịu dàng với chính mình. 🕊️",
+      "Thành công lớn bắt đầu từ một gia đình ấm êm. 🏆",
+      "Biết ơn những điều bình dị mỗi ngày. 🙏",
+      "Cùng nhau vượt qua, không ai bị bỏ lại phía sau. 🫶",
+      "Dành thời gian cho nhau là món quà vô giá. ⏳",
+      "Một gia đình gọn gàng, một tâm trí thảnh thơi. 🧹",
+      "Yêu thương là ngôn ngữ mọi trái tim đều hiểu. 💗",
+      "Chúc cả nhà một ngày tràn đầy năng lượng! ⚡"
+    ]
+  }
+}

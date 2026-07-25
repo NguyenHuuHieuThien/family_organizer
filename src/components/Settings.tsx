@@ -31,11 +31,14 @@ import {
   Upload,
   Send,
   Calendar,
-  Copy
+  Copy,
+  Languages
 } from "lucide-react";
 import { User, UserRole, FamilyRelation, FAMILY_RELATION_LABELS, ROLE_LABELS } from "../types.js";
 import { useModalA11y } from "../hooks/useModalA11y.js";
 import { FancySelect } from "./FancySelect.js";
+import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGUAGES } from "../i18n/index.js";
 
 // Role <select> options shared by the create + edit forms
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
@@ -123,6 +126,7 @@ export function Settings({
   rewardApprovalThreshold,
   onSetRewardApprovalThreshold
 }: SettingsProps) {
+  const { t, i18n } = useTranslation();
   // In-app confirmation dialog (replaces native browser confirm)
   const { confirm, ConfirmDialog } = useConfirm();
   // Tab configuration
@@ -835,25 +839,25 @@ export function Settings({
             onClick={() => { setActiveTab("profile"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "profile" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            <UserCircle className="w-4 h-4 text-indigo-400" /> Hồ sơ của tôi
+            <UserCircle className="w-4 h-4 text-indigo-400" /> {t("settings.tabs.profile")}
           </button>
           <button
             onClick={() => { setActiveTab("members"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "members" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            <Users className="w-4 h-4 text-sky-400" /> Thành viên và Phân quyền
+            <Users className="w-4 h-4 text-sky-400" /> {t("settings.tabs.members")}
           </button>
           <button
             onClick={() => { setActiveTab("backups"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "backups" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            <Database className="w-4 h-4 text-amber-400" /> Hệ thống & Sao lưu
+            <Database className="w-4 h-4 text-amber-400" /> {t("settings.tabs.system")}
           </button>
           <button
             onClick={() => { setActiveTab("logs"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "logs" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            <History className="w-4 h-4 text-emerald-400" /> Nhật ký hệ thống
+            <History className="w-4 h-4 text-emerald-400" /> {t("settings.tabs.logs")}
           </button>
         </div>
 
@@ -1691,6 +1695,27 @@ export function Settings({
               {thresholdMsg && <p className="text-[11px] text-slate-400">{thresholdMsg}</p>}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Ngôn ngữ hiển thị — tùy chọn cá nhân, lưu trên thiết bị (mọi thành viên) */}
+      {activeTab === "backups" && (
+        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
+          <div className="space-y-0.5">
+            <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+              <Languages className="w-4 h-4 text-sky-400" /> {t("language.name")}
+            </h3>
+            <p className="text-[11px] text-slate-500">{t("language.description")}</p>
+          </div>
+          <div className="text-xs max-w-xs">
+            <FancySelect
+              value={(i18n.resolvedLanguage || i18n.language || "vi").split("-")[0]}
+              onChange={(v) => i18n.changeLanguage(v)}
+              ariaLabel={t("language.name")}
+              className="bg-slate-900"
+              options={SUPPORTED_LANGUAGES.map(l => ({ value: l.code, label: `${l.flag}  ${l.label}` }))}
+            />
+          </div>
         </div>
       )}
 

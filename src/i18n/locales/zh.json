@@ -1,0 +1,188 @@
+{
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "close": "关闭",
+    "delete": "删除",
+    "edit": "编辑",
+    "loading": "加载中…"
+  },
+  "language": {
+    "name": "语言",
+    "description": "选择应用的显示语言。此设置保存在本设备上。",
+    "vi": "Tiếng Việt (越南语)",
+    "en": "English (英语)",
+    "zh": "中文"
+  },
+  "theme": {
+    "toDark": "切换到深色模式",
+    "toLight": "切换到浅色模式"
+  },
+  "auth": {
+    "title": "Family Organizer",
+    "subtitle": "家庭日常协作系统",
+    "usernameLabel": "账号",
+    "usernamePlaceholder": "输入家庭登录名...",
+    "passwordLabel": "密码",
+    "passwordPlaceholder": "每位成员的密码...",
+    "showPassword": "显示密码",
+    "hidePassword": "隐藏密码",
+    "submit": "登录家庭",
+    "submitting": "验证中...",
+    "footer": "数据私密 • 运行在家庭自己的服务器上",
+    "errorEmpty": "请输入账号和密码！",
+    "errorInvalid": "密码不正确！",
+    "errorConnect": "无法连接到服务器"
+  },
+  "nav": {
+    "dashboard": "总览",
+    "tasks": "任务",
+    "finance": "支出",
+    "plans": "日程",
+    "notes": "笔记",
+    "shopping": "购物",
+    "childHealth": "家庭健康",
+    "documents": "证件",
+    "server": "服务器管理",
+    "settings": "设置"
+  },
+  "settings": {
+    "tabs": {
+      "profile": "我的资料",
+      "members": "成员与权限",
+      "system": "系统与备份",
+      "logs": "系统日志"
+    }
+  },
+  "categories": {
+    "food": "餐饮",
+    "education2": "教育",
+    "utilities": "水电",
+    "shopping": "购物",
+    "medical": "医疗",
+    "transport": "交通",
+    "debt_bank": "偿还银行贷款",
+    "debt_personal": "偿还个人借款",
+    "funeral": "丧葬",
+    "ceremony": "婚庆礼金",
+    "rent": "房租",
+    "internet": "网络",
+    "phone": "电话",
+    "insurance": "保险",
+    "loan": "偿还银行贷款",
+    "other": "其他"
+  },
+  "dashboard": {
+    "greetPrefix": "你好，",
+    "greetMorning": "早上好！",
+    "greetAfternoon": "下午好！",
+    "greetEvening": "晚上好！",
+    "timeAgoMin": "{{n}} 分钟前",
+    "timeAgoHour": "{{n}} 小时前",
+    "timeAgoDay": "{{n}} 天前",
+    "spark7d": "7 天",
+    "recur": { "daily": "每天", "weekly": "每周", "monthly": "每月", "yearly": "每年" },
+    "countdown": { "today": "就是今天！", "inDays": "还有 {{n}} 天" },
+    "birthdayCountdown": "{{name}} 的生日",
+    "weather": {
+      "title": "天气",
+      "feelsLike": "体感",
+      "humidity": "湿度",
+      "gust": "阵风",
+      "rain": "降雨",
+      "uv": "紫外线",
+      "estimate": "估算",
+      "today": "今天",
+      "quakeTitle": "近期地震",
+      "quakeRadius": "（{{km}}公里内）",
+      "quakeAway": "约 {{km}}公里外",
+      "quakeRecent": "最近",
+      "noQuake": "近期没有明显地震。",
+      "codes": {
+        "0": "晴朗", "1": "少云", "2": "多云", "3": "阴天",
+        "45": "雾", "48": "雾凇", "51": "小毛毛雨", "53": "毛毛雨",
+        "55": "密集毛毛雨", "61": "小雨", "63": "中雨", "65": "大雨",
+        "80": "阵雨", "81": "阵雨", "82": "强阵雨", "95": "雷暴",
+        "96": "雷暴伴冰雹", "99": "强雷暴"
+      }
+    },
+    "market": {
+      "gold": "黄金",
+      "goldSell": "卖出 /两",
+      "goldBuy": "买入",
+      "goldTael": "≈ /两（参考）",
+      "goldWorld": "国际",
+      "usdRate": "1 美元汇率"
+    },
+    "stats": {
+      "myTasks": "我的任务",
+      "myTasksSub": "待处理",
+      "urgent": "紧急任务",
+      "urgentSub": "高优先级",
+      "balance": "本月结余",
+      "balanceSub": "收入减支出",
+      "schedule": "未来 20 天",
+      "scheduleSub": "事件/日程"
+    },
+    "plans": {
+      "title": "即将到来的事件",
+      "detail": "查看详情",
+      "empty": "未来 20 天没有事件。",
+      "viewEvent": "查看事件详情",
+      "holiday": "节日",
+      "noDesc": "无描述",
+      "allDay": "全天"
+    },
+    "birthdays": {
+      "title": "即将到来的生日",
+      "turns": "满 {{age}} 岁 • {{day}}/{{month}}",
+      "today": "今天 🎉",
+      "inDays": "还有 {{n}} 天"
+    },
+    "notes": {
+      "title": "家庭精选笔记",
+      "all": "全部笔记",
+      "empty": "还没有笔记固定到主屏幕。",
+      "member": "成员"
+    },
+    "finance": {
+      "title": "{{month}} 月支出",
+      "fund": "查看资金",
+      "income": "总收入",
+      "expense": "总支出",
+      "topCategories": "支出类别排行",
+      "pctIncome": "{{pct}}% 收",
+      "pctExpense": "{{pct}}% 支"
+    },
+    "activity": {
+      "title": "家庭活动日志",
+      "empty": "暂无系统活动。"
+    },
+    "greetings": [
+      "家是最安心的归处。🏡",
+      "付出的爱会长久留存。💞",
+      "全家的一个微笑胜过千言万语。😊",
+      "今天给家人一个大大的拥抱吧！🤗",
+      "家庭聚餐是心灵的滋补品。🍚",
+      "放慢一点，多倾听彼此。🌿",
+      "全家的健康是最宝贵的财富。💪",
+      "每一天相伴都是礼物。🎁",
+      "家人同心，难事变易。🤝",
+      "今天就把爱说出口吧。💌",
+      "快乐分享就会加倍。✨",
+      "家是心之所向。❤️",
+      "一起努力，一起幸福。🌈",
+      "用大爱做小事。🌟",
+      "在平凡中守护爱的火焰。🔥",
+      "今天记得多喝水、笑得灿烂！💧",
+      "对彼此耐心，对自己温柔。🕊️",
+      "伟大的成功始于温暖的家庭。🏆",
+      "每天感恩平凡的点滴。🙏",
+      "一起渡过，不让任何人掉队。🫶",
+      "陪伴彼此是无价的礼物。⏳",
+      "家里整洁，心也自在。🧹",
+      "爱是每颗心都懂的语言。💗",
+      "祝全家元气满满的一天！⚡"
+    ]
+  }
+}

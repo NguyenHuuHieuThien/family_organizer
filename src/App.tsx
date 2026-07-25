@@ -73,6 +73,7 @@ import { useModalA11y } from "./hooks/useModalA11y.js";
 import { reloadOnce, scheduleReloadFallback } from "./utils/appReload.js";
 import { DEFAULT_VN_LOCATION, findVnLocation } from "./utils/vnLocations.js";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 type SettingsTab = "profile" | "members" | "backups" | "logs";
 
@@ -90,6 +91,8 @@ const formatNotifTime = (iso: string): string => {
 };
 
 export default function App() {
+  const { t } = useTranslation();
+
   // Authentication & session status
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem("family_token"));
@@ -1634,19 +1637,19 @@ export default function App() {
 
   // Navigation Links definition
   const navLinks = [
-    { id: "dashboard", label: "Tổng quan", icon: Home },
-    { id: "tasks", label: "Nhóm Task", icon: CheckSquare },
+    { id: "dashboard", label: t("nav.dashboard"), icon: Home },
+    { id: "tasks", label: t("nav.tasks"), icon: CheckSquare },
     // Only show finance to Admin and Members; hidden from Child and Guest accounts
-    ...(canAccessFinance(currentUser.role) ? [{ id: "finance", label: "Chi tiêu", icon: Wallet }] : []),
-    { id: "plans", label: "Lập Lịch", icon: Calendar },
-    { id: "notes", label: "Ghi chú", icon: FileText },
-    { id: "shopping", label: "Đi chợ", icon: ShoppingCart },
+    ...(canAccessFinance(currentUser.role) ? [{ id: "finance", label: t("nav.finance"), icon: Wallet }] : []),
+    { id: "plans", label: t("nav.plans"), icon: Calendar },
+    { id: "notes", label: t("nav.notes"), icon: FileText },
+    { id: "shopping", label: t("nav.shopping"), icon: ShoppingCart },
     // Sổ sức khỏe cả nhà (gồm Tăng trưởng, Tiêm chủng, Lịch thuốc) — mọi thành viên đều xem được
-    { id: "child-health", label: "Sức khỏe gia đình", icon: HeartPulse },
-    ...(canAccessFinance(currentUser.role) ? [{ id: "documents", label: "Giấy tờ", icon: FolderLock }] : []),
+    { id: "child-health", label: t("nav.childHealth"), icon: HeartPulse },
+    ...(canAccessFinance(currentUser.role) ? [{ id: "documents", label: t("nav.documents"), icon: FolderLock }] : []),
     // Theo dõi sức khỏe máy chủ (CPU/RAM/nhiệt độ/ổ đĩa) — chỉ Admin thấy
-    ...(currentUser.role === UserRole.ADMIN ? [{ id: "server", label: "Quản lý Server", icon: Cpu }] : []),
-    { id: "settings", label: "Thiết lập", icon: Settings2 }
+    ...(currentUser.role === UserRole.ADMIN ? [{ id: "server", label: t("nav.server"), icon: Cpu }] : []),
+    { id: "settings", label: t("nav.settings"), icon: Settings2 }
   ];
 
   return (

@@ -1,0 +1,188 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading…"
+  },
+  "language": {
+    "name": "Language",
+    "description": "Choose the app's display language. This setting is saved on this device.",
+    "vi": "Tiếng Việt (Vietnamese)",
+    "en": "English",
+    "zh": "中文 (Chinese)"
+  },
+  "theme": {
+    "toDark": "Switch to Dark mode",
+    "toLight": "Switch to Light mode"
+  },
+  "auth": {
+    "title": "Family Organizer",
+    "subtitle": "Your family's everyday collaboration hub",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "Enter your family login name...",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Each member's password...",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "submit": "Sign in to Family",
+    "submitting": "Authenticating...",
+    "footer": "Private data • Runs on your family's own server",
+    "errorEmpty": "Please enter your username and password!",
+    "errorInvalid": "Incorrect password!",
+    "errorConnect": "Unable to connect to the server"
+  },
+  "nav": {
+    "dashboard": "Overview",
+    "tasks": "Tasks",
+    "finance": "Spending",
+    "plans": "Schedule",
+    "notes": "Notes",
+    "shopping": "Shopping",
+    "childHealth": "Family Health",
+    "documents": "Documents",
+    "server": "Server Admin",
+    "settings": "Settings"
+  },
+  "settings": {
+    "tabs": {
+      "profile": "My Profile",
+      "members": "Members & Permissions",
+      "system": "System & Backup",
+      "logs": "System Logs"
+    }
+  },
+  "categories": {
+    "food": "Food & Drink",
+    "education2": "Education",
+    "utilities": "Utilities",
+    "shopping": "Shopping",
+    "medical": "Healthcare",
+    "transport": "Transport",
+    "debt_bank": "Bank loan repayment",
+    "debt_personal": "Personal loan repayment",
+    "funeral": "Funeral",
+    "ceremony": "Weddings & gifts",
+    "rent": "Rent",
+    "internet": "Internet",
+    "phone": "Phone",
+    "insurance": "Insurance",
+    "loan": "Bank loan repayment",
+    "other": "Other"
+  },
+  "dashboard": {
+    "greetPrefix": "Hello,",
+    "greetMorning": "Good morning!",
+    "greetAfternoon": "Good afternoon!",
+    "greetEvening": "Good evening!",
+    "timeAgoMin": "{{n}} min ago",
+    "timeAgoHour": "{{n}} h ago",
+    "timeAgoDay": "{{n}} d ago",
+    "spark7d": "7 days",
+    "recur": { "daily": "Daily", "weekly": "Weekly", "monthly": "Monthly", "yearly": "Yearly" },
+    "countdown": { "today": "Today!", "inDays": "In {{n}} days" },
+    "birthdayCountdown": "{{name}}'s birthday",
+    "weather": {
+      "title": "Weather",
+      "feelsLike": "Feels like",
+      "humidity": "Humidity",
+      "gust": "Gust",
+      "rain": "Rain",
+      "uv": "UV",
+      "estimate": "estimated",
+      "today": "Today",
+      "quakeTitle": "Recent earthquakes",
+      "quakeRadius": "(within {{km}}km)",
+      "quakeAway": "~{{km}}km away",
+      "quakeRecent": "recently",
+      "noQuake": "No significant earthquakes recently.",
+      "codes": {
+        "0": "Clear sky", "1": "Mostly clear", "2": "Partly cloudy", "3": "Overcast",
+        "45": "Fog", "48": "Rime fog", "51": "Light drizzle", "53": "Drizzle",
+        "55": "Dense drizzle", "61": "Light rain", "63": "Moderate rain", "65": "Heavy rain",
+        "80": "Rain showers", "81": "Rain showers", "82": "Violent showers", "95": "Thunderstorm",
+        "96": "Thunderstorm with hail", "99": "Severe thunderstorm"
+      }
+    },
+    "market": {
+      "gold": "Gold",
+      "goldSell": "Sell /tael",
+      "goldBuy": "Buy",
+      "goldTael": "≈ /tael (reference)",
+      "goldWorld": "World",
+      "usdRate": "1 USD rate"
+    },
+    "stats": {
+      "myTasks": "My tasks",
+      "myTasksSub": "Awaiting action",
+      "urgent": "Urgent tasks",
+      "urgentSub": "High priority",
+      "balance": "This month's balance",
+      "balanceSub": "Income minus expenses",
+      "schedule": "Next 20 days",
+      "scheduleSub": "Events/Schedule"
+    },
+    "plans": {
+      "title": "Upcoming events",
+      "detail": "View details",
+      "empty": "No events in the next 20 days.",
+      "viewEvent": "View event details",
+      "holiday": "Holiday",
+      "noDesc": "No description",
+      "allDay": "All day"
+    },
+    "birthdays": {
+      "title": "Upcoming birthdays",
+      "turns": "Turns {{age}} • {{day}}/{{month}}",
+      "today": "Today 🎉",
+      "inDays": "In {{n}} days"
+    },
+    "notes": {
+      "title": "Pinned family notes",
+      "all": "All notes",
+      "empty": "No notes pinned to the home screen yet.",
+      "member": "Member"
+    },
+    "finance": {
+      "title": "Spending for month {{month}}",
+      "fund": "View funds",
+      "income": "Total income",
+      "expense": "Total expense",
+      "topCategories": "Top spending categories",
+      "pctIncome": "{{pct}}% In",
+      "pctExpense": "{{pct}}% Out"
+    },
+    "activity": {
+      "title": "Family activity log",
+      "empty": "No system activity yet."
+    },
+    "greetings": [
+      "Home is the most peaceful place to return to. 🏡",
+      "Love given away is love that lasts forever. 💞",
+      "One family smile is worth more than a thousand words. 😊",
+      "Give a loved one a big hug today! 🤗",
+      "A family meal is a tonic for the soul. 🍚",
+      "Slow down a little to listen to each other more. 🌿",
+      "The family's health is the most precious asset. 💪",
+      "Every day together is a gift. 🎁",
+      "When a family is united, hard things become easy. 🤝",
+      "Let words of love be spoken today. 💌",
+      "Joy doubles when it is shared. ✨",
+      "Home is where the heart always turns. ❤️",
+      "Try together, be happy together. 🌈",
+      "Small deeds done with great love. 🌟",
+      "Keep love alive through the simple things. 🔥",
+      "Drink enough water and smile brightly today! 💧",
+      "Be patient with each other, gentle with yourself. 🕊️",
+      "Great success begins with a warm family. 🏆",
+      "Be grateful for the simple things every day. 🙏",
+      "Get through it together, no one left behind. 🫶",
+      "Time for each other is a priceless gift. ⏳",
+      "A tidy home, a peaceful mind. 🧹",
+      "Love is a language every heart understands. 💗",
+      "Wishing the whole family an energetic day! ⚡"
+    ]
+  }
+}
