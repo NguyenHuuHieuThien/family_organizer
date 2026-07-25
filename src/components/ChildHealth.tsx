@@ -13,6 +13,7 @@ import { Medication } from "./Medication.js";
 import { ShimmerLine, Reveal, IconChip, staggerDelay } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
+import { useTranslation } from "react-i18next";
 
 type HealthSection = "growth" | "vaccination" | "medication" | "emergency";
 
@@ -91,9 +92,9 @@ function bmiBadgeClass(c: BmiAssessment["color"]) {
   }
 }
 
-// Mini SVG line chart cho 1 chỉ số theo thời gian.
-function MiniChart({ data, color, unit }: { data: { date: string; value: number }[]; color: string; unit: string }) {
-  if (data.length === 0) return <p className="text-[10px] text-slate-600">Chưa có dữ liệu.</p>;
+// Mini SVG line chart for a single metric over time.
+function MiniChart({ data, color, unit, noDataLabel }: { data: { date: string; value: number }[]; color: string; unit: string; noDataLabel: string }) {
+  if (data.length === 0) return <p className="text-[10px] text-slate-600">{noDataLabel}</p>;
   const values = data.map(d => d.value);
   const min = Math.min(...values), max = Math.max(...values);
   const range = max - min || 1;
@@ -120,21 +121,19 @@ function MiniChart({ data, color, unit }: { data: { date: string; value: number 
   );
 }
 
-// "Hệ" thẻ bài theo quan hệ gia đình. Viền/khung là gradient rực rỡ cố định
-// (đẹp ở cả 2 theme, như viền kim loại của thẻ thật); riêng CHỮ accent dùng cặp
-// light/dark: đậm trên nền sáng, rực trên nền tối.
-interface CardTheme { frame: string; ring: string; glow: string; accent: string; element: string; title: string; rayHex: string; }
+// "Hệ" thẻ bài theo quan hệ gia đình.
+interface CardTheme { frame: string; ring: string; glow: string; accent: string; element: string; titleKey: string; rayHex: string; }
 const CARD_THEME_BY_RELATION: Record<string, CardTheme> = {
-  ba:         { frame: "from-cyan-300 via-blue-500 to-indigo-700", ring: "border-cyan-500/50 dark:border-cyan-300/60", glow: "shadow-cyan-500/15 dark:shadow-cyan-400/25", accent: "text-cyan-700 dark:text-cyan-300", element: "🛡️", title: "Hệ Trụ Cột", rayHex: "#38bdf8" },
-  me:         { frame: "from-pink-300 via-rose-500 to-fuchsia-700", ring: "border-pink-500/50 dark:border-pink-300/60", glow: "shadow-rose-500/15 dark:shadow-rose-400/25", accent: "text-pink-700 dark:text-pink-300", element: "🌸", title: "Hệ Yêu Thương", rayHex: "#f472b6" },
-  con:        { frame: "from-emerald-300 via-green-500 to-teal-700", ring: "border-emerald-500/50 dark:border-emerald-300/60", glow: "shadow-emerald-500/15 dark:shadow-emerald-400/25", accent: "text-emerald-700 dark:text-emerald-300", element: "🌱", title: "Hệ Mầm Non", rayHex: "#34d399" },
-  ong_noi:    { frame: "from-amber-200 via-yellow-500 to-orange-700", ring: "border-amber-500/50 dark:border-amber-300/60", glow: "shadow-amber-500/15 dark:shadow-amber-400/25", accent: "text-amber-700 dark:text-amber-300", element: "👑", title: "Hệ Trưởng Lão", rayHex: "#fbbf24" },
-  ong_ngoai:  { frame: "from-amber-200 via-yellow-500 to-orange-700", ring: "border-amber-500/50 dark:border-amber-300/60", glow: "shadow-amber-500/15 dark:shadow-amber-400/25", accent: "text-amber-700 dark:text-amber-300", element: "👑", title: "Hệ Trưởng Lão", rayHex: "#fbbf24" },
-  ba_noi:     { frame: "from-fuchsia-300 via-purple-500 to-violet-800", ring: "border-fuchsia-500/50 dark:border-fuchsia-300/60", glow: "shadow-fuchsia-500/15 dark:shadow-fuchsia-400/25", accent: "text-fuchsia-700 dark:text-fuchsia-300", element: "🌟", title: "Hệ Hiền Từ", rayHex: "#e879f9" },
-  ba_ngoai:   { frame: "from-fuchsia-300 via-purple-500 to-violet-800", ring: "border-fuchsia-500/50 dark:border-fuchsia-300/60", glow: "shadow-fuchsia-500/15 dark:shadow-fuchsia-400/25", accent: "text-fuchsia-700 dark:text-fuchsia-300", element: "🌟", title: "Hệ Hiền Từ", rayHex: "#e879f9" },
-  anh_chi_em: { frame: "from-violet-300 via-indigo-500 to-blue-800", ring: "border-violet-500/50 dark:border-violet-300/60", glow: "shadow-violet-500/15 dark:shadow-violet-400/25", accent: "text-violet-700 dark:text-violet-300", element: "⚡", title: "Hệ Đồng Hành", rayHex: "#a78bfa" },
+  ba:         { frame: "from-cyan-300 via-blue-500 to-indigo-700", ring: "border-cyan-500/50 dark:border-cyan-300/60", glow: "shadow-cyan-500/15 dark:shadow-cyan-400/25", accent: "text-cyan-700 dark:text-cyan-300", element: "🛡️", titleKey: "childHealth.cardThemeFather", rayHex: "#38bdf8" },
+  me:         { frame: "from-pink-300 via-rose-500 to-fuchsia-700", ring: "border-pink-500/50 dark:border-pink-300/60", glow: "shadow-rose-500/15 dark:shadow-rose-400/25", accent: "text-pink-700 dark:text-pink-300", element: "🌸", titleKey: "childHealth.cardThemeMother", rayHex: "#f472b6" },
+  con:        { frame: "from-emerald-300 via-green-500 to-teal-700", ring: "border-emerald-500/50 dark:border-emerald-300/60", glow: "shadow-emerald-500/15 dark:shadow-emerald-400/25", accent: "text-emerald-700 dark:text-emerald-300", element: "🌱", titleKey: "childHealth.cardThemeChild", rayHex: "#34d399" },
+  ong_noi:    { frame: "from-amber-200 via-yellow-500 to-orange-700", ring: "border-amber-500/50 dark:border-amber-300/60", glow: "shadow-amber-500/15 dark:shadow-amber-400/25", accent: "text-amber-700 dark:text-amber-300", element: "👑", titleKey: "childHealth.cardThemeGrandparent", rayHex: "#fbbf24" },
+  ong_ngoai:  { frame: "from-amber-200 via-yellow-500 to-orange-700", ring: "border-amber-500/50 dark:border-amber-300/60", glow: "shadow-amber-500/15 dark:shadow-amber-400/25", accent: "text-amber-700 dark:text-amber-300", element: "👑", titleKey: "childHealth.cardThemeGrandparent", rayHex: "#fbbf24" },
+  ba_noi:     { frame: "from-fuchsia-300 via-purple-500 to-violet-800", ring: "border-fuchsia-500/50 dark:border-fuchsia-300/60", glow: "shadow-fuchsia-500/15 dark:shadow-fuchsia-400/25", accent: "text-fuchsia-700 dark:text-fuchsia-300", element: "🌟", titleKey: "childHealth.cardThemeGrandmother", rayHex: "#e879f9" },
+  ba_ngoai:   { frame: "from-fuchsia-300 via-purple-500 to-violet-800", ring: "border-fuchsia-500/50 dark:border-fuchsia-300/60", glow: "shadow-fuchsia-500/15 dark:shadow-fuchsia-400/25", accent: "text-fuchsia-700 dark:text-fuchsia-300", element: "🌟", titleKey: "childHealth.cardThemeGrandmother", rayHex: "#e879f9" },
+  anh_chi_em: { frame: "from-violet-300 via-indigo-500 to-blue-800", ring: "border-violet-500/50 dark:border-violet-300/60", glow: "shadow-violet-500/15 dark:shadow-violet-400/25", accent: "text-violet-700 dark:text-violet-300", element: "⚡", titleKey: "childHealth.cardThemeSibling", rayHex: "#a78bfa" },
 };
-const DEFAULT_CARD_THEME: CardTheme = { frame: "from-zinc-300 via-zinc-500 to-zinc-700", ring: "border-zinc-500/50 dark:border-zinc-300/50", glow: "shadow-zinc-500/10 dark:shadow-zinc-400/20", accent: "text-zinc-600 dark:text-zinc-300", element: "✨", title: "Hệ Thành Viên", rayHex: "#a1a1aa" };
+const DEFAULT_CARD_THEME: CardTheme = { frame: "from-zinc-300 via-zinc-500 to-zinc-700", ring: "border-zinc-500/50 dark:border-zinc-300/50", glow: "shadow-zinc-500/10 dark:shadow-zinc-400/20", accent: "text-zinc-600 dark:text-zinc-300", element: "✨", titleKey: "childHealth.cardThemeDefault", rayHex: "#a1a1aa" };
 const cardThemeFor = (relation?: string): CardTheme => (relation && CARD_THEME_BY_RELATION[relation]) || DEFAULT_CARD_THEME;
 
 export function ChildHealth({
@@ -156,6 +155,8 @@ export function ChildHealth({
   requestedSection,
   requestedSectionSeq
 }: ChildHealthProps) {
+  const { t } = useTranslation();
+
   // Ưu tiên hiển thị trẻ em trước; nếu không có thì cho chọn bất kỳ thành viên.
   const sortedMembers = useMemo(() => {
     return [...users].sort((a, b) => (a.familyRelation === "con" ? -1 : 0) - (b.familyRelation === "con" ? -1 : 0));
@@ -232,7 +233,6 @@ export function ChildHealth({
     setEpEditingId(memberId);
   };
 
-  // "112" / "18,5" → số dương; null nếu không hợp lệ
   const parseMeasure = (s: string): number | null => {
     const n = parseFloat(s.trim().replace(",", "."));
     return isNaN(n) || n <= 0 ? null : n;
@@ -243,7 +243,7 @@ export function ChildHealth({
     const h = epHeight.trim() ? parseMeasure(epHeight) : undefined;
     const w = epWeight.trim() ? parseMeasure(epWeight) : undefined;
     if (h === null || w === null) {
-      setEpError("Chiều cao/cân nặng không hợp lệ (nhập số dương, vd 112 hoặc 18,5).");
+      setEpError(t("childHealth.errorMeasureInvalid"));
       return;
     }
     setEpSaving(true);
@@ -271,7 +271,7 @@ export function ChildHealth({
       });
       setEpEditingId(null);
     } catch (err: any) {
-      setEpError(err.message || "Không lưu được hồ sơ.");
+      setEpError(err.message || t("childHealth.errorProfileSave"));
     } finally {
       setEpSaving(false);
     }
@@ -300,7 +300,6 @@ export function ChildHealth({
   }, [growthRecords]);
 
   // Số đo gần nhất của một thành viên — chiều cao và cân nặng tìm riêng
-  // (bản ghi tăng trưởng có thể chỉ điền một trong hai).
   const latestMeasureFor = (memberId: string): { height?: number; weight?: number; date?: string } => {
     const list = growthByChild.get(memberId) ?? [];
     let height: number | undefined, weight: number | undefined, date: string | undefined;
@@ -335,7 +334,7 @@ export function ChildHealth({
         contacts: p?.emergencyContacts?.filter(c => c.name || c.phone) || []
       });
     } catch (e) {
-      console.error("Xuất thẻ khẩn cấp PDF thất bại:", e);
+      console.error("export emergency card PDF failed:", e);
     } finally {
       setExportingCardId(null);
     }
@@ -351,13 +350,13 @@ export function ChildHealth({
   const handleAddVaccine = async (e: React.FormEvent) => {
     e.preventDefault();
     setVError("");
-    if (!formMemberId) { setVError("Chọn thành viên."); return; }
-    if (!vName.trim()) { setVError("Nhập tên vắc-xin."); return; }
+    if (!formMemberId) { setVError(t("childHealth.errorNoMember")); return; }
+    if (!vName.trim()) { setVError(t("childHealth.errorVaccineNoName")); return; }
     try {
       await onSaveVaccination({ childId: formMemberId, name: vName.trim(), doseLabel: vDose.trim() || undefined, scheduledDate: vScheduled || undefined, status: "scheduled", note: vNote.trim() || undefined });
       setVName(""); setVDose(""); setVScheduled(""); setVNote("");
     } catch (err: any) {
-      setVError(err.message || "Không lưu được.");
+      setVError(err.message || t("childHealth.errorSaveFailed"));
     }
   };
 
@@ -374,42 +373,39 @@ export function ChildHealth({
   const handleAddGrowth = async (e: React.FormEvent) => {
     e.preventDefault();
     setGError("");
-    if (!formMemberId) { setGError("Chọn thành viên."); return; }
-    if (!gHeight && !gWeight) { setGError("Nhập chiều cao hoặc cân nặng."); return; }
+    if (!formMemberId) { setGError(t("childHealth.errorNoMember")); return; }
+    if (!gHeight && !gWeight) { setGError(t("childHealth.errorGrowthRequired")); return; }
     const height = parsePositiveMeasurement(gHeight);
     const weight = parsePositiveMeasurement(gWeight);
     if (height === undefined && weight === undefined) {
-      setGError("Nhập chiều cao hoặc cân nặng.");
+      setGError(t("childHealth.errorGrowthRequired"));
       return;
     }
     if (Number.isNaN(height) || Number.isNaN(weight)) {
-      setGError("Chiều cao/cân nặng phải lớn hơn 0.");
+      setGError(t("childHealth.errorGrowthPositive"));
       return;
     }
     try {
       await onSaveGrowth({ childId: formMemberId, date: gDate, heightCm: height, weightKg: weight });
       setGHeight(""); setGWeight("");
     } catch (err: any) {
-      setGError(err.message || "Không lưu được.");
+      setGError(err.message || t("childHealth.errorSaveFailed"));
     }
   };
 
-  // Render helpers (hàm thường, không phải component — tránh remount mỗi lần gõ phím)
-  // spanClass: cho ô chọn thành viên chiếm trọn hàng của lưới form (khác nhau giữa các form).
   const renderMemberSelect = (accent: string, spanClass: string) => (
     <div className={`space-y-1 ${spanClass}`}>
-      <label className="text-slate-500 text-[10px] block">Ghi cho thành viên</label>
+      <label className="text-slate-500 text-[10px] block">{t("childHealth.memberSelectLabel")}</label>
       <FancySelect
         value={formMemberId}
         onChange={setFormMemberId}
-        ariaLabel="Ghi cho thành viên"
+        ariaLabel={t("childHealth.memberSelectAria")}
         className={accent}
         options={sortedMembers.map(u => ({ value: u.id, label: u.fullName }))}
       />
     </div>
   );
 
-  // Header nhỏ hiển thị tên + avatar của một thành viên (dùng chung cho các card)
   const renderMemberHeader = (member: User, right?: React.ReactNode) => (
     <div className="flex items-center justify-between gap-2">
       <div className="flex items-center gap-2 min-w-0">
@@ -421,10 +417,10 @@ export function ChildHealth({
   );
 
   const subTabs: { id: HealthSection; label: string; icon: typeof Ruler; active: string }[] = [
-    { id: "emergency", label: "Thẻ khẩn cấp", icon: ShieldAlert, active: "bg-amber-500 text-slate-950" },
-    { id: "growth", label: "Tăng trưởng", icon: Ruler, active: "bg-emerald-500 text-slate-950" },
-    { id: "vaccination", label: "Tiêm chủng", icon: Syringe, active: "bg-sky-500 text-slate-950" },
-    { id: "medication", label: "Lịch thuốc", icon: Pill, active: "bg-rose-500 text-slate-950" }
+    { id: "emergency", label: t("childHealth.tabEmergency"), icon: ShieldAlert, active: "bg-amber-500 text-slate-950" },
+    { id: "growth", label: t("childHealth.tabGrowth"), icon: Ruler, active: "bg-emerald-500 text-slate-950" },
+    { id: "vaccination", label: t("childHealth.tabVaccination"), icon: Syringe, active: "bg-sky-500 text-slate-950" },
+    { id: "medication", label: t("childHealth.tabMedication"), icon: Pill, active: "bg-rose-500 text-slate-950" }
   ];
 
   return (
@@ -433,20 +429,20 @@ export function ChildHealth({
       <Reveal className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-3 space-y-3">
         <ShimmerLine accent="pink" />
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 px-1">
-          <IconChip accent="pink"><HeartPulse className="w-4 h-4" /></IconChip> Sức khỏe gia đình
+          <IconChip accent="pink"><HeartPulse className="w-4 h-4" /></IconChip> {t("childHealth.title")}
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold">
-          {subTabs.map(t => {
-            const Icon = t.icon;
-            const isActive = section === t.id;
+          {subTabs.map(tab => {
+            const Icon = tab.icon;
+            const isActive = section === tab.id;
             return (
               <button
-                key={t.id}
+                key={tab.id}
                 type="button"
-                onClick={() => setSection(t.id)}
-                className={`px-2 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all ${isActive ? t.active : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
+                onClick={() => setSection(tab.id)}
+                className={`px-2 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all ${isActive ? tab.active : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
               >
-                <Icon className="w-4 h-4" /> <span className="truncate">{t.label}</span>
+                <Icon className="w-4 h-4" /> <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
@@ -459,29 +455,29 @@ export function ChildHealth({
           <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
             <ShimmerLine accent="emerald" />
             <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <IconChip accent="emerald"><Ruler className="w-4 h-4" /></IconChip> Ghi số đo (chiều cao / cân nặng)
+              <IconChip accent="emerald"><Ruler className="w-4 h-4" /></IconChip> {t("childHealth.growthTitle")}
             </h4>
             <form onSubmit={handleAddGrowth} className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
               {renderMemberSelect("focus:border-emerald-500", "col-span-2 sm:col-span-4")}
               <div className="space-y-1 col-span-2 sm:col-span-1">
-                <label className="text-slate-500 text-[10px] block">Ngày đo</label>
+                <label className="text-slate-500 text-[10px] block">{t("childHealth.measureDateLabel")}</label>
                 <DateInputDMY value={gDate} onChange={setGDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
               </div>
               <div className="space-y-1">
-                <label className="text-slate-500 text-[10px] block">Chiều cao</label>
-                <input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder="Cao (cm)" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                <label className="text-slate-500 text-[10px] block">{t("childHealth.heightLabel")}</label>
+                <input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder={t("childHealth.heightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
               <div className="space-y-1">
-                <label className="text-slate-500 text-[10px] block">Cân nặng</label>
-                <input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder="Nặng (kg)" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                <label className="text-slate-500 text-[10px] block">{t("childHealth.weightLabel")}</label>
+                <input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder={t("childHealth.weightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
-              <button type="submit" className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer self-end"><Plus className="w-4 h-4" /> Ghi</button>
+              <button type="submit" className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer self-end"><Plus className="w-4 h-4" /> {t("childHealth.recordBtn")}</button>
               {gError && <p className="col-span-2 sm:col-span-4 text-[11px] text-rose-400">{gError}</p>}
             </form>
           </Reveal>
 
           {sortedMembers.length === 0 ? (
-            <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có thành viên nào.</p>
+            <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">{t("childHealth.noMembers")}</p>
           ) : sortedMembers.map((member, memberIndex) => {
             const records = growthByChild.get(member.id) ?? [];
             const bmi = bmiFor(member, records);
@@ -493,17 +489,20 @@ export function ChildHealth({
                   </span>
                 ) : undefined)}
                 {records.length === 0 ? (
-                  <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-lg px-3 py-2 text-center">Chưa có số đo.</p>
+                  <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-lg px-3 py-2 text-center">{t("childHealth.noGrowthData")}</p>
                 ) : (
                   <>
                     {bmi && (
                       <p className="text-[10px] text-slate-500">
-                        {bmi.basis === "adult" && "Đối chiếu chuẩn người lớn châu Á (Việt Nam): <18,5 thiếu cân · 18,5–22,9 bình thường · 23–24,9 thừa cân · 25–29,9 béo phì độ I · ≥30 độ II. "}
-                        {bmi.basis === "child" && `Đối chiếu chuẩn WHO theo tuổi & giới${member.gender ? (member.gender === "male" ? " (nam)" : " (nữ)") : ""}${(() => { const a = ageFromDob(member.dateOfBirth); return a != null ? ` · ${Math.floor(a)} tuổi` : ""; })()}. `}
+                        {bmi.basis === "adult" && t("childHealth.bmiAdultNote") + " "}
+                        {bmi.basis === "child" && t("childHealth.bmiChildNote", {
+                          gender: member.gender ? (member.gender === "male" ? t("childHealth.genderMale") : t("childHealth.genderFemale")) : "",
+                          age: (() => { const a = ageFromDob(member.dateOfBirth); return a != null ? t("childHealth.ageYears", { n: Math.floor(a) }) : ""; })()
+                        }) + " "}
                         {bmi.note}
                       </p>
                     )}
-                    {/* Số đo mới nhất — hiện TO rõ, kèm chênh lệch so lần đo trước */}
+                    {/* Số đo mới nhất */}
                     {(() => {
                       const heights = records.filter(g => g.heightCm != null);
                       const weights = records.filter(g => g.weightKg != null);
@@ -515,7 +514,7 @@ export function ChildHealth({
                       const deltaText = (cur?: number, prev?: number, unit = "") => {
                         if (cur == null || prev == null) return null;
                         const d = Math.round((cur - prev) * 10) / 10;
-                        if (d === 0) return <span className="text-slate-500">· không đổi</span>;
+                        if (d === 0) return <span className="text-slate-500">· {t("childHealth.unchanged")}</span>;
                         return (
                           <span className="text-slate-400">
                             · {d > 0 ? "▲ +" : "▼ "}{fmt(d)} {unit}
@@ -525,23 +524,23 @@ export function ChildHealth({
                       return (
                         <div className="grid grid-cols-2 gap-3">
                           <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3.5">
-                            <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Chiều cao</p>
+                            <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">{t("childHealth.heightLabel")}</p>
                             <p className="mt-1.5 text-3xl md:text-4xl font-extrabold text-emerald-400 tabular-nums leading-none">
                               {lastH ? fmt(lastH.heightCm!) : "—"}
                               <span className="text-sm font-bold text-slate-400 ml-1.5">cm</span>
                             </p>
                             <p className="mt-2 text-[10px] text-slate-500 font-mono">
-                              {lastH ? <>đo {formatDateVN(lastH.date)} {deltaText(lastH.heightCm!, prevH?.heightCm ?? undefined, "cm")}</> : "Chưa có số đo"}
+                              {lastH ? <>{t("childHealth.measuredOn", { date: formatDateVN(lastH.date) })} {deltaText(lastH.heightCm!, prevH?.heightCm ?? undefined, "cm")}</> : t("childHealth.noHeightData")}
                             </p>
                           </div>
                           <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3.5">
-                            <p className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">Cân nặng</p>
+                            <p className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">{t("childHealth.weightLabel")}</p>
                             <p className="mt-1.5 text-3xl md:text-4xl font-extrabold text-sky-400 tabular-nums leading-none">
                               {lastW ? fmt(lastW.weightKg!) : "—"}
                               <span className="text-sm font-bold text-slate-400 ml-1.5">kg</span>
                             </p>
                             <p className="mt-2 text-[10px] text-slate-500 font-mono">
-                              {lastW ? <>đo {formatDateVN(lastW.date)} {deltaText(lastW.weightKg!, prevW?.weightKg ?? undefined, "kg")}</> : "Chưa có số đo"}
+                              {lastW ? <>{t("childHealth.measuredOn", { date: formatDateVN(lastW.date) })} {deltaText(lastW.weightKg!, prevW?.weightKg ?? undefined, "kg")}</> : t("childHealth.noHeightData")}
                             </p>
                           </div>
                         </div>
@@ -549,12 +548,12 @@ export function ChildHealth({
                     })()}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3">
-                        <p className="text-[10px] text-emerald-400 font-bold uppercase mb-1">Chiều cao (cm)</p>
-                        <MiniChart data={records.filter(g => g.heightCm != null).map(g => ({ date: g.date, value: g.heightCm! }))} color="#10b981" unit="cm" />
+                        <p className="text-[10px] text-emerald-400 font-bold uppercase mb-1">{t("childHealth.heightChartLabel")}</p>
+                        <MiniChart data={records.filter(g => g.heightCm != null).map(g => ({ date: g.date, value: g.heightCm! }))} color="#10b981" unit="cm" noDataLabel={t("childHealth.noChartData")} />
                       </div>
                       <div className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3">
-                        <p className="text-[10px] text-sky-400 font-bold uppercase mb-1">Cân nặng (kg)</p>
-                        <MiniChart data={records.filter(g => g.weightKg != null).map(g => ({ date: g.date, value: g.weightKg! }))} color="#0ea5e9" unit="kg" />
+                        <p className="text-[10px] text-sky-400 font-bold uppercase mb-1">{t("childHealth.weightChartLabel")}</p>
+                        <MiniChart data={records.filter(g => g.weightKg != null).map(g => ({ date: g.date, value: g.weightKg! }))} color="#0ea5e9" unit="kg" noDataLabel={t("childHealth.noChartData")} />
                       </div>
                     </div>
                     <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
@@ -582,54 +581,54 @@ export function ChildHealth({
           <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
             <ShimmerLine accent="sky" />
             <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-              <IconChip accent="sky"><Syringe className="w-4 h-4" /></IconChip> Thêm mũi tiêm
+              <IconChip accent="sky"><Syringe className="w-4 h-4" /></IconChip> {t("childHealth.vaccinationTitle")}
             </h4>
             <form onSubmit={handleAddVaccine} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {renderMemberSelect("focus:border-sky-500", "col-span-1 sm:col-span-2")}
-              <input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder="Tên vắc-xin" className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+              <input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder={t("childHealth.vaccineNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
               <datalist id="vaccine-list">{COMMON_VACCINES.map(v => <option key={v} value={v} />)}</datalist>
-              <input value={vDose} onChange={e => setVDose(e.target.value)} placeholder="Mũi (vd: Mũi 1, nhắc lại)" className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+              <input value={vDose} onChange={e => setVDose(e.target.value)} placeholder={t("childHealth.vaccineDosePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
               <div className="space-y-1">
-                <label className="text-slate-500 text-[10px] block">Ngày hẹn tiêm</label>
+                <label className="text-slate-500 text-[10px] block">{t("childHealth.vaccineDateLabel")}</label>
                 <DateInputDMY value={vScheduled} onChange={setVScheduled} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 font-mono" />
               </div>
-              <input value={vNote} onChange={e => setVNote(e.target.value)} placeholder="Ghi chú" className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
+              <input value={vNote} onChange={e => setVNote(e.target.value)} placeholder={t("childHealth.vaccineNotePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
               {vError && <p className="sm:col-span-2 text-[11px] text-rose-400">{vError}</p>}
-              <button type="submit" className="sm:col-span-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> Thêm mũi tiêm</button>
+              <button type="submit" className="sm:col-span-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> {t("childHealth.addVaccineBtn")}</button>
             </form>
           </Reveal>
 
           {sortedMembers.length === 0 ? (
-            <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">Chưa có thành viên nào.</p>
+            <p className="text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl p-4 text-center">{t("childHealth.noMembers")}</p>
           ) : sortedMembers.map((member, memberIndex) => {
             const list = vaccinesByChild.get(member.id) ?? [];
             return (
               <Reveal key={member.id} delay={0.12 + staggerDelay(memberIndex, 0.06, 5)} className="bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
-                {renderMemberHeader(member, <span className="text-[10px] text-slate-500 font-mono shrink-0">{list.length} mũi</span>)}
+                {renderMemberHeader(member, <span className="text-[10px] text-slate-500 font-mono shrink-0">{t("childHealth.vaccineDoseCount", { n: list.length })}</span>)}
                 {list.length === 0 ? (
-                  <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-lg px-3 py-2 text-center">Chưa có mũi tiêm nào.</p>
+                  <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-lg px-3 py-2 text-center">{t("childHealth.noVaccines")}</p>
                 ) : (
                   <div className="space-y-2">
                     <AnimatePresence>
                       {list.map(v => {
-                        const dleft = v.status === "scheduled" ? daysLeft(v.scheduledDate) : null;
+                        const dl = v.status === "scheduled" ? daysLeft(v.scheduledDate) : null;
                         return (
                           <motion.div key={v.id} layout initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 flex items-center justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-xs font-bold text-slate-100 truncate">{v.name} {v.doseLabel && <span className="text-slate-400 font-normal">• {v.doseLabel}</span>}</p>
                               <p className="text-[10px] text-slate-500 font-mono flex items-center gap-2 flex-wrap">
                                 {v.status === "done" ? (
-                                  <span className="text-emerald-400">✓ Đã tiêm {formatDateVN(v.doneDate) || ""}</span>
+                                  <span className="text-emerald-400">{t("childHealth.vaccineDone", { date: formatDateVN(v.doneDate) || "" })}</span>
                                 ) : (
                                   <>
-                                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {v.scheduledDate ? formatDateVN(v.scheduledDate) : "chưa đặt"}</span>
-                                    {dleft !== null && <span className={dleft < 0 ? "text-rose-400" : dleft <= 7 ? "text-amber-400" : "text-slate-500"}>{dleft < 0 ? `trễ ${-dleft}d` : `còn ${dleft}d`}</span>}
+                                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {v.scheduledDate ? formatDateVN(v.scheduledDate) : t("childHealth.vaccineNotScheduled")}</span>
+                                    {dl !== null && <span className={dl < 0 ? "text-rose-400" : dl <= 7 ? "text-amber-400" : "text-slate-500"}>{dl < 0 ? t("childHealth.vaccineOverdueDays", { n: -dl }) : t("childHealth.vaccineDaysLeft", { n: dl })}</span>}
                                   </>
                                 )}
                               </p>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <button onClick={() => toggleVaccineDone(v)} className={`px-2 py-1 rounded-lg text-[10px] font-bold border cursor-pointer ${v.status === "done" ? "bg-emerald-500 text-slate-950 border-emerald-400" : "bg-slate-900 text-emerald-400 border-slate-700 hover:border-emerald-500/50"}`} title="Đánh dấu đã tiêm">
+                              <button onClick={() => toggleVaccineDone(v)} className={`px-2 py-1 rounded-lg text-[10px] font-bold border cursor-pointer ${v.status === "done" ? "bg-emerald-500 text-slate-950 border-emerald-400" : "bg-slate-900 text-emerald-400 border-slate-700 hover:border-emerald-500/50"}`} title={t("childHealth.markVaccineDoneTitle")}>
                                 <Check className="w-3 h-3" />
                               </button>
                               <button onClick={() => onDeleteVaccination(v.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -662,10 +661,7 @@ export function ChildHealth({
       {/* ─── THẺ KHẨN CẤP ────────────────────────────────────────────── */}
       {section === "emergency" && (
         <div className="space-y-4">
-          <p className="text-[11px] text-slate-500 px-1">
-            Thông tin y tế quan trọng của từng thành viên — nhóm máu, dị ứng, bệnh nền, BHYT, liên hệ khẩn cấp.
-            Cả nhà đều xem được để dùng khi cấp cứu.
-          </p>
+          <p className="text-[11px] text-slate-500 px-1">{t("childHealth.emergencyIntro")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6 justify-items-center sm:justify-items-stretch">
             {users.map((member, mi) => {
               const p = profileByUser.get(member.id);
@@ -677,19 +673,17 @@ export function ChildHealth({
               if (!isEditing) {
                 const measure = latestMeasureFor(member.id);
                 const abilities: { label: string; value: string; icon: typeof Droplet; tone: string }[] = [];
-                if (p?.allergies) abilities.push({ label: "Dị ứng", value: p.allergies, icon: AlertTriangle, tone: "text-rose-600 dark:text-rose-300" });
-                if (p?.chronicConditions) abilities.push({ label: "Bệnh nền", value: p.chronicConditions, icon: HeartPulse, tone: "text-orange-600 dark:text-orange-300" });
-                if (p?.currentMedications) abilities.push({ label: "Thuốc dùng", value: p.currentMedications, icon: Pill, tone: "text-cyan-600 dark:text-cyan-300" });
-                if (p?.healthInsuranceNumber) abilities.push({ label: "Số BHYT", value: p.healthInsuranceNumber, icon: Stethoscope, tone: "text-emerald-600 dark:text-emerald-300" });
+                if (p?.allergies) abilities.push({ label: t("childHealth.allergyLabel"), value: p.allergies, icon: AlertTriangle, tone: "text-rose-600 dark:text-rose-300" });
+                if (p?.chronicConditions) abilities.push({ label: t("childHealth.chronicLabel"), value: p.chronicConditions, icon: HeartPulse, tone: "text-orange-600 dark:text-orange-300" });
+                if (p?.currentMedications) abilities.push({ label: t("childHealth.medicationLabel"), value: p.currentMedications, icon: Pill, tone: "text-cyan-600 dark:text-cyan-300" });
+                if (p?.healthInsuranceNumber) abilities.push({ label: t("childHealth.bhytLabel"), value: p.healthInsuranceNumber, icon: Stethoscope, tone: "text-emerald-600 dark:text-emerald-300" });
 
                 return (
                   <Reveal key={member.id} delay={0.05 + staggerDelay(mi)} className="w-full max-w-[340px] sm:max-w-none">
                     <div className="relative h-full bg-slate-900 neu-raised rounded-2xl overflow-hidden flex flex-col">
-                      {/* Dải accent mảnh theo hệ ở mép trên — bản sắc màu, không rối */}
                       <div aria-hidden className={`h-1 bg-gradient-to-r ${theme.frame}`} />
 
                       <div className="p-4 flex flex-col gap-3 flex-1">
-                        {/* Header: avatar viền accent + tên + hệ + nút thao tác */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className={`shrink-0 rounded-full p-[2px] bg-gradient-to-br ${theme.frame}`}>
@@ -698,7 +692,7 @@ export function ChildHealth({
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-slate-100 truncate">{member.fullName}</p>
                               <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${theme.accent}`}>
-                                <span>{theme.element}</span> {theme.title}{relationLabel ? ` · ${relationLabel}` : ""}
+                                <span>{theme.element}</span> {t(theme.titleKey)}{relationLabel ? ` · ${relationLabel}` : ""}
                               </span>
                             </div>
                           </div>
@@ -708,8 +702,8 @@ export function ChildHealth({
                                 type="button"
                                 onClick={() => exportCardPdf(member, p)}
                                 disabled={exportingCardId !== null}
-                                title="Xuất thẻ ra PDF (khổ A6 — in gập bỏ ví)"
-                                aria-label="Xuất thẻ ra PDF"
+                                title={t("childHealth.exportPdfTitle")}
+                                aria-label={t("childHealth.exportPdfAria")}
                                 className="p-1.5 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-indigo-400 cursor-pointer disabled:opacity-60"
                               >
                                 {exportingCardId === member.id
@@ -718,38 +712,36 @@ export function ChildHealth({
                               </button>
                             )}
                             {canEditEmergency && (
-                              <button type="button" onClick={() => openEpEdit(member.id)} title="Cập nhật thẻ" aria-label="Cập nhật thẻ" className="p-1.5 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-500 dark:hover:text-amber-400 cursor-pointer">
+                              <button type="button" onClick={() => openEpEdit(member.id)} title={t("childHealth.editCardTitle")} aria-label={t("childHealth.editCardTitle")} className="p-1.5 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-500 dark:hover:text-amber-400 cursor-pointer">
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
                         </div>
 
-                        {/* Nhãn mục đích thẻ */}
                         <div className="flex items-center gap-1.5">
                           <ShieldAlert className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">Thẻ y tế khẩn cấp</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300">{t("childHealth.emergencyBadge")}</span>
                         </div>
 
                         {!p ? (
                           <div className="flex-1 flex items-center justify-center py-6">
                             <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-xl px-4 py-5 text-center">
-                              Thẻ chưa kích hoạt.{canEditEmergency ? " Bấm ✏️ để điền thông tin." : ""}
+                              {t("childHealth.cardNotActivated")}{canEditEmergency ? t("childHealth.cardNotActivatedEdit") : ""}
                             </p>
                           </div>
                         ) : (
                           <>
-                            {/* Sinh hiệu chính: nhóm máu (nổi bật) + ngày sinh */}
                             <div className="grid grid-cols-2 gap-2">
                               <div className="rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2 flex flex-col gap-1">
                                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1">
-                                  <Droplet className="w-3 h-3 text-red-600 dark:text-red-400 fill-red-600 dark:fill-red-400" /> Nhóm máu
+                                  <Droplet className="w-3 h-3 text-red-600 dark:text-red-400 fill-red-600 dark:fill-red-400" /> {t("childHealth.bloodTypeLabel")}
                                 </span>
                                 <span className="text-2xl font-black leading-none text-red-600 dark:text-red-400">{p.bloodType || "?"}</span>
                               </div>
                               <div className="rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2 flex flex-col gap-1">
                                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1">
-                                  <Cake className="w-3 h-3 text-pink-500 dark:text-pink-400" /> Ngày sinh
+                                  <Cake className="w-3 h-3 text-pink-500 dark:text-pink-400" /> {t("childHealth.dobLabel")}
                                 </span>
                                 {member.dateOfBirth ? (
                                   <span className="text-[11px] font-bold text-slate-200 leading-tight">
@@ -764,11 +756,10 @@ export function ChildHealth({
                               </div>
                             </div>
 
-                            {/* Chiều cao · cân nặng gần nhất (từ sổ Tăng trưởng) */}
                             {(measure.height != null || measure.weight != null) && (
                               <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2">
                                 <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 shrink-0">
-                                  <Ruler className="w-3 h-3 text-sky-500 dark:text-sky-400" /> Cao · Nặng
+                                  <Ruler className="w-3 h-3 text-sky-500 dark:text-sky-400" /> {t("childHealth.heightWeightLabel")}
                                 </span>
                                 <span className="text-[11px] font-bold text-slate-200 font-mono text-right whitespace-nowrap">
                                   {measure.height != null ? `${measure.height} cm` : "—"} · {measure.weight != null ? `${measure.weight} kg` : "—"}
@@ -776,10 +767,9 @@ export function ChildHealth({
                               </div>
                             )}
 
-                            {/* Thông tin y tế */}
                             <div className="rounded-xl bg-slate-950 neu-pressed-sm divide-y divide-slate-850/60 flex-1">
                               {abilities.length === 0 ? (
-                                <p className="text-[11px] text-slate-500 px-3 py-2.5 text-center italic">Chưa ghi thông tin y tế.</p>
+                                <p className="text-[11px] text-slate-500 px-3 py-2.5 text-center italic">{t("childHealth.noMedicalInfo")}</p>
                               ) : abilities.map((a, i) => {
                                 const Icon = a.icon;
                                 return (
@@ -794,10 +784,9 @@ export function ChildHealth({
                               })}
                             </div>
 
-                            {/* Liên hệ khẩn cấp */}
                             {p.emergencyContacts?.length > 0 && (
                               <div className="rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2 space-y-1.5">
-                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Liên hệ khẩn cấp</p>
+                                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1"><Phone className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> {t("childHealth.emergencyContactsLabel")}</p>
                                 {p.emergencyContacts.map((c, i) => (
                                   <a key={i} href={`tel:${c.phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-[11px] text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-300 transition-colors">
                                     <span className="font-semibold truncate">{c.name}</span>
@@ -809,7 +798,7 @@ export function ChildHealth({
                             )}
 
                             {p.notes && (
-                              <p className="text-[10px] text-slate-500 italic leading-relaxed px-1">“{p.notes}”</p>
+                              <p className="text-[10px] text-slate-500 italic leading-relaxed px-1">"{p.notes}"</p>
                             )}
                           </>
                         )}
@@ -819,7 +808,7 @@ export function ChildHealth({
                 );
               }
 
-              // ─── NHÁNH SỬA: form chức năng (nền slate cho dễ nhập) ───
+              // ─── NHÁNH SỬA: form chức năng ───
               return (
                 <Reveal key={member.id} delay={0.05 + staggerDelay(mi)} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-3.5 sm:p-4 space-y-3 w-full max-w-[330px] sm:max-w-none">
                   <ShimmerLine accent="amber" />
@@ -831,7 +820,7 @@ export function ChildHealth({
                         {relationLabel && <p className="text-[10px] text-slate-500">{relationLabel}</p>}
                       </div>
                     </div>
-                    <button type="button" onClick={() => setEpEditingId(null)} title="Hủy" className="shrink-0 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 cursor-pointer transition-colors">
+                    <button type="button" onClick={() => setEpEditingId(null)} title={t("childHealth.cancelBtn")} className="shrink-0 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 cursor-pointer transition-colors">
                       <X className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -839,73 +828,71 @@ export function ChildHealth({
                   <div className="space-y-2 text-xs">
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-slate-500 text-[10px] block">Nhóm máu</label>
+                          <label className="text-slate-500 text-[10px] block">{t("childHealth.bloodTypeLabel")}</label>
                           <FancySelect
                             value={epBlood}
                             onChange={setEpBlood}
-                            ariaLabel="Nhóm máu"
-                            placeholder="Chưa rõ"
-                            options={[{ value: "", label: "Chưa rõ" }, ...BLOOD_TYPE_OPTIONS.map(b => ({ value: b, label: b }))]}
+                            ariaLabel={t("childHealth.bloodTypeLabel")}
+                            placeholder={t("childHealth.formBloodTypeUnknown")}
+                            options={[{ value: "", label: t("childHealth.formBloodTypeUnknown") }, ...BLOOD_TYPE_OPTIONS.map(b => ({ value: b, label: b }))]}
                           />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-slate-500 text-[10px] block">Số BHYT</label>
-                          <input value={epBhyt} onChange={e => setEpBhyt(e.target.value)} placeholder="GD-4-79-..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                          <label className="text-slate-500 text-[10px] block">{t("childHealth.bhytLabel")}</label>
+                          <input value={epBhyt} onChange={e => setEpBhyt(e.target.value)} placeholder={t("childHealth.formBhytPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
-                          <label className="text-slate-500 text-[10px] block">Chiều cao (cm)</label>
+                          <label className="text-slate-500 text-[10px] block">{t("childHealth.heightLabel")} (cm)</label>
                           <input value={epHeight} onChange={e => setEpHeight(e.target.value)} placeholder="112" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-slate-500 text-[10px] block">Cân nặng (kg)</label>
+                          <label className="text-slate-500 text-[10px] block">{t("childHealth.weightLabel")} (kg)</label>
                           <input value={epWeight} onChange={e => setEpWeight(e.target.value)} placeholder="18,5" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
-                        <p className="col-span-2 text-[9px] text-slate-600 -mt-0.5">Đổi số đo sẽ ghi thêm một dòng vào mục Tăng trưởng (ngày hôm nay).</p>
+                        <p className="col-span-2 text-[9px] text-slate-600 -mt-0.5">{t("childHealth.formMeasureNote")}</p>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-slate-500 text-[10px] block">Dị ứng (thuốc, thức ăn...)</label>
-                        <input value={epAllergies} onChange={e => setEpAllergies(e.target.value)} placeholder="Ví dụ: Penicillin, hải sản" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <label className="text-slate-500 text-[10px] block">{t("childHealth.formAllergyLabel")}</label>
+                        <input value={epAllergies} onChange={e => setEpAllergies(e.target.value)} placeholder={t("childHealth.formAllergyPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-slate-500 text-[10px] block">Bệnh nền</label>
-                        <input value={epChronic} onChange={e => setEpChronic(e.target.value)} placeholder="Ví dụ: Tiểu đường, cao huyết áp" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <label className="text-slate-500 text-[10px] block">{t("childHealth.formChronicLabel")}</label>
+                        <input value={epChronic} onChange={e => setEpChronic(e.target.value)} placeholder={t("childHealth.formChronicPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-slate-500 text-[10px] block">Thuốc đang dùng thường xuyên</label>
-                        <input value={epMeds} onChange={e => setEpMeds(e.target.value)} placeholder="Ví dụ: Metformin 500mg sáng/tối" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <label className="text-slate-500 text-[10px] block">{t("childHealth.formMedsLabel")}</label>
+                        <input value={epMeds} onChange={e => setEpMeds(e.target.value)} placeholder={t("childHealth.formMedsPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
 
                       <div className="space-y-1.5">
-                        <label className="text-slate-500 text-[10px] block">Liên hệ khẩn cấp (tối đa 5)</label>
+                        <label className="text-slate-500 text-[10px] block">{t("childHealth.formContactsLabel")}</label>
                         {epContacts.map((c, i) => (
-                          // Mobile: Tên chiếm trọn hàng 1, SĐT + Quan hệ + nút xóa xuống hàng 2.
-                          // sm trở lên: đủ rộng nên gộp lại 1 hàng như cũ.
                           <div key={i} className="flex flex-wrap gap-1.5">
-                            <input value={c.name} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))} placeholder="Tên" className="basis-full sm:basis-0 sm:flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
-                            <input value={c.phone} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, phone: e.target.value } : x))} placeholder="SĐT" inputMode="tel" className="flex-1 min-w-0 sm:flex-none sm:w-28 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
-                            <input value={c.relation || ""} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, relation: e.target.value } : x))} placeholder="Quan hệ" className="w-24 sm:w-20 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
-                            <button type="button" onClick={() => setEpContacts(prev => prev.filter((_, xi) => xi !== i))} title="Xóa liên hệ" className="p-2 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0">
+                            <input value={c.name} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))} placeholder={t("childHealth.formContactNamePlaceholder")} className="basis-full sm:basis-0 sm:flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                            <input value={c.phone} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, phone: e.target.value } : x))} placeholder={t("childHealth.formContactPhonePlaceholder")} inputMode="tel" className="flex-1 min-w-0 sm:flex-none sm:w-28 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                            <input value={c.relation || ""} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, relation: e.target.value } : x))} placeholder={t("childHealth.formContactRelationPlaceholder")} className="w-24 sm:w-20 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                            <button type="button" onClick={() => setEpContacts(prev => prev.filter((_, xi) => xi !== i))} title={t("childHealth.removeContactTitle")} className="p-2 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         ))}
                         {epContacts.length < 5 && (
                           <button type="button" onClick={() => setEpContacts(prev => [...prev, { name: "", phone: "", relation: "" }])} className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer">
-                            <Plus className="w-3 h-3" /> Thêm liên hệ
+                            <Plus className="w-3 h-3" /> {t("childHealth.addContactBtn")}
                           </button>
                         )}
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-slate-500 text-[10px] block">Ghi chú thêm</label>
-                        <textarea value={epNotes} onChange={e => setEpNotes(e.target.value)} rows={2} placeholder="Ví dụ: đang mang thai, có máy trợ tim..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 resize-none" />
+                        <label className="text-slate-500 text-[10px] block">{t("childHealth.formNotesLabel")}</label>
+                        <textarea value={epNotes} onChange={e => setEpNotes(e.target.value)} rows={2} placeholder={t("childHealth.formNotesPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 resize-none" />
                       </div>
 
                       {epError && <p className="text-[11px] text-rose-400">{epError}</p>}
                       <button type="button" disabled={epSaving} onClick={saveEp} className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
-                        <Check className="w-4 h-4" /> {epSaving ? "Đang lưu..." : "Lưu hồ sơ"}
+                        <Check className="w-4 h-4" /> {epSaving ? t("childHealth.savingBtn") : t("childHealth.saveBtn")}
                       </button>
                   </div>
                 </Reveal>
