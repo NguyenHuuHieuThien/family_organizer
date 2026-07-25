@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { 
   Plus, 
   Trash2, 
@@ -103,6 +104,8 @@ export function Tasks({
   rewardsEnabled,
   rewardApprovalThreshold
 }: TasksProps) {
+  const { t } = useTranslation();
+
   // Query Filters State
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -233,7 +236,7 @@ export function Tasks({
   // Nút nổi thêm nhanh — ẩn khi đang mở modal hoặc tài khoản khách
   useTabFab(
     currentUser.role !== UserRole.GUEST && !isNewTaskOpen
-      ? { id: "tasks", color: "sky", title: "Thêm công việc mới", icon: CheckSquare, onClick: handleOpenCreate }
+      ? { id: "tasks", color: "sky", title: t("tasks.fabTitle"), icon: CheckSquare, onClick: handleOpenCreate }
       : null
   );
 
@@ -276,7 +279,7 @@ export function Tasks({
     setFormError("");
 
     if (!newTitle.trim()) {
-      setFormError("Vui lòng nhập tên công việc!");
+      setFormError(t("tasks.errNameRequired"));
       return;
     }
 
@@ -309,7 +312,7 @@ export function Tasks({
       setEditingTaskId(null);
       setIsNewTaskOpen(false);
     } catch (err: any) {
-      setFormError(err.message || (editingTaskId ? "Cập nhật công việc thất bại" : "Tạo công việc thất bại"));
+      setFormError(err.message || (editingTaskId ? t("tasks.errSaveEdit") : t("tasks.errSaveCreate")));
     }
   };
 
@@ -358,7 +361,7 @@ export function Tasks({
       const optimized = await optimizeImageFile(file, { maxSizes: [768, 512], targetBytes: 300 * 1024 });
       setSubmitProofImage(optimized.dataUrl);
     } catch (e: any) {
-      setSubmitProofErr(e?.message || "Không xử lý được ảnh này.");
+      setSubmitProofErr(e?.message || t("tasks.proofImageErr"));
     } finally {
       setSubmitProofBusy(false);
     }
@@ -454,19 +457,19 @@ export function Tasks({
   const handleRedeemGift = async (item: RewardItem) => {
     if (!shopTargetId || redeemBusyId) return;
     const ok = await confirm({
-      title: "Đổi quà?",
-      message: `Đổi "${item.emoji ? item.emoji + " " : ""}${item.name}" cho ${shopTarget?.fullName || "bé"} với ${item.cost} điểm?`,
-      confirmLabel: "Đổi quà",
-      cancelLabel: "Để sau"
+      title: t("tasks.confirmRedeemTitle"),
+      message: t("tasks.confirmRedeemMsg", { itemName: (item.emoji ? item.emoji + " " : "") + item.name, target: shopTarget?.fullName || t("tasks.childFallback"), cost: item.cost }),
+      confirmLabel: t("tasks.confirmRedeemBtn"),
+      cancelLabel: t("tasks.confirmLater")
     });
     if (!ok) return;
     setRedeemBusyId(item.id);
     setShopMsg(null);
     try {
       await onRedeemRewardItem(item.id, shopTargetId);
-      setShopMsg({ kind: "ok", text: `Đã đổi "${item.name}" — nhớ thực hiện lời hứa với bé nhé! 🎉` });
+      setShopMsg({ kind: "ok", text: t("tasks.redeemSuccess", { name: item.name }) });
     } catch (err: any) {
-      setShopMsg({ kind: "err", text: err.message || "Không đổi được quà." });
+      setShopMsg({ kind: "err", text: err.message || t("tasks.redeemErr") });
     } finally {
       setRedeemBusyId(null);
     }
@@ -487,7 +490,7 @@ export function Tasks({
       setGiftName(""); setGiftEmoji(""); setGiftCost(0);
       setShowGiftForm(false); setEditingGift(null);
     } catch (err: any) {
-      setShopMsg({ kind: "err", text: err.message || "Không lưu được quà." });
+      setShopMsg({ kind: "err", text: err.message || t("tasks.saveGiftErr") });
     } finally {
       setGiftSaving(false);
     }
@@ -511,23 +514,23 @@ export function Tasks({
     if (!shopTargetId || mysteryBusy) return;
     const balance = shopTargetId ? (rewardTotals[shopTargetId] || 0) : 0;
     if (balance < mysteryCost) {
-      setShopMsg({ kind: "err", text: `Cần ${mysteryCost} điểm (quà bất ngờ), bé đang có ${balance}.` });
+      setShopMsg({ kind: "err", text: t("tasks.mysteryNeedMore", { cost: mysteryCost, balance }) });
       return;
     }
     const ok = await confirm({
-      title: "Đổi Quà Bất Ngờ 🎲",
-      message: `${shopTarget?.fullName || "Bé"} sẽ dùng ${mysteryCost} điểm để nhận 1 món quà bất ngờ (server chọn ngẫu nhiên). Không xem trước được nhé!`,
-      confirmLabel: "Đồng ý!",
-      cancelLabel: "Để sau"
+      title: t("tasks.confirmMysteryTitle"),
+      message: t("tasks.confirmMysteryMsg", { name: shopTarget?.fullName || t("tasks.childFallbackCap"), cost: mysteryCost }),
+      confirmLabel: t("tasks.confirmMysteryBtn"),
+      cancelLabel: t("tasks.confirmLater")
     });
     if (!ok) return;
     setMysteryBusy(true); setMysteryResult(null); setShopMsg(null);
     try {
       const res = await onRedeemMysteryItem(shopTargetId);
       setMysteryResult({ name: res.item.name, emoji: res.item.emoji, cost: res.mysteryCost });
-      setShopMsg({ kind: "ok", text: `🎲 Bé nhận được: "${res.item.emoji ? res.item.emoji + " " : ""}${res.item.name}" (−${res.mysteryCost} điểm)!` });
+      setShopMsg({ kind: "ok", text: t("tasks.mysterySuccess", { name: (res.item.emoji ? res.item.emoji + " " : "") + res.item.name, cost: res.mysteryCost }) });
     } catch (err: any) {
-      setShopMsg({ kind: "err", text: err.message || "Không đổi được quà bất ngờ." });
+      setShopMsg({ kind: "err", text: err.message || t("tasks.mysteryErr") });
     } finally {
       setMysteryBusy(false);
     }
@@ -537,31 +540,31 @@ export function Tasks({
     try {
       await onSeedDefaultRewardItems();
     } catch (err: any) {
-      setShopMsg({ kind: "err", text: err.message || "Không thêm được mẫu." });
+      setShopMsg({ kind: "err", text: err.message || t("tasks.seedErr") });
     }
   };
 
   const handleDeleteGift = async (item: RewardItem) => {
     const ok = await confirm({
-      title: "Xóa món quà?",
-      message: `Xóa "${item.name}" khỏi cửa hàng đổi thưởng? Lịch sử đổi quà cũ vẫn giữ nguyên.`,
-      confirmLabel: "Xóa",
+      title: t("tasks.confirmDeleteGiftTitle"),
+      message: t("tasks.confirmDeleteGiftMsg", { name: item.name }),
+      confirmLabel: t("tasks.confirmDeleteGiftBtn"),
       tone: "danger"
     });
     if (!ok) return;
     try {
       await onDeleteRewardItem(item.id);
     } catch (err: any) {
-      setShopMsg({ kind: "err", text: err.message || "Không xóa được quà." });
+      setShopMsg({ kind: "err", text: err.message || t("tasks.deleteGiftErr") });
     }
   };
 
   const handleDeleteClick = async (taskId: string) => {
     const ok = await confirm({
-      title: "Xóa công việc?",
-      message: "Công việc này sẽ bị xóa khỏi danh sách task gia đình. Bạn có chắc chắn muốn tiếp tục không?",
-      confirmLabel: "Xóa công việc",
-      cancelLabel: "Đóng lại",
+      title: t("tasks.confirmDeleteTitle"),
+      message: t("tasks.confirmDeleteMsg"),
+      confirmLabel: t("tasks.confirmDeleteBtn"),
+      cancelLabel: t("tasks.formClose"),
       tone: "danger"
     });
     if (!ok) return;
@@ -587,10 +590,10 @@ export function Tasks({
 
   const statusName = (s: TaskStatus) => {
     switch (s) {
-      case TaskStatus.TODO: return "Chưa làm";
-      case TaskStatus.IN_PROGRESS: return "Đang làm";
-      case TaskStatus.COMPLETED: return "Hoàn thành";
-      case TaskStatus.OVERDUE: return "Quá hạn";
+      case TaskStatus.TODO: return t("tasks.statusTodo");
+      case TaskStatus.IN_PROGRESS: return t("tasks.statusInProgress");
+      case TaskStatus.COMPLETED: return t("tasks.statusCompleted");
+      case TaskStatus.OVERDUE: return t("tasks.statusOverdue");
     }
   };
 
@@ -605,17 +608,17 @@ export function Tasks({
 
   const priorityLabel = (p: TaskPriority) => {
     switch (p) {
-      case TaskPriority.HIGH: return "Khẩn cấp";
-      case TaskPriority.MEDIUM: return "Trung bình";
-      case TaskPriority.LOW: return "Hàng ngày";
+      case TaskPriority.HIGH: return t("tasks.priorityHigh");
+      case TaskPriority.MEDIUM: return t("tasks.priorityMedium");
+      case TaskPriority.LOW: return t("tasks.priorityLow");
     }
   };
 
   const recurrenceLabel = (type?: RecurrenceType) => {
     if (!type || type === "none") return "";
-    if (type === "daily") return "Lặp ngày";
-    if (type === "weekly") return "Lặp tuần";
-    return "Lặp tháng";
+    if (type === "daily") return t("tasks.recurrenceDaily");
+    if (type === "weekly") return t("tasks.recurrenceWeekly");
+    return t("tasks.recurrenceMonthly");
   };
 
   const priorityRank: Record<TaskPriority, number> = {
@@ -673,32 +676,32 @@ export function Tasks({
   const kanbanColumns = [
     {
       status: TaskStatus.TODO,
-      title: "Chưa làm",
-      hint: "Việc cần nhận và sắp xếp",
+      title: t("tasks.statusTodo"),
+      hint: t("tasks.colTodoHint"),
       icon: Layers,
       headerClass: "border-slate-700 text-slate-300",
       accentClass: "bg-slate-500"
     },
     {
       status: TaskStatus.IN_PROGRESS,
-      title: "Đang làm",
-      hint: "Đang được xử lý",
+      title: t("tasks.statusInProgress"),
+      hint: t("tasks.colInProgressHint"),
       icon: Clock,
       headerClass: "border-sky-500/30 text-sky-300",
       accentClass: "bg-sky-500"
     },
     {
       status: TaskStatus.OVERDUE,
-      title: "Quá hạn",
-      hint: "Cần xử lý sớm",
+      title: t("tasks.statusOverdue"),
+      hint: t("tasks.colOverdueHint"),
       icon: AlertCircle,
       headerClass: "border-rose-500/30 text-rose-300",
       accentClass: "bg-rose-500"
     },
     {
       status: TaskStatus.COMPLETED,
-      title: "Hoàn thành",
-      hint: "Đã xong trong gia đình",
+      title: t("tasks.statusCompleted"),
+      hint: t("tasks.colCompletedHint"),
       icon: CheckCircle,
       headerClass: "border-emerald-500/30 text-emerald-300",
       accentClass: "bg-emerald-500"
@@ -710,11 +713,10 @@ export function Tasks({
     : kanbanColumns.filter(column => column.status === statusFilter);
 
   const quickNextStatus = (task: Task): { label: string; status: TaskStatus } => {
-    if (task.status === TaskStatus.COMPLETED) return { label: "Mở lại", status: TaskStatus.TODO };
-    // Task quá hạn (kể cả khi đang ở todo/in_progress) → hành động chính là hoàn thành
-    if (isTaskOverdue(task)) return { label: "Hoàn thành", status: TaskStatus.COMPLETED };
-    if (task.status === TaskStatus.TODO) return { label: "Bắt đầu", status: TaskStatus.IN_PROGRESS };
-    return { label: "Hoàn thành", status: TaskStatus.COMPLETED };
+    if (task.status === TaskStatus.COMPLETED) return { label: t("tasks.actionReopen"), status: TaskStatus.TODO };
+    if (isTaskOverdue(task)) return { label: t("tasks.actionComplete"), status: TaskStatus.COMPLETED };
+    if (task.status === TaskStatus.TODO) return { label: t("tasks.actionStart"), status: TaskStatus.IN_PROGRESS };
+    return { label: t("tasks.actionComplete"), status: TaskStatus.COMPLETED };
   };
 
   return (
@@ -725,9 +727,9 @@ export function Tasks({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-500" />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm công việc của gia đình, nhãn dán..."
+            <input
+              type="text"
+              placeholder={t("tasks.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-sm focus:outline-none transition-all"
@@ -738,7 +740,7 @@ export function Tasks({
             onClick={handleOpenCreate}
             className="bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all self-start md:self-auto shrink-0 shadow-md shadow-sky-500/5 cursor-pointer"
           >
-            <Plus className="w-4 h-4" /> Thêm công việc
+            <Plus className="w-4 h-4" /> {t("tasks.addBtn")}
           </button>
         </div>
 
@@ -746,31 +748,31 @@ export function Tasks({
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2 text-xs">
           {/* Status filter */}
           <div>
-            <label className="text-slate-500 block mb-1">Trạng thái</label>
+            <label className="text-slate-500 block mb-1">{t("tasks.filterStatusLbl")}</label>
             <FancySelect
               value={statusFilter}
               onChange={setStatusFilter}
-              ariaLabel="Lọc theo trạng thái"
+              ariaLabel={t("tasks.filterStatusLbl")}
               options={[
-                { value: "all", label: "Tất cả trạng thái" },
-                { value: "todo", label: "Chưa làm" },
-                { value: "in_progress", label: "Đang làm" },
-                { value: "completed", label: "Hoàn thành" },
-                { value: "overdue", label: "Quá hạn" }
+                { value: "all", label: t("tasks.filterStatusAll") },
+                { value: "todo", label: t("tasks.statusTodo") },
+                { value: "in_progress", label: t("tasks.statusInProgress") },
+                { value: "completed", label: t("tasks.statusCompleted") },
+                { value: "overdue", label: t("tasks.statusOverdue") }
               ]}
             />
           </div>
 
           {/* Assignee filter */}
           <div>
-            <label className="text-slate-500 block mb-1">Người nhận việc</label>
+            <label className="text-slate-500 block mb-1">{t("tasks.filterAssigneeLbl")}</label>
             <FancySelect
               value={assigneeFilter}
               onChange={setAssigneeFilter}
-              ariaLabel="Lọc theo người nhận việc"
+              ariaLabel={t("tasks.filterAssigneeLbl")}
               options={[
-                { value: "all", label: "Tất cả thành viên" },
-                { value: "unassigned", label: "Chưa giao việc" },
+                { value: "all", label: t("tasks.filterAssigneeAll") },
+                { value: "unassigned", label: t("tasks.filterAssigneeNone") },
                 ...users.map(u => ({ value: u.id, label: u.fullName }))
               ]}
             />
@@ -778,38 +780,38 @@ export function Tasks({
 
           {/* Priority filter */}
           <div>
-            <label className="text-slate-500 block mb-1">Độ ưu tiên</label>
+            <label className="text-slate-500 block mb-1">{t("tasks.filterPriorityLbl")}</label>
             <FancySelect
               value={priorityFilter}
               onChange={setPriorityFilter}
-              ariaLabel="Lọc theo độ ưu tiên"
+              ariaLabel={t("tasks.filterPriorityLbl")}
               options={[
-                { value: "all", label: "Mọi ưu tiên" },
-                { value: "low", label: "Thấp" },
-                { value: "medium", label: "Trung bình" },
-                { value: "high", label: "Cao" }
+                { value: "all", label: t("tasks.filterPriorityAll") },
+                { value: "low", label: t("tasks.filterPriorityLow") },
+                { value: "medium", label: t("tasks.filterPriorityMedium") },
+                { value: "high", label: t("tasks.filterPriorityHigh") }
               ]}
             />
           </div>
 
           {/* Scope filter */}
           <div>
-            <label className="text-slate-500 block mb-1">Phạm vi chia sẻ</label>
+            <label className="text-slate-500 block mb-1">{t("tasks.filterScopeLbl")}</label>
             <FancySelect
               value={scopeFilter}
               onChange={(v) => setScopeFilter(v as any)}
-              ariaLabel="Lọc theo phạm vi chia sẻ"
+              ariaLabel={t("tasks.filterScopeLbl")}
               options={[
-                { value: "all", label: "Mọi công việc" },
-                { value: "shared", label: "Chia sẻ chung cả nhà" },
-                { value: "personal", label: "Chỉ cá nhân riêng" }
+                { value: "all", label: t("tasks.filterScopeAll") },
+                { value: "shared", label: t("tasks.filterScopeShared") },
+                { value: "personal", label: t("tasks.filterScopePersonal") }
               ]}
             />
           </div>
 
           {/* Clear Filters Button */}
           <div className="col-span-2 md:col-span-1 flex items-end">
-            <button 
+            <button
               onClick={() => {
                 setSearchTerm("");
                 setStatusFilter("all");
@@ -820,7 +822,7 @@ export function Tasks({
               }}
               className="w-full bg-slate-950 neu-btn hover:bg-slate-800 hover:text-slate-100 p-2 text-slate-400 font-semibold rounded-lg text-center transition-all cursor-pointer"
             >
-              Đặt lại bộ lọc
+              {t("tasks.resetFilters")}
             </button>
           </div>
         </div>
@@ -833,11 +835,8 @@ export function Tasks({
           <div className="flex items-start gap-3">
             <span className="text-2xl leading-none">⭐</span>
             <div className="space-y-0.5">
-              <h3 className="text-sm font-bold text-slate-200">Điểm thưởng cho trẻ đang bật</h3>
-              <p className="text-[11px] text-slate-500">
-                Chưa có tài khoản Trẻ em nào. Thêm thành viên với vai trò <b className="text-slate-300">Con (Trẻ em)</b> trong
-                <b className="text-slate-300"> Thiết lập → Thành viên</b> để bắt đầu tích điểm và đổi quà.
-              </p>
+              <h3 className="text-sm font-bold text-slate-200">{t("tasks.rewardEmptyTitle")}</h3>
+              <p className="text-[11px] text-slate-500">{t("tasks.rewardEmptyMsg")}</p>
             </div>
           </div>
         </Reveal>
@@ -848,9 +847,9 @@ export function Tasks({
           <ShimmerLine accent="amber" />
           <div>
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-              <Star className="w-4 h-4 text-amber-400" /> Điểm thưởng cho trẻ
+              <Star className="w-4 h-4 text-amber-400" /> {t("tasks.rewardTitle")}
             </h3>
-            <p className="text-[11px] text-slate-500">Task có điểm sẽ tự cộng khi trẻ hoàn thành. Có thể cộng/trừ thủ công khi cần.</p>
+            <p className="text-[11px] text-slate-500">{t("tasks.rewardSubtitle")}</p>
           </div>
 
           {/* Thẻ điểm từng bé — avatar + sao cho thân thiện, dễ nhận diện */}
@@ -863,7 +862,7 @@ export function Tasks({
                     <Avatar user={child} className="w-10 h-10 rounded-xl text-sm" extraClass="shrink-0" />
                     <div className="min-w-0 flex-1">
                       <span className="text-xs font-bold text-slate-200 block truncate">{child.fullName}</span>
-                      <span className="text-[10px] text-slate-500">Điểm tích luỹ</span>
+                      <span className="text-[10px] text-slate-500">{t("tasks.rewardPointsLabel")}</span>
                     </div>
                     <span className="flex items-center gap-1 text-lg font-extrabold text-amber-400 shrink-0">
                       <Star className="w-4 h-4 fill-amber-400" />{rewardTotals[child.id] || 0}
@@ -871,7 +870,7 @@ export function Tasks({
                   </div>
                   <div className="space-y-1 border-t border-slate-800/60 pt-2">
                     {recent.length === 0 ? (
-                      <p className="text-[10px] text-slate-500">Chưa có lịch sử điểm.</p>
+                      <p className="text-[10px] text-slate-500">{t("tasks.rewardHistoryEmpty")}</p>
                     ) : recent.map(entry => (
                       <p key={entry.id} className="text-[10px] text-slate-500 truncate">
                         <span className={`font-bold ${entry.points > 0 ? "text-emerald-400" : "text-rose-400"}`}>{entry.points > 0 ? "+" : ""}{entry.points}</span> • {entry.reason}
@@ -887,22 +886,22 @@ export function Tasks({
           {isAdultRole(currentUser.role) && (
             <div className="bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
               <p className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Cộng / trừ điểm thủ công
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" /> {t("tasks.rewardManualTitle")}
               </p>
               <form onSubmit={handleManualReward} className="grid grid-cols-1 sm:grid-cols-[minmax(150px,1fr)_110px_minmax(160px,1.6fr)_auto] gap-2 text-xs">
                 <FancySelect
                   value={manualRewardUser}
                   onChange={setManualRewardUser}
-                  ariaLabel="Chọn trẻ nhận điểm"
-                  placeholder="Chọn trẻ"
+                  ariaLabel={t("tasks.rewardSelectChild")}
+                  placeholder={t("tasks.rewardSelectChild")}
                   options={[
-                    { value: "", label: "Chọn trẻ" },
+                    { value: "", label: t("tasks.rewardSelectChild") },
                     ...childUsers.map(u => ({ value: u.id, label: u.fullName }))
                   ]}
                 />
-                <input type="number" value={manualRewardPoints || ""} onChange={(e) => setManualRewardPoints(Number(e.target.value))} placeholder="+/- điểm" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-                <input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder="Lý do (vd: dọn phòng)" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-                <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl px-4 py-2 font-bold cursor-pointer">Cập nhật</button>
+                <input type="number" value={manualRewardPoints || ""} onChange={(e) => setManualRewardPoints(Number(e.target.value))} placeholder={t("tasks.rewardPointsPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+                <input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder={t("tasks.rewardReasonPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+                <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl px-4 py-2 font-bold cursor-pointer">{t("tasks.rewardUpdateBtn")}</button>
               </form>
             </div>
           )}
@@ -913,7 +912,7 @@ export function Tasks({
           <ShimmerLine accent="pink" />
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-1.5">
-              <Gift className="w-4 h-4 text-pink-400" /> Cửa hàng đổi thưởng
+              <Gift className="w-4 h-4 text-pink-400" /> {t("tasks.storeTitle")}
             </h3>
             <div className="flex items-center gap-2">
               {/* Người lớn chọn bé nhận quà; trẻ luôn đổi cho chính mình. Ô rộng để hiện đủ tên bé. */}
@@ -922,7 +921,7 @@ export function Tasks({
                   <FancySelect
                     value={shopTargetId}
                     onChange={setShopChildId}
-                    ariaLabel="Chọn bé nhận quà"
+                    ariaLabel={t("tasks.storeSelectChildLabel")}
                     leading={(() => { const c = childUsers.find(u => u.id === shopTargetId); return c ? <Avatar user={c} className="w-5 h-5 rounded-md text-[9px]" extraClass="shrink-0" /> : null; })()}
                     options={childUsers.map(u => ({ value: u.id, label: u.fullName }))}
                   />
@@ -934,7 +933,7 @@ export function Tasks({
                     onClick={() => { cancelGiftForm(); setShowGiftForm(v => !v); }}
                     className="flex items-center gap-1 bg-slate-950 neu-btn hover:bg-slate-800 text-pink-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Thêm quà
+                    <Plus className="w-3.5 h-3.5" /> {t("tasks.storeAddGift")}
                   </button>
                 )}
               </div>
@@ -943,13 +942,13 @@ export function Tasks({
             {/* Form thêm / sửa quà (người lớn) */}
             {showGiftForm && isAdultRole(currentUser.role) && (
               <form onSubmit={handleAddGift} className="space-y-2">
-                <p className="text-[11px] font-bold text-slate-400">{editingGift ? `Sửa quà: ${editingGift.name}` : "Thêm món quà mới"}</p>
+                <p className="text-[11px] font-bold text-slate-400">{editingGift ? t("tasks.storeGiftFormEdit", { name: editingGift.name }) : t("tasks.storeGiftFormNew")}</p>
                 <div className="grid grid-cols-[64px_1fr_100px_auto_auto] gap-2 text-xs">
                   <input value={giftEmoji} onChange={e => setGiftEmoji(e.target.value)} placeholder="🎁" maxLength={4} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 text-center" />
-                  <input value={giftName} onChange={e => setGiftName(e.target.value)} placeholder="Tên quà (vd: 30 phút iPad)" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 min-w-0" />
-                  <input type="number" min={1} value={giftCost || ""} onChange={e => setGiftCost(Number(e.target.value))} placeholder="Điểm" className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500" />
+                  <input value={giftName} onChange={e => setGiftName(e.target.value)} placeholder={t("tasks.storeGiftNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 min-w-0" />
+                  <input type="number" min={1} value={giftCost || ""} onChange={e => setGiftCost(Number(e.target.value))} placeholder={t("tasks.storeGiftCostPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500" />
                   <button type="submit" disabled={giftSaving || !giftName.trim() || giftCost <= 0} className="bg-pink-500 hover:bg-pink-400 text-slate-950 rounded-xl px-3 py-2 font-bold cursor-pointer disabled:opacity-60">
-                    {giftSaving ? "..." : editingGift ? "Lưu" : "Thêm"}
+                    {giftSaving ? "..." : editingGift ? t("tasks.storeGiftSave") : t("tasks.storeGiftAdd")}
                   </button>
                   <button type="button" onClick={cancelGiftForm} className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-500 hover:text-slate-300 cursor-pointer">
                     <X className="w-4 h-4" />
@@ -965,12 +964,12 @@ export function Tasks({
             {activeGifts.length === 0 ? (
               <div className="border border-dashed border-slate-800 rounded-xl px-4 py-5 text-center space-y-3">
                 <p className="text-[11px] text-slate-500">
-                  Chưa có món quà nào.{isAdultRole(currentUser.role) ? " Thêm từng món hoặc tạo bộ mẫu sẵn có:" : ""}
+                  {t("tasks.storeEmpty")}{isAdultRole(currentUser.role) ? t("tasks.storeEmptyAdultSuffix") : ""}
                 </p>
                 {isAdultRole(currentUser.role) && (
                   <button type="button" onClick={handleSeedDefaults}
                     className="mx-auto flex items-center gap-1.5 bg-pink-500/10 border border-pink-500/20 text-pink-400 text-[11px] font-bold px-4 py-2 rounded-xl hover:bg-pink-500/20 cursor-pointer transition-all">
-                    <Gift className="w-3.5 h-3.5" /> Tạo 8 món quà mẫu sẵn
+                    <Gift className="w-3.5 h-3.5" /> {t("tasks.storeSeedBtn")}
                   </button>
                 )}
               </div>
@@ -985,10 +984,10 @@ export function Tasks({
                         <span className="text-2xl leading-none">{item.emoji || "🎁"}</span>
                         {isAdultRole(currentUser.role) && (
                           <div className="flex gap-1">
-                            <button type="button" onClick={() => startEditGift(item)} title="Sửa quà" aria-label={`Sửa quà ${item.name}`} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
+                            <button type="button" onClick={() => startEditGift(item)} title={t("tasks.storeGiftEditTooltip")} aria-label={t("tasks.storeGiftEditAriaLabel", { name: item.name })} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
                               <Pencil className="w-3 h-3" />
                             </button>
-                            <button type="button" onClick={() => handleDeleteGift(item)} title="Xóa quà" aria-label={`Xóa quà ${item.name}`} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
+                            <button type="button" onClick={() => handleDeleteGift(item)} title={t("tasks.storeGiftDeleteTooltip")} aria-label={t("tasks.storeGiftDeleteAriaLabel", { name: item.name })} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
                               <Trash2 className="w-3 h-3" />
                             </button>
                           </div>
@@ -999,10 +998,10 @@ export function Tasks({
                         type="button"
                         onClick={() => handleRedeemGift(item)}
                         disabled={!shopTargetId || !affordable || redeemBusyId !== null}
-                        title={affordable ? `Đổi với ${item.cost} điểm` : `Cần ${item.cost} điểm (đang có ${balance})`}
+                        title={affordable ? t("tasks.storeRedeemTitle", { cost: item.cost }) : t("tasks.storeNeedMoreTitle", { cost: item.cost, balance })}
                         className={`w-full rounded-lg px-2 py-1.5 text-[11px] font-bold cursor-pointer disabled:cursor-default ${affordable ? "bg-amber-500 hover:bg-amber-400 text-slate-950" : "bg-slate-800 text-slate-500"} disabled:opacity-70`}
                       >
-                        {redeemBusyId === item.id ? "Đang đổi..." : `${item.cost} điểm`}
+                        {redeemBusyId === item.id ? t("tasks.storeRedeemBusy") : t("tasks.storeCostLabel", { cost: item.cost })}
                       </button>
                     </div>
                   );
@@ -1018,7 +1017,7 @@ export function Tasks({
                       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/40 to-transparent" />
                       <div className="flex items-start justify-between gap-1">
                         <span className="text-2xl leading-none">{mysteryResult ? (mysteryResult.emoji || "🎁") : "🎲"}</span>
-                        <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/15 dark:bg-violet-500/10 border border-violet-500/30 dark:border-violet-500/20 px-1.5 py-0.5 rounded-md">BẤT NGỜ</span>
+                        <span className="text-[9px] font-bold text-violet-600 dark:text-violet-400 bg-violet-500/15 dark:bg-violet-500/10 border border-violet-500/30 dark:border-violet-500/20 px-1.5 py-0.5 rounded-md">{t("tasks.mysteryBadge")}</span>
                       </div>
                       {mysteryResult ? (
                         <p className="text-[11px] font-bold text-violet-700 dark:text-violet-300 leading-snug flex-1 animate-pulse-once">
@@ -1026,18 +1025,18 @@ export function Tasks({
                         </p>
                       ) : (
                         <p className="text-[11px] font-bold text-slate-200 leading-snug flex-1">
-                          Quà bất ngờ
-                          <span className="block text-[10px] font-normal text-slate-450 mt-0.5">Giảm ~30% — server chọn ngẫu nhiên</span>
+                          {t("tasks.mysteryLabel")}
+                          <span className="block text-[10px] font-normal text-slate-450 mt-0.5">{t("tasks.mysteryDiscount")}</span>
                         </p>
                       )}
                       <button
                         type="button"
                         onClick={handleMysteryRedeem}
                         disabled={!shopTargetId || !affordable || mysteryBusy || redeemBusyId !== null}
-                        title={affordable ? `Đổi quà bất ngờ với ${mysteryCost} điểm (giảm ~30%)` : `Cần ${mysteryCost} điểm (đang có ${balance})`}
+                        title={affordable ? t("tasks.mysteryRedeemTitle", { cost: mysteryCost }) : t("tasks.storeNeedMoreTitle", { cost: mysteryCost, balance })}
                         className={`w-full rounded-lg px-2 py-1.5 text-[11px] font-bold cursor-pointer disabled:cursor-default transition-all ${affordable ? "bg-violet-500 hover:bg-violet-400 text-white" : "bg-slate-800 text-slate-500"} disabled:opacity-70`}
                       >
-                        {mysteryBusy ? "Đang quay..." : `≈${mysteryCost} điểm`}
+                        {mysteryBusy ? t("tasks.mysteryBusy") : t("tasks.mysteryCostLabel", { cost: mysteryCost })}
                       </button>
                     </div>
                   );
@@ -1051,7 +1050,7 @@ export function Tasks({
       {/* Tasks List Grid */}
       {filteredTasks.length === 0 ? (
         <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl py-12 text-center" id="empty-tasks">
-          <p className="text-sm text-slate-500">Không tìm thấy công việc phù hợp với bộ lọc hiển thị.</p>
+          <p className="text-sm text-slate-500">{t("tasks.emptyBoard")}</p>
         </div>
       ) : (
         <>
@@ -1062,8 +1061,8 @@ export function Tasks({
               <div className="flex items-center gap-2.5 min-w-0">
                 <IconChip accent="sky"><Layers className="w-4 h-4" /></IconChip>
                 <div className="min-w-0">
-                  <h3 className="text-sm font-bold text-slate-100">Bảng công việc gia đình</h3>
-                  <p className="text-[11px] text-slate-500 text-pretty">Sắp xếp theo trạng thái, ưu tiên và hạn xử lý để cả nhà nhìn là biết việc nào cần làm trước.</p>
+                  <h3 className="text-sm font-bold text-slate-100">{t("tasks.boardTitle")}</h3>
+                  <p className="text-[11px] text-slate-500 text-pretty">{t("tasks.boardSubtitle")}</p>
                 </div>
               </div>
 
@@ -1072,37 +1071,37 @@ export function Tasks({
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
                     <span className="block text-lg font-extrabold text-slate-100 tabular-nums leading-tight">{boardStats.total}</span>
-                    <span className="block text-[10px] text-slate-500">Tổng</span>
+                    <span className="block text-[10px] text-slate-500">{t("tasks.statTotal")}</span>
                   </div>
                   <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
                     <span className="block text-lg font-extrabold text-sky-400 tabular-nums leading-tight">{boardStats.active}</span>
-                    <span className="block text-[10px] text-slate-500">Đang mở</span>
+                    <span className="block text-[10px] text-slate-500">{t("tasks.statActive")}</span>
                   </div>
                   <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
                     <span className="block text-lg font-extrabold text-rose-400 tabular-nums leading-tight">{boardStats.high}</span>
-                    <span className="block text-[10px] text-slate-500">Khẩn cấp</span>
+                    <span className="block text-[10px] text-slate-500">{t("tasks.statUrgent")}</span>
                   </div>
                   <div className="bg-slate-950 neu-pressed-sm rounded-xl px-2.5 py-1.5">
                     <span className="block text-lg font-extrabold text-amber-400 tabular-nums leading-tight">{boardStats.unassigned}</span>
-                    <span className="block text-[10px] text-slate-500">Chưa giao</span>
+                    <span className="block text-[10px] text-slate-500">{t("tasks.statUnassigned")}</span>
                   </div>
                 </div>
                 <div className="w-full sm:w-[168px] shrink-0">
-                  <label htmlFor="completed-window-filter" className="block text-[10px] text-slate-500 mb-1">Việc hoàn thành</label>
+                  <label htmlFor="completed-window-filter" className="block text-[10px] text-slate-500 mb-1">{t("tasks.completedWindowLbl")}</label>
                   <FancySelect
                     id="completed-window-filter"
                     value={completedWindowDays}
                     onChange={(v) => setCompletedWindowDays(v as "7" | "30" | "90" | "all")}
-                    ariaLabel="Khoảng thời gian hoàn thành"
+                    ariaLabel={t("tasks.completedWindowLbl")}
                     options={[
-                      { value: "7", label: "7 ngày gần nhất" },
-                      { value: "30", label: "30 ngày gần nhất" },
-                      { value: "90", label: "90 ngày gần nhất" },
-                      { value: "all", label: "Tất cả" }
+                      { value: "7", label: t("tasks.window7d") },
+                      { value: "30", label: t("tasks.window30d") },
+                      { value: "90", label: t("tasks.window90d") },
+                      { value: "all", label: t("tasks.windowAll") }
                     ]}
                   />
                   {hiddenCompletedCount > 0 && (
-                    <p className="mt-1 text-[10px] text-slate-500 tabular-nums">Đang ẩn {hiddenCompletedCount} task cũ.</p>
+                    <p className="mt-1 text-[10px] text-slate-500 tabular-nums">{t("tasks.hiddenCount", { n: hiddenCompletedCount })}</p>
                   )}
                 </div>
               </div>
@@ -1135,7 +1134,7 @@ export function Tasks({
                     <div className="p-3 space-y-3 min-h-[220px] max-h-[660px] overflow-y-auto overscroll-contain scrollbar-thin">
                       {columnTasks.length === 0 ? (
                         <div className="h-32 border border-dashed border-slate-800 rounded-xl flex items-center justify-center px-4 text-center">
-                          <p className="text-[11px] text-slate-500">Không có task ở cột này.</p>
+                          <p className="text-[11px] text-slate-500">{t("tasks.colEmpty")}</p>
                         </div>
                       ) : (
                         <AnimatePresence initial={false}>
@@ -1143,7 +1142,7 @@ export function Tasks({
                             const assignee = users.find(u => u.id === task.assigneeId);
                             const creator = users.find(u => u.id === task.creatorId);
                             const next = quickNextStatus(task);
-                            const dueDate = task.dueDate ? formatDateVN(task.dueDate) : "Chưa đặt hạn";
+                            const dueDate = task.dueDate ? formatDateVN(task.dueDate) : t("tasks.noDueDate");
                             const recurrence = recurrenceLabel(task.recurrenceType);
 
                             return (
@@ -1166,8 +1165,8 @@ export function Tasks({
                                       type="button"
                                       onClick={() => setSelectedTask(task)}
                                       className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-sky-400 flex items-center justify-center cursor-pointer"
-                                      title="Xem chi tiết & bình luận"
-                                      aria-label={`Xem chi tiết task ${task.title}`}
+                                      title={t("tasks.detailTitle")}
+                                      aria-label={t("tasks.detailAriaLabel", { title: task.title })}
                                     >
                                       <MessageSquare className="size-3.5" />
                                     </button>
@@ -1176,8 +1175,8 @@ export function Tasks({
                                         type="button"
                                         onClick={() => handleOpenEditTask(task)}
                                         className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-amber-400 flex items-center justify-center cursor-pointer"
-                                        title="Sửa / giao lại công việc"
-                                        aria-label={`Sửa task ${task.title}`}
+                                        title={t("tasks.editTitleTooltip")}
+                                        aria-label={t("tasks.editAriaLabel", { title: task.title })}
                                       >
                                         <Pencil className="size-3.5" />
                                       </button>
@@ -1187,8 +1186,8 @@ export function Tasks({
                                         type="button"
                                         onClick={() => handleDeleteClick(task.id)}
                                         className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-rose-400 flex items-center justify-center cursor-pointer"
-                                        title="Xóa công việc"
-                                        aria-label={`Xóa task ${task.title}`}
+                                        title={t("tasks.deleteTitleTooltip")}
+                                        aria-label={t("tasks.deleteAriaLabel", { title: task.title })}
                                       >
                                         <Trash2 className="size-3.5" />
                                       </button>
@@ -1205,7 +1204,7 @@ export function Tasks({
                                     {task.title}
                                   </h4>
                                   <p className="mt-1 text-[11px] text-slate-500 line-clamp-2 leading-relaxed text-pretty">
-                                    {task.description || "Không có mô tả công việc."}
+                                    {task.description || t("tasks.noDesc")}
                                   </p>
                                 </button>
 
@@ -1222,7 +1221,7 @@ export function Tasks({
                                           <span className="size-6 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
                                             <UserIcon className="size-3 text-slate-500" />
                                           </span>
-                                          <span className="text-slate-500 italic truncate">Chưa giao</span>
+                                          <span className="text-slate-500 italic truncate">{t("tasks.unassigned")}</span>
                                         </>
                                       )}
                                     </div>
@@ -1238,21 +1237,21 @@ export function Tasks({
                                     </span>
                                     {task.isShared ? (
                                       <span className="text-[10px] px-2 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-lg font-semibold flex items-center gap-1">
-                                        <Share2 className="size-3" /> Chung
+                                        <Share2 className="size-3" /> {t("tasks.badgeShared")}
                                       </span>
                                     ) : (
                                       <span className="text-[10px] px-2 py-0.5 bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-500/20 rounded-lg font-semibold">
-                                        Cá nhân
+                                        {t("tasks.badgePersonal")}
                                       </span>
                                     )}
                                     {(task.rewardPoints || 0) > 0 && (
                                       <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 rounded-lg font-bold">
-                                        +{task.rewardPoints} điểm
+                                        {t("tasks.badgePoints", { n: task.rewardPoints })}
                                       </span>
                                     )}
                                     {task.pendingApproval && (
                                       <span className="text-[10px] px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20 rounded-lg font-bold inline-flex items-center gap-1">
-                                        <Clock className="w-3 h-3" /> Chờ ba mẹ duyệt
+                                        <Clock className="w-3 h-3" /> {t("tasks.badgePending")}
                                       </span>
                                     )}
                                     {recurrence && (
@@ -1279,7 +1278,7 @@ export function Tasks({
                                 {(task.rejectionReason && !task.pendingApproval) && (
                                   <div className="text-[10px] text-rose-700 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-2 py-1.5 flex items-start gap-1.5">
                                     <RotateCcw className="w-3 h-3 shrink-0 mt-0.5" />
-                                    <span className="min-w-0">Bị trả lại: {task.rejectionReason}</span>
+                                    <span className="min-w-0">{t("tasks.rejected", { reason: task.rejectionReason })}</span>
                                   </div>
                                 )}
 
@@ -1288,7 +1287,7 @@ export function Tasks({
                                     {task.proofImage && (
                                       <img
                                         src={task.proofImage}
-                                        alt="Bằng chứng hoàn thành"
+                                        alt={t("tasks.proofAlt")}
                                         onClick={() => setProofPreview(task.proofImage || "")}
                                         className="w-full max-h-40 object-cover rounded-md cursor-zoom-in"
                                       />
@@ -1299,7 +1298,7 @@ export function Tasks({
 
                                 <div className="pt-2 border-t border-slate-800 flex items-center justify-between gap-2">
                                   <span className="min-w-0 truncate text-[10px] text-slate-600">
-                                    Tạo bởi {creator ? creator.fullName : "ẩn danh"}
+                                    {creator ? t("tasks.createdBy", { name: creator.fullName }) : t("tasks.createdByAnon")}
                                   </span>
                                   {task.pendingApproval ? (
                                     canApproveTasks ? (
@@ -1310,19 +1309,19 @@ export function Tasks({
                                           disabled={approvingId === task.id}
                                           className="bg-slate-900 hover:bg-slate-800 neu-btn text-emerald-700 dark:text-emerald-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-60 inline-flex items-center gap-1"
                                         >
-                                          <Check className="w-3.5 h-3.5" /> {approvingId === task.id ? "..." : "Duyệt"}
+                                          <Check className="w-3.5 h-3.5" /> {approvingId === task.id ? "..." : t("tasks.approveBtn")}
                                         </button>
                                         <button
                                           type="button"
                                           onClick={() => { setRejectTaskTarget(task); setRejectReason(""); }}
                                           className="bg-slate-900 hover:bg-slate-800 neu-btn text-rose-700 dark:text-rose-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
                                         >
-                                          <X className="w-3.5 h-3.5" /> Trả lại
+                                          <X className="w-3.5 h-3.5" /> {t("tasks.rejectBtnShort")}
                                         </button>
                                       </div>
                                     ) : (
                                       <span className="shrink-0 text-[11px] font-bold text-amber-700 dark:text-amber-400 inline-flex items-center gap-1">
-                                        <Clock className="w-3.5 h-3.5" /> Đang chờ duyệt
+                                        <Clock className="w-3.5 h-3.5" /> {t("tasks.pendingLabel")}
                                       </span>
                                     )
                                   ) : (childNeedsApproval(task) && next.status === TaskStatus.COMPLETED) ? (
@@ -1331,7 +1330,7 @@ export function Tasks({
                                       onClick={() => openSubmitModal(task)}
                                       className="shrink-0 bg-slate-900 hover:bg-slate-800 neu-btn text-emerald-700 dark:text-emerald-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
                                     >
-                                      <Check className="w-3.5 h-3.5" /> Con làm xong
+                                      <Check className="w-3.5 h-3.5" /> {t("tasks.childDoneBtn")}
                                     </button>
                                   ) : (
                                     <button
@@ -1375,7 +1374,7 @@ export function Tasks({
             <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
               <div className="space-y-1">
                 <span className={`text-[9px] uppercase tracking-wider font-semibold px-2 py-0.5 border rounded-lg ${priorityColor(activeTaskDetails.priority)}`}>
-                  Độ ưu tiên: {activeTaskDetails.priority === "high" ? "Khẩn cấp" : activeTaskDetails.priority === "medium" ? "Trung bình" : "Thấp"}
+                  {activeTaskDetails.priority === "high" ? t("tasks.priorityHigh") : activeTaskDetails.priority === "medium" ? t("tasks.priorityMedium") : t("tasks.priorityLowShort")}
                 </span>
                 <h2 className="text-md font-bold text-slate-100">{activeTaskDetails.title}</h2>
               </div>
@@ -1384,9 +1383,9 @@ export function Tasks({
                   <button
                     onClick={() => handleOpenEditTask(activeTaskDetails)}
                     className="flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer"
-                    title="Sửa / giao lại công việc"
+                    title={t("tasks.editTitleTooltip")}
                   >
-                    <Pencil className="w-3.5 h-3.5" /> Sửa
+                    <Pencil className="w-3.5 h-3.5" /> {t("tasks.detailEditBtn")}
                   </button>
                 )}
                 <button
@@ -1402,36 +1401,36 @@ export function Tasks({
             <div className="p-5 overflow-y-auto space-y-6 flex-1 text-sm">
               {/* Description */}
               <div className="space-y-1.5">
-                <span className="text-xs text-slate-500 block font-semibold uppercase tracking-wider">Mô tả công việc</span>
+                <span className="text-xs text-slate-500 block font-semibold uppercase tracking-wider">{t("tasks.detailDescLabel")}</span>
                 <p className="bg-slate-950 p-3.5 rounded-xl text-slate-300 leading-relaxed border border-slate-800/80">
-                  {activeTaskDetails.description || "Không có miêu tả."}
+                  {activeTaskDetails.description || t("tasks.detailNoDesc")}
                 </p>
               </div>
 
               {/* Grid of details */}
               <div className="grid grid-cols-2 gap-4 bg-slate-950/30 p-4 neu-pressed-sm rounded-xl text-xs">
                 <div>
-                  <span className="text-slate-500">Người tạo:</span>
+                  <span className="text-slate-500">{t("tasks.detailCreatorLbl")}</span>
                   <p className="text-slate-200 mt-0.5 font-medium">
-                    {users.find(u => u.id === activeTaskDetails.creatorId)?.fullName || "Người dùng ẩn danh"}
+                    {users.find(u => u.id === activeTaskDetails.creatorId)?.fullName || t("tasks.detailCreatorAnon")}
                   </p>
                 </div>
                 <div>
-                  <span className="text-slate-500">Phân công cụ thể:</span>
+                  <span className="text-slate-500">{t("tasks.detailAssigneeLbl")}</span>
                   <p className="text-slate-200 mt-0.5 font-medium">
-                    {users.find(u => u.id === activeTaskDetails.assigneeId)?.fullName || "Chưa giao cho ai"}
+                    {users.find(u => u.id === activeTaskDetails.assigneeId)?.fullName || t("tasks.detailAssigneeNone")}
                   </p>
                 </div>
                 <div>
-                  <span className="text-slate-500">Ngày hết hạn:</span>
+                  <span className="text-slate-500">{t("tasks.detailDueDateLbl")}</span>
                   <p className="text-slate-300 mt-0.5 font-mono">
                     {formatDateTimeVN(activeTaskDetails.dueDate)}
                   </p>
                 </div>
                 <div>
-                  <span className="text-slate-500">Chế độ chia sẻ:</span>
+                  <span className="text-slate-500">{t("tasks.detailScopeLbl")}</span>
                   <p className="text-slate-300 mt-0.5">
-                    {activeTaskDetails.isShared ? "Công khai với cả gia đình" : "Bảo mật riêng tư"}
+                    {activeTaskDetails.isShared ? t("tasks.detailScopePublic") : t("tasks.detailScopePrivate")}
                   </p>
                 </div>
               </div>
@@ -1440,12 +1439,12 @@ export function Tasks({
               <div className="space-y-4">
                 <span className="text-xs text-slate-500 block font-semibold uppercase tracking-wider flex items-center gap-1.5">
                   <MessageSquare className="w-4 h-4 text-sky-400" />
-                  Bình luận đóng góp ({activeTaskDetails.comments.length})
+                  {t("tasks.commentsTitle", { count: activeTaskDetails.comments.length })}
                 </span>
 
                 <div className="space-y-3 max-h-[160px] overflow-y-auto pr-1">
                   {activeTaskDetails.comments.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic py-2 text-center">Chưa có bình luận đóng góp nào.</p>
+                    <p className="text-xs text-slate-500 italic py-2 text-center">{t("tasks.commentsEmpty")}</p>
                   ) : (
                     activeTaskDetails.comments.map((comment) => {
                       const commUser = users.find(u => u.id === comment.userId);
@@ -1471,7 +1470,7 @@ export function Tasks({
                 <div className="flex gap-2">
                   <input 
                     type="text" 
-                    placeholder="Viết phản hồi hoặc kết quả công việc..."
+                    placeholder={t("tasks.commentPlaceholder")}
                     value={commentInput}
                     onChange={(e) => setCommentInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
@@ -1481,7 +1480,7 @@ export function Tasks({
                     onClick={handlePostComment}
                     className="bg-sky-500 hover:bg-sky-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-bold shrink-0 cursor-pointer"
                   >
-                    Gửi
+                    {t("tasks.commentSend")}
                   </button>
                 </div>
               </div>
@@ -1491,7 +1490,7 @@ export function Tasks({
                 <div className="space-y-2 border-t border-slate-800/60 pt-4">
                   <span className="text-xs text-slate-500 block font-semibold uppercase tracking-wider flex items-center gap-1.5">
                     <Clock className="w-4 h-4 text-yellow-400" />
-                    Lịch sử thay đổi task
+                    {t("tasks.historyTitle")}
                   </span>
                   <div className="bg-slate-950/20 p-3 rounded-xl space-y-1.5 max-h-[120px] overflow-y-auto">
                     {activeTaskDetails.history.map((hist) => (
@@ -1527,7 +1526,7 @@ export function Tasks({
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
-                <CheckCircle className="w-5 h-5 text-sky-400" /> {editingTaskId ? "Chỉnh sửa công việc" : "Tạo việc mới hằng ngày"}
+                <CheckCircle className="w-5 h-5 text-sky-400" /> {editingTaskId ? t("tasks.formTitleEdit") : t("tasks.formTitleNew")}
               </h3>
               <button
                 onClick={handleCloseTaskForm}
@@ -1546,10 +1545,10 @@ export function Tasks({
               )}
 
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Tên công việc <span className="text-rose-400">*</span></label>
-                <input 
-                  type="text" 
-                  placeholder="Ví dụ: Đóng tiền rèm cửa, dọn tủ quần áo..."
+                <label className="text-slate-400 block font-semibold">{t("tasks.formNameLabel")} <span className="text-rose-400">*</span></label>
+                <input
+                  type="text"
+                  placeholder={t("tasks.formNamePlaceholder")}
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
@@ -1557,10 +1556,10 @@ export function Tasks({
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Nội dung chi tiết</label>
-                <textarea 
+                <label className="text-slate-400 block font-semibold">{t("tasks.formDescLabel")}</label>
+                <textarea
                   rows={3}
-                  placeholder="Điền các nội dung lưu ý, chuẩn bị hàng hóa..."
+                  placeholder={t("tasks.formDescPlaceholder")}
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
@@ -1568,47 +1567,47 @@ export function Tasks({
               </div>
 
               <div className="space-y-1 min-w-0">
-                <label className="text-slate-400 block font-semibold">Độ ưu tiên</label>
+                <label className="text-slate-400 block font-semibold">{t("tasks.formPriorityLabel")}</label>
                 <FancySelect
                   value={newPriority}
                   onChange={(v) => setNewPriority(v as TaskPriority)}
-                  ariaLabel="Độ ưu tiên"
+                  ariaLabel={t("tasks.formPriorityLabel")}
                   options={[
-                    { value: "low", label: "Thấp / Thường nhật" },
-                    { value: "medium", label: "Bình thường" },
-                    { value: "high", label: "Cao / Khẩn cấp" }
+                    { value: "low", label: t("tasks.filterPriorityLow") + " / " + t("tasks.priorityLow") },
+                    { value: "medium", label: t("tasks.priorityMedium") },
+                    { value: "high", label: t("tasks.filterPriorityHigh") + " / " + t("tasks.priorityHigh") }
                   ]}
                 />
               </div>
 
               <div className="space-y-1 min-w-0">
-                <label className="text-slate-400 block font-semibold">Hạn hoàn thành</label>
+                <label className="text-slate-400 block font-semibold">{t("tasks.formDueDateLabel")}</label>
                 <DateTimePicker24 value={newDueDate} onChange={setNewDueDate} />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1 min-w-0">
-                  <label className="text-slate-400 block font-semibold">Giao việc cho ai</label>
+                  <label className="text-slate-400 block font-semibold">{t("tasks.formAssigneeLabel")}</label>
                   <FancySelect
                     value={newAssignee}
                     onChange={setNewAssignee}
-                    ariaLabel="Giao việc cho ai"
+                    ariaLabel={t("tasks.formAssigneeLabel")}
                     options={[
-                      { value: "unassigned", label: "Chung (Cả nhà cùng thấy)" },
+                      { value: "unassigned", label: t("tasks.formAssigneeShared") },
                       ...users.map(u => ({ value: u.id, label: u.fullName }))
                     ]}
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-slate-400 block font-semibold">Chia sẻ công khai</label>
+                  <label className="text-slate-400 block font-semibold">{t("tasks.formScopeLabel")}</label>
                   <FancySelect
                     value={newIsShared ? "true" : "false"}
                     onChange={(v) => setNewIsShared(v === "true")}
-                    ariaLabel="Phạm vi chia sẻ"
+                    ariaLabel={t("tasks.formScopeLabel")}
                     options={[
-                      { value: "true", label: "Chung (Cả gia đình đều xem được)" },
-                      { value: "false", label: "Riêng tư (Chỉ Admin & người phân công thấy)" }
+                      { value: "true", label: t("tasks.formScopePublic") },
+                      { value: "false", label: t("tasks.formScopePrivate") }
                     ]}
                   />
                 </div>
@@ -1616,7 +1615,7 @@ export function Tasks({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/80">
                 <div className="space-y-1">
-                  <label className="text-slate-400 block font-semibold">Điểm thưởng</label>
+                  <label className="text-slate-400 block font-semibold">{t("tasks.formPointsLabel")}</label>
                   <input
                     type="number"
                     min="0"
@@ -1627,22 +1626,22 @@ export function Tasks({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-slate-400 block font-semibold">Task lặp lại</label>
+                  <label className="text-slate-400 block font-semibold">{t("tasks.formRecurLabel")}</label>
                   <FancySelect
                     value={newRecurrenceType}
                     onChange={(v) => setNewRecurrenceType(v as RecurrenceType)}
-                    ariaLabel="Task lặp lại"
+                    ariaLabel={t("tasks.formRecurLabel")}
                     options={[
-                      { value: "none", label: "Không lặp" },
-                      { value: "daily", label: "Hàng ngày" },
-                      { value: "weekly", label: "Hàng tuần" },
-                      { value: "monthly", label: "Hàng tháng" }
+                      { value: "none", label: t("tasks.formRecurNone") },
+                      { value: "daily", label: t("tasks.formRecurDaily") },
+                      { value: "weekly", label: t("tasks.formRecurWeekly") },
+                      { value: "monthly", label: t("tasks.formRecurMonthly") }
                     ]}
                   />
                 </div>
                 {newRecurrenceType !== "none" && (
                   <div className="space-y-1 col-span-2">
-                    <label className="text-slate-400 block font-semibold">Kết thúc lặp</label>
+                    <label className="text-slate-400 block font-semibold">{t("tasks.formRecurEndLabel")}</label>
                     <DateInputDMY
                       value={newRecurrenceEndDate}
                       onChange={setNewRecurrenceEndDate}
@@ -1652,8 +1651,8 @@ export function Tasks({
                 )}
                 {newRecurrenceType !== "none" && (
                   <div className="space-y-1.5 col-span-2">
-                    <label className="text-slate-400 block font-semibold">Xoay vòng người nhận (tùy chọn)</label>
-                    <p className="text-[10px] text-slate-500">Chọn các thành viên để mỗi lần lặp lại tự luân phiên giao cho người kế tiếp.</p>
+                    <label className="text-slate-400 block font-semibold">{t("tasks.formRotationLabel")}</label>
+                    <p className="text-[10px] text-slate-500">{t("tasks.formRotationHint")}</p>
                     <div className="flex flex-wrap gap-1.5">
                       {users.map(u => {
                         const active = newRotationMemberIds.includes(u.id);
@@ -1670,17 +1669,17 @@ export function Tasks({
                       })}
                     </div>
                     {newRotationMemberIds.length > 0 && (
-                      <p className="text-[10px] text-indigo-400">Thứ tự xoay vòng theo số hiển thị. Bấm lại để bỏ chọn.</p>
+                      <p className="text-[10px] text-indigo-400">{t("tasks.formRotationOrder")}</p>
                     )}
                   </div>
                 )}
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Nhãn tag (cách nhau bằng dấu phẩy)</label>
-                <input 
-                  type="text" 
-                  placeholder="Ví dụ: Nhà cửa, Mua sắm, Bé Vy..."
+                <label className="text-slate-400 block font-semibold">{t("tasks.formTagsLabel")}</label>
+                <input
+                  type="text"
+                  placeholder={t("tasks.formTagsPlaceholder")}
                   value={newTagsStr}
                   onChange={(e) => setNewTagsStr(e.target.value)}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500"
@@ -1695,13 +1694,13 @@ export function Tasks({
                   onClick={handleCloseTaskForm}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
-                  Đóng lại
+                  {t("tasks.formClose")}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer"
                 >
-                  {editingTaskId ? "Lưu thay đổi" : "Lên nhiệm vụ"}
+                  {editingTaskId ? t("tasks.formSave") : t("tasks.formCreate")}
                 </button>
               </div>
             </form>
@@ -1719,20 +1718,18 @@ export function Tasks({
           >
             <div className="px-5 py-4 border-t-0 border-b border-slate-800 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald-400" />
-              <h3 className="font-bold text-slate-100">Con làm xong việc này</h3>
+              <h3 className="font-bold text-slate-100">{t("tasks.submitTitle")}</h3>
             </div>
             <div className="p-5 space-y-4 text-xs">
               <p className="text-slate-400 leading-relaxed">
-                Việc <b className="text-slate-200">"{submitTaskTarget.title}"</b> sẽ gửi cho ba mẹ duyệt.
-                Duyệt xong con sẽ nhận <b className="text-amber-400">+{submitTaskTarget.rewardPoints} điểm</b>.
-                Chụp ảnh hoặc ghi chú cho ba mẹ xem nhé (không bắt buộc).
+                {t("tasks.submitMsg", { taskTitle: submitTaskTarget.title, points: submitTaskTarget.rewardPoints })}
               </p>
 
               <div className="space-y-1.5">
-                <label className="text-slate-400 font-semibold block">Ảnh bằng chứng (tùy chọn)</label>
+                <label className="text-slate-400 font-semibold block">{t("tasks.submitProofLabel")}</label>
                 {submitProofImage ? (
                   <div className="relative">
-                    <img src={submitProofImage} alt="Bằng chứng" className="w-full max-h-52 object-cover rounded-xl" />
+                    <img src={submitProofImage} alt={t("tasks.proofAlt")} className="w-full max-h-52 object-cover rounded-xl" />
                     <button
                       type="button"
                       onClick={() => setSubmitProofImage("")}
@@ -1744,7 +1741,7 @@ export function Tasks({
                 ) : (
                   <label className="flex items-center justify-center gap-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-3 text-slate-400 cursor-pointer hover:text-slate-200">
                     <Camera className="w-4 h-4" />
-                    {submitProofBusy ? "Đang xử lý ảnh..." : "Chọn / chụp ảnh"}
+                    {submitProofBusy ? t("tasks.submitProofProcessing") : t("tasks.submitProofPick")}
                     <input
                       type="file"
                       accept="image/*"
@@ -1758,12 +1755,12 @@ export function Tasks({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-slate-400 font-semibold block">Ghi chú (tùy chọn)</label>
+                <label className="text-slate-400 font-semibold block">{t("tasks.submitNoteLabel")}</label>
                 <textarea
                   rows={2}
                   value={submitProofNote}
                   onChange={(e) => setSubmitProofNote(e.target.value)}
-                  placeholder="Ví dụ: Con đã dọn xong phòng và xếp gọn đồ chơi ạ."
+                  placeholder={t("tasks.submitNotePlaceholder")}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-emerald-500"
                 />
               </div>
@@ -1774,7 +1771,7 @@ export function Tasks({
                 onClick={() => setSubmitTaskTarget(null)}
                 className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
               >
-                Đóng lại
+                {t("tasks.submitClose")}
               </button>
               <button
                 type="button"
@@ -1782,7 +1779,7 @@ export function Tasks({
                 disabled={submitBusy || submitProofBusy}
                 className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50 text-xs"
               >
-                {submitBusy ? "Đang gửi..." : "Gửi ba mẹ duyệt"}
+                {submitBusy ? t("tasks.submitSending") : t("tasks.submitBtn")}
               </button>
             </div>
           </motion.div>
@@ -1799,17 +1796,17 @@ export function Tasks({
           >
             <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2">
               <RotateCcw className="w-5 h-5 text-rose-400" />
-              <h3 className="font-bold text-slate-100">Trả lại để làm lại</h3>
+              <h3 className="font-bold text-slate-100">{t("tasks.rejectTitle")}</h3>
             </div>
             <div className="p-5 space-y-3 text-xs">
               <p className="text-slate-400 leading-relaxed">
-                Trả lại việc <b className="text-slate-200">"{rejectTaskTarget.title}"</b> cho bé làm lại. Chưa cộng điểm.
+                {t("tasks.rejectMsg", { taskTitle: rejectTaskTarget.title })}
               </p>
               <textarea
                 rows={3}
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Lý do / góp ý cho con (ví dụ: Con dọn lại gầm giường nữa nhé)."
+                placeholder={t("tasks.rejectPlaceholder")}
                 className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-rose-500"
               />
             </div>
@@ -1819,7 +1816,7 @@ export function Tasks({
                 onClick={() => { setRejectTaskTarget(null); setRejectReason(""); }}
                 className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
               >
-                Đóng lại
+                {t("tasks.rejectClose")}
               </button>
               <button
                 type="button"
@@ -1827,7 +1824,7 @@ export function Tasks({
                 disabled={rejectBusy}
                 className="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50 text-xs"
               >
-                {rejectBusy ? "Đang gửi..." : "Trả lại việc"}
+                {rejectBusy ? t("tasks.rejectSending") : t("tasks.rejectBtn")}
               </button>
             </div>
           </motion.div>
@@ -1840,7 +1837,7 @@ export function Tasks({
           className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[60] p-4 cursor-zoom-out"
           onClick={() => setProofPreview("")}
         >
-          <img src={proofPreview} alt="Bằng chứng hoàn thành" className="max-w-full max-h-[90vh] rounded-xl" />
+          <img src={proofPreview} alt={t("tasks.proofAlt")} className="max-w-full max-h-[90vh] rounded-xl" />
         </div>
       )}
 
