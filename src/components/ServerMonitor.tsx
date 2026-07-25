@@ -7,6 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Cpu, Thermometer, MemoryStick, HardDrive, Server, Clock, AlertTriangle, Activity, Network, Globe, Copy, Check, Database, Smartphone, Users as UsersIcon, Wifi, ExternalLink, Plus, Pencil, Trash2, X, Save } from "lucide-react";
 import { ShimmerLine, Reveal, IconChip, Accent } from "./Lively.js";
 import { User, UserRole } from "../types.js";
+import { useTranslation } from "react-i18next";
 
 // Client chỉ tải dữ liệu 1 phút/lần (server cũng tự ghi telemetry 1 phút/lần
 // vào SQLite nên biểu đồ giữ nguyên lịch sử qua các lần reload trang).
@@ -92,6 +93,7 @@ async function copyText(value: string): Promise<boolean> {
 
 // Giá trị mono bấm-để-copy, có tick xác nhận 1,5s.
 function CopyValue({ value, className = "" }: { value: string; className?: string }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -102,7 +104,7 @@ function CopyValue({ value, className = "" }: { value: string; className?: strin
           window.setTimeout(() => setCopied(false), 1500);
         }
       }}
-      title="Bấm để sao chép"
+      title={t("serverMonitor.copyTitle")}
       className={`inline-flex items-center gap-1.5 font-mono text-slate-200 hover:text-sky-400 cursor-pointer min-w-0 transition-colors ${className}`}
     >
       <span className="truncate">{value}</span>
@@ -118,20 +120,6 @@ const ADDR_KIND_BADGE: Record<NetworkAddr["kind"], { label: string; cls: string 
   tailscale: { label: "Tailscale", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
   lan: { label: "LAN", cls: "bg-sky-500/10 text-sky-400 border-sky-500/20" },
   docker: { label: "Docker", cls: "bg-slate-800 text-slate-400 border-slate-800" }
-};
-
-const fmtUptime = (sec: number) => {
-  const d = Math.floor(sec / 86400);
-  const h = Math.floor((sec % 86400) / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  return d > 0 ? `${d} ngày ${h} giờ` : h > 0 ? `${h} giờ ${m} phút` : `${m} phút`;
-};
-
-// Nhãn mốc thời gian trục X: 24h hiện giờ:phút, 7 ngày hiện ngày/tháng + giờ.
-const fmtTick = (t: number, range: HistoryRange) => {
-  const d = new Date(t);
-  if (range === "7d") return `${d.getDate()}/${d.getMonth() + 1} ${String(d.getHours()).padStart(2, "0")}h`;
-  return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 };
 
 // Ngưỡng màu theo mức độ "nóng" của chỉ số (% hoặc °C).
@@ -163,16 +151,19 @@ function LevelBar({ pct, accent }: { pct: number; accent: Accent }) {
   );
 }
 
+// Nhãn mốc thời gian trục X: 24h hiện giờ:phút, 7 ngày hiện ngày/tháng + giờ.
+const fmtTick = (t: number, range: HistoryRange) => {
+  const d = new Date(t);
+  if (range === "7d") return `${d.getDate()}/${d.getMonth() + 1} ${String(d.getHours()).padStart(2, "0")}h`;
+  return d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+};
+
 interface ChartSeries {
   label: string;
   color: string;
   values: (number | null)[];
 }
 
-/**
- * Biểu đồ đường có trục rõ ràng: trục X = thời gian, trục Y = giá trị có nhãn
- * (% hoặc °). SVG thuần, tự co theo bề rộng thẻ.
- */
 function AxisChart({ series, times, yMin, yMax, yTicks, unit, range }: {
   series: ChartSeries[];
   times: number[];
@@ -190,7 +181,6 @@ function AxisChart({ series, times, yMin, yMax, yTicks, unit, range }: {
   const t0 = times[0] ?? 0;
   const t1 = times[n - 1] ?? 1;
   const span = Math.max(1, t1 - t0);
-  // X theo thời gian thật (khoảng trống khi server tắt sẽ hiện đúng khoảng trống).
   const x = (t: number) => M.left + (n <= 1 ? iw / 2 : ((t - t0) / span) * iw);
   const y = (v: number) => M.top + ih - ((Math.min(yMax, Math.max(yMin, v)) - yMin) / (yMax - yMin || 1)) * ih;
   const linePoints = (values: (number | null)[]) =>
@@ -198,13 +188,10 @@ function AxisChart({ series, times, yMin, yMax, yTicks, unit, range }: {
       .map((v, i) => (v === null ? null : `${x(times[i]).toFixed(1)},${y(v).toFixed(1)}`))
       .filter(Boolean)
       .join(" ");
-  // 4 mốc nhãn chia ĐỀU THEO THỜI GIAN (không theo index) — dữ liệu phân bố
-  // lệch tới đâu thì nhãn vẫn cách đều, không bị chồng chữ ở góc biểu đồ.
   const xTicks = n >= 2 ? [0, 1, 2, 3].map(i => t0 + (i * span) / 3) : [];
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-auto" role="img">
-      {/* Lưới ngang + nhãn trục Y */}
       {yTicks.map(v => (
         <g key={v}>
           <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} className="stroke-slate-800" strokeWidth="1" strokeDasharray="3 5" />
@@ -213,10 +200,8 @@ function AxisChart({ series, times, yMin, yMax, yTicks, unit, range }: {
           </text>
         </g>
       ))}
-      {/* Trục */}
       <line x1={M.left} x2={M.left} y1={M.top} y2={M.top + ih} className="stroke-slate-800" strokeWidth="1.5" />
       <line x1={M.left} x2={W - M.right} y1={M.top + ih} y2={M.top + ih} className="stroke-slate-800" strokeWidth="1.5" />
-      {/* Nhãn thời gian trục X */}
       {xTicks.map((t, idx) => (
         <text
           key={idx}
@@ -229,7 +214,6 @@ function AxisChart({ series, times, yMin, yMax, yTicks, unit, range }: {
           {fmtTick(t, range)}
         </text>
       ))}
-      {/* Đường dữ liệu */}
       {series.map(s => (
         <polyline
           key={s.label}
@@ -245,7 +229,6 @@ function AxisChart({ series, times, yMin, yMax, yTicks, unit, range }: {
   );
 }
 
-// Khung thẻ chứa một biểu đồ: tiêu đề + giá trị hiện tại + chú giải màu.
 function ChartCard({ accent, icon, title, legend, children, delay }: {
   accent: Accent;
   icon: React.ReactNode;
@@ -275,13 +258,17 @@ function ChartCard({ accent, icon, title, legend, children, delay }: {
   );
 }
 
-const CollectingHint = () => (
-  <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-xl py-9 text-center">
-    <p className="text-xs text-slate-500">Server đang thu thập telemetry (1 phút/lần) — biểu đồ sẽ đầy dần.</p>
-  </div>
-);
+function CollectingHint() {
+  const { t } = useTranslation();
+  return (
+    <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-xl py-9 text-center">
+      <p className="text-xs text-slate-500">{t("serverMonitor.collectingHint")}</p>
+    </div>
+  );
+}
 
 export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) {
+  const { t } = useTranslation();
   const isAdmin = currentUser?.role === UserRole.ADMIN;
   const [stats, setStats] = useState<ServerStats | null>(null);
   const [error, setError] = useState("");
@@ -298,6 +285,16 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
   const [linkSaving, setLinkSaving] = useState(false);
   const linkFormRef = useRef<HTMLFormElement>(null);
 
+  const fmtUptime = (sec: number) => {
+    const d = Math.floor(sec / 86400);
+    const h = Math.floor((sec % 86400) / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    return d > 0
+      ? t("serverMonitor.uptimeDay", { d, h })
+      : h > 0
+        ? t("serverMonitor.uptimeHour", { h, m })
+        : t("serverMonitor.uptimeMin", { m });
+  };
 
   const fetchLinks = async () => {
     try {
@@ -313,7 +310,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
       body: JSON.stringify({ links: newLinks })
     });
     const d = await res.json();
-    if (!res.ok) throw new Error(d.error || "Lưu thất bại");
+    if (!res.ok) throw new Error(d.error || t("serverMonitor.homelabSaving"));
     setLinks(d.links || []);
   };
 
@@ -348,11 +345,8 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
     await saveLinks(links.filter(l => l.id !== id));
   };
 
-
-  // Tải links một lần khi mở tab (chỉ admin thấy).
   useEffect(() => { if (isAdmin) fetchLinks(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Thẻ chỉ số hiện tại: tải ngay khi mở tab + mỗi phút (bỏ qua khi app chạy nền).
   useEffect(() => {
     let alive = true;
     const fetchStats = async () => {
@@ -360,12 +354,12 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
       try {
         const res = await fetch("/api/server/stats", { headers: authHeaders });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Không đọc được thông số máy chủ.");
+        if (!res.ok) throw new Error(data.error || t("serverMonitor.statusOffline"));
         if (!alive) return;
         setStats(data);
         setError("");
       } catch (err: any) {
-        if (alive) setError(err.message || "Mất kết nối tới máy chủ.");
+        if (alive) setError(err.message || t("serverMonitor.statusOffline"));
       }
     };
     fetchStats();
@@ -378,7 +372,6 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
     };
   }, []); // authHeaders ổn định trong một phiên đăng nhập
 
-  // Lịch sử biểu đồ từ SQLite: tải khi đổi khoảng xem + làm mới mỗi phút.
   useEffect(() => {
     let alive = true;
     const fetchHistory = async () => {
@@ -410,7 +403,6 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
   const times = useMemo(() => history.map(p => p.t), [history]);
   const hasChart = history.length >= 2;
 
-  // Trục Y biểu đồ nhiệt: tự co theo dữ liệu, làm tròn bậc 10 cho nhãn đẹp.
   const tempDomain = useMemo(() => {
     const vals = history.flatMap(p => [p.temp, p.ssd]).filter((v): v is number => v !== null);
     if (vals.length === 0) return { min: 20, max: 80 };
@@ -436,7 +428,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <span className="flex items-center gap-1.5 font-mono"><Activity className="w-3.5 h-3.5 text-emerald-400" /> Load {stats.loadAvg.map(n => n.toFixed(2)).join(" / ")}</span>
       </div>
     );
-  }, [stats]);
+  }, [stats, t]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-6" id="server-monitor-module">
@@ -445,15 +437,15 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <ShimmerLine accent="emerald" />
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-            <IconChip accent="emerald"><Server className="w-4 h-4" /></IconChip> Quản lý Server
+            <IconChip accent="emerald"><Server className="w-4 h-4" /></IconChip> {t("serverMonitor.title")}
           </h3>
           {error ? (
             <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20">
-              <AlertTriangle className="w-3 h-3" /> Mất kết nối
+              <AlertTriangle className="w-3 h-3" /> {t("serverMonitor.statusOffline")}
             </span>
           ) : (
             <span className="flex items-center gap-1.5 text-[10px] font-bold px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" /> LIVE · cập nhật 1 phút/lần
+              <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" /> {t("serverMonitor.statusLive")}
             </span>
           )}
         </div>
@@ -476,7 +468,13 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
                 {cpuPct === null ? "—" : `${cpuPct.toFixed(0)}%`}
               </span>
             ) : skeleton}
-            <p className="text-slate-500 text-[10px] mt-1 truncate">{stats ? `${stats.cpu.cores} nhân${stats.cpu.model ? ` · ${stats.cpu.model}` : ""}` : "Đang đọc..."}</p>
+            <p className="text-slate-500 text-[10px] mt-1 truncate">
+              {stats
+                ? (stats.cpu.model
+                  ? t("serverMonitor.cpuCoresModel", { n: stats.cpu.cores, model: stats.cpu.model })
+                  : t("serverMonitor.cpuCores", { n: stats.cpu.cores }))
+                : t("serverMonitor.reading")}
+            </p>
           </div>
           <LevelBar pct={cpuPct ?? 0} accent={cpuAccent} />
         </Reveal>
@@ -485,7 +483,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent={tempAccent} />
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-medium">Nhiệt độ CPU</span>
+            <span className="text-slate-400 text-xs font-medium">{t("serverMonitor.tempCpu")}</span>
             <IconChip accent={tempAccent}><Thermometer className="w-4 h-4" /></IconChip>
           </div>
           <div>
@@ -497,11 +495,11 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
             <p className="text-slate-500 text-[10px] mt-1 font-mono">
               {stats
                 ? stats.ssdTempC !== null
-                  ? `SSD NVMe ${fmtTemp(stats.ssdTempC)}`
+                  ? t("serverMonitor.tempSsd", { temp: fmtTemp(stats.ssdTempC) })
                   : stats.tempC === null
-                    ? "Máy chủ không cho đọc cảm biến"
-                    : "SSD không có cảm biến nhiệt"
-                : "Đang đọc..."}
+                    ? t("serverMonitor.tempNoSensor")
+                    : t("serverMonitor.tempNoSsd")
+                : t("serverMonitor.reading")}
             </p>
           </div>
           <LevelBar pct={stats?.tempC ? (stats.tempC / 90) * 100 : 0} accent={tempAccent} />
@@ -521,7 +519,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               </span>
             ) : skeleton}
             <p className="text-slate-500 text-[10px] mt-1 font-mono">
-              {stats ? `${fmtGb(stats.memory.usedBytes)} / ${fmtGb(stats.memory.totalBytes)}` : "Đang đọc..."}
+              {stats ? `${fmtGb(stats.memory.usedBytes)} / ${fmtGb(stats.memory.totalBytes)}` : t("serverMonitor.reading")}
             </p>
           </div>
           <LevelBar pct={ramPct ?? 0} accent={ramAccent} />
@@ -531,7 +529,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <Reveal delay={0.18} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent={diskAccent} />
           <div className="flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-medium">Bộ nhớ (ổ đĩa)</span>
+            <span className="text-slate-400 text-xs font-medium">{t("serverMonitor.diskLabel")}</span>
             <IconChip accent={diskAccent}><HardDrive className="w-4 h-4" /></IconChip>
           </div>
           <div>
@@ -541,7 +539,11 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               </span>
             ) : skeleton}
             <p className="text-slate-500 text-[10px] mt-1 font-mono">
-              {stats?.disk ? `${fmtGb(stats.disk.usedBytes)} / ${fmtGb(stats.disk.totalBytes)}` : stats ? "Không đọc được phân vùng" : "Đang đọc..."}
+              {stats?.disk
+                ? `${fmtGb(stats.disk.usedBytes)} / ${fmtGb(stats.disk.totalBytes)}`
+                : stats
+                  ? t("serverMonitor.diskNoData")
+                  : t("serverMonitor.reading")}
             </p>
           </div>
           <LevelBar pct={diskPct ?? 0} accent={diskAccent} />
@@ -554,17 +556,15 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <Reveal delay={0.2} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent="sky" />
           <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-            <IconChip accent="sky"><Network className="w-4 h-4" /></IconChip> Mạng &amp; truy cập
+            <IconChip accent="sky"><Network className="w-4 h-4" /></IconChip> {t("serverMonitor.networkTitle")}
           </h4>
 
           <div className="space-y-2 text-[11px]">
-            {/* Link đang dùng để mở app — chính là link chia sẻ cho người nhà */}
             <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
-              <span className="flex items-center gap-1.5 text-slate-400 shrink-0"><Globe className="w-3.5 h-3.5 text-sky-400" /> Link truy cập</span>
+              <span className="flex items-center gap-1.5 text-slate-400 shrink-0"><Globe className="w-3.5 h-3.5 text-sky-400" /> {t("serverMonitor.networkAccessLink")}</span>
               <CopyValue value={window.location.origin} className="text-[11px]" />
             </div>
 
-            {/* IP các card mạng của máy chủ */}
             {stats?.network && stats.network.interfaces.length > 0 ? (
               stats.network.interfaces.map(ni => {
                 const badge = ADDR_KIND_BADGE[ni.kind];
@@ -581,23 +581,19 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               })
             ) : (
               <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-xl px-3 py-2 text-slate-500">
-                {stats ? "Không đọc được card mạng nào." : "Đang đọc..."}
+                {stats ? t("serverMonitor.networkNoInterfaces") : t("serverMonitor.reading")}
               </div>
             )}
 
-            {/* IP thiết bị đang xem trang này */}
             {stats?.network?.clientIp && (
               <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
-                <span className="flex items-center gap-1.5 text-slate-400 shrink-0"><Smartphone className="w-3.5 h-3.5 text-emerald-400" /> IP của bạn</span>
+                <span className="flex items-center gap-1.5 text-slate-400 shrink-0"><Smartphone className="w-3.5 h-3.5 text-emerald-400" /> {t("serverMonitor.networkClientIp")}</span>
                 <CopyValue value={stats.network.clientIp} className="text-[11px]" />
               </div>
             )}
 
-            {/* App chạy trong Docker bridge thì chỉ thấy IP container */}
             {stats?.network && stats.network.interfaces.every(ni => ni.kind === "docker") && (
-              <p className="text-[10px] text-slate-500 px-1">
-                App chạy trong Docker (mạng bridge) nên chỉ thấy IP container — IP LAN/Tailscale thật của máy chủ xem trên router hoặc Tailscale admin.
-              </p>
+              <p className="text-[10px] text-slate-500 px-1">{t("serverMonitor.networkDockerNote")}</p>
             )}
           </div>
         </Reveal>
@@ -606,39 +602,39 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <Reveal delay={0.24} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 space-y-3">
           <ShimmerLine accent="indigo" />
           <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-            <IconChip accent="indigo"><Database className="w-4 h-4" /></IconChip> Ứng dụng &amp; dữ liệu
+            <IconChip accent="indigo"><Database className="w-4 h-4" /></IconChip> {t("serverMonitor.appTitle")}
           </h4>
 
           {stats?.app && stats.data ? (
             <div className="space-y-2 text-[11px]">
               <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
-                <span className="text-slate-400">Phiên bản app</span>
+                <span className="text-slate-400">{t("serverMonitor.appVersion")}</span>
                 <span className="font-mono text-slate-200">
                   v{stats.app.version}{stats.app.commit ? <span className="text-slate-500"> · {stats.app.commit}</span> : null}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
-                <span className="text-slate-400">Tiến trình Node</span>
+                <span className="text-slate-400">{t("serverMonitor.appProcess")}</span>
                 <span className="font-mono text-slate-200">
-                  {stats.app.nodeVersion} · chạy {fmtUptime(stats.app.processUptimeSec)} · RAM {fmtBytes(stats.app.rssBytes)}
+                  {stats.app.nodeVersion} · {fmtUptime(stats.app.processUptimeSec)} · RAM {fmtBytes(stats.app.rssBytes)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
-                <span className="text-slate-400">Dữ liệu</span>
+                <span className="text-slate-400">{t("serverMonitor.appData")}</span>
                 <span className="font-mono text-slate-200">
                   SQLite {fmtBytes(stats.data.dbBytes)} · Media {fmtBytes(stats.data.uploadsBytes)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
-                <span className="flex items-center gap-1.5 text-slate-400"><UsersIcon className="w-3.5 h-3.5 text-indigo-400" /> Kết nối</span>
+                <span className="flex items-center gap-1.5 text-slate-400"><UsersIcon className="w-3.5 h-3.5 text-indigo-400" /> {t("serverMonitor.appConnections")}</span>
                 <span className="font-mono text-slate-200">
-                  {stats.data.sseClients} phiên đang mở · {stats.data.pushDevices} thiết bị push · {stats.data.users} thành viên
+                  {t("serverMonitor.appConnDetails", { sse: stats.data.sseClients, push: stats.data.pushDevices, users: stats.data.users })}
                 </span>
               </div>
             </div>
           ) : (
             <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-xl py-6 text-center text-[11px] text-slate-500">
-              {stats ? "Server đang chạy bản cũ — cập nhật app để xem mục này." : "Đang đọc..."}
+              {stats ? t("serverMonitor.appOldVersion") : t("serverMonitor.reading")}
             </div>
           )}
         </Reveal>
@@ -650,32 +646,31 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
           <ShimmerLine accent="violet" />
           <div className="flex items-center justify-between gap-2">
             <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
-              <IconChip accent="violet"><Globe className="w-4 h-4" /></IconChip> Dịch vụ Homelab
+              <IconChip accent="violet"><Globe className="w-4 h-4" /></IconChip> {t("serverMonitor.homelabTitle")}
             </h4>
             <button type="button" onClick={() => openLinkForm()}
               className="flex items-center gap-1 bg-slate-950 neu-btn hover:bg-slate-800 text-violet-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer transition-all">
-              <Plus className="w-3.5 h-3.5" /> Thêm
+              <Plus className="w-3.5 h-3.5" /> {t("serverMonitor.homelabAdd")}
             </button>
           </div>
 
-          {/* Form thêm / sửa link */}
           {linkForm.open && (
             <form ref={linkFormRef} onSubmit={handleLinkSubmit} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 space-y-2">
-              <p className="text-[11px] font-semibold text-slate-400">{linkForm.editing ? "Sửa dịch vụ" : "Thêm dịch vụ mới"}</p>
+              <p className="text-[11px] font-semibold text-slate-400">{linkForm.editing ? t("serverMonitor.homelabEditTitle") : t("serverMonitor.homelabAddTitle")}</p>
               <div className="grid grid-cols-[56px_1fr_1fr] gap-2 text-xs">
                 <input value={lfEmoji} onChange={e => setLfEmoji(e.target.value)} placeholder="📸" maxLength={4}
                   className="bg-slate-900 neu-pressed-sm rounded-xl px-2 py-2 text-slate-200 outline-none focus:border-violet-500 text-center text-lg" />
-                <input value={lfName} onChange={e => setLfName(e.target.value)} placeholder="Tên dịch vụ (vd: Immich)" required
+                <input value={lfName} onChange={e => setLfName(e.target.value)} placeholder={t("serverMonitor.homelabNamePlaceholder")} required
                   className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
-                <input value={lfDesc} onChange={e => setLfDesc(e.target.value)} placeholder="Mô tả (tùy chọn)"
+                <input value={lfDesc} onChange={e => setLfDesc(e.target.value)} placeholder={t("serverMonitor.homelabDescPlaceholder")}
                   className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
               </div>
               <div className="flex gap-2">
-                <input value={lfUrl} onChange={e => setLfUrl(e.target.value)} placeholder="https://dietpi.latxa-goby.ts.net:2283" required type="url"
+                <input value={lfUrl} onChange={e => setLfUrl(e.target.value)} placeholder={t("serverMonitor.homelabUrlPlaceholder")} required type="url"
                   className="flex-1 bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs font-mono text-slate-200 outline-none focus:border-violet-500 min-w-0" />
                 <button type="submit" disabled={linkSaving || !lfName.trim() || !lfUrl.trim()}
                   className="flex items-center gap-1.5 bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-slate-950 text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer transition-all shrink-0">
-                  <Save className="w-3.5 h-3.5" /> {linkSaving ? "Lưu..." : "Lưu"}
+                  <Save className="w-3.5 h-3.5" /> {linkSaving ? t("serverMonitor.homelabSaving") : t("serverMonitor.homelabSave")}
                 </button>
                 <button type="button" onClick={closeLinkForm}
                   className="p-2 bg-slate-900 neu-btn rounded-xl text-slate-500 hover:text-slate-300 cursor-pointer">
@@ -685,22 +680,20 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
             </form>
           )}
 
-          {/* Grid link tiles */}
           {links.length === 0 && !linkForm.open ? (
             <p className="text-[11px] text-slate-500 border border-dashed border-slate-800 rounded-xl px-3 py-4 text-center">
-              Chưa có dịch vụ nào. Bấm "Thêm" để thêm link tới Immich, Portainer, File Browser...
+              {t("serverMonitor.homelabEmpty")}
             </p>
           ) : links.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {links.map(link => (
                 <div key={link.id} className="group relative bg-slate-950/60 neu-pressed-sm hover:border-violet-500/40 rounded-xl p-3 flex flex-col gap-2 transition-colors">
-                  {/* Admin controls */}
                   <div className="absolute top-2 right-2 hidden group-hover:flex gap-1">
-                    <button type="button" onClick={() => openLinkForm(link)} title="Sửa"
+                    <button type="button" onClick={() => openLinkForm(link)} title={t("serverMonitor.homelabEditBtn")}
                       className="p-1 bg-slate-900 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
                       <Pencil className="w-3 h-3" />
                     </button>
-                    <button type="button" onClick={() => handleLinkDelete(link.id)} title="Xóa"
+                    <button type="button" onClick={() => handleLinkDelete(link.id)} title={t("serverMonitor.homelabDeleteBtn")}
                       className="p-1 bg-slate-900 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
                       <Trash2 className="w-3 h-3" />
                     </button>
@@ -725,11 +718,9 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         </Reveal>
       )}
 
-      {/* Chọn khoảng xem lịch sử (lưu trong SQLite trên server, giữ 7 ngày) */}
+      {/* Chọn khoảng xem lịch sử */}
       <Reveal delay={0.2} className="flex items-center justify-between gap-2 flex-wrap">
-        <p className="text-[11px] text-slate-500">
-          Lịch sử ghi tự động 1 phút/lần trên server — reload trang không mất dữ liệu.
-        </p>
+        <p className="text-[11px] text-slate-500">{t("serverMonitor.historyNote")}</p>
         <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 gap-1 text-[11px] font-bold">
           {(["24h", "7d"] as HistoryRange[]).map(r => (
             <button
@@ -738,18 +729,18 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               onClick={() => setRange(r)}
               className={`px-3 py-1.5 rounded-lg cursor-pointer transition-all ${range === r ? "bg-sky-500 text-slate-950" : "text-slate-400 hover:text-slate-200"}`}
             >
-              {r === "24h" ? "24 giờ" : "7 ngày"}
+              {r === "24h" ? t("serverMonitor.historyRange24h") : t("serverMonitor.historyRange7d")}
             </button>
           ))}
         </div>
       </Reveal>
 
-      {/* 3 biểu đồ riêng: CPU % · RAM % · Nhiệt độ °C */}
+      {/* 3 biểu đồ: CPU · RAM · Nhiệt độ */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 xl:gap-6">
         <ChartCard
           accent="emerald"
           icon={<Cpu className="w-3.5 h-3.5" />}
-          title="CPU (%)"
+          title={t("serverMonitor.chartCpuTitle")}
           legend={[{ label: "CPU", color: "#34d399", value: cpuPct != null ? `${cpuPct.toFixed(0)}%` : "—" }]}
           delay={0.24}
         >
@@ -765,7 +756,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <ChartCard
           accent="indigo"
           icon={<MemoryStick className="w-3.5 h-3.5" />}
-          title="RAM (%)"
+          title={t("serverMonitor.chartRamTitle")}
           legend={[{ label: "RAM", color: "#818cf8", value: ramPct != null ? `${ramPct.toFixed(0)}%` : "—" }]}
           delay={0.28}
         >
@@ -781,7 +772,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <ChartCard
           accent="amber"
           icon={<Thermometer className="w-3.5 h-3.5" />}
-          title="Nhiệt độ (°C)"
+          title={t("serverMonitor.chartTempTitle")}
           legend={[
             { label: "CPU", color: "#fbbf24", value: stats?.tempC != null ? fmtTemp(stats.tempC) : "—" },
             { label: "SSD", color: "#22d3ee", value: stats?.ssdTempC != null ? fmtTemp(stats.ssdTempC) : "—" }
