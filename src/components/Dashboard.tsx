@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo, useState, useEffect, useRef, lazy, Suspense } from "react";
 import {
   CheckSquare,
   Calendar,
@@ -31,6 +31,32 @@ import { QuickNudge } from "./QuickNudge.js";
 import { ShimmerLine, IconChip } from "./Lively.js";
 import { getVietnamHolidaysForMonth } from "../utils/vietnamHolidays.js";
 import { expandRecurringOccurrences } from "../utils/recurrence.js";
+
+// Full Markdown (GFM) renderer — lazy-loaded, shared with the Notes tab so
+// pinned-note previews render formatted content instead of raw text.
+const MarkdownView = lazy(() => import("./Markdown.js"));
+const MarkdownFallback = () => <p className="text-slate-600 text-[11px]">Đang hiển thị…</p>;
+
+// Nhãn + emoji + màu thanh cho hạng mục CHI — khớp bộ màu ở tab Tài chính,
+// dùng cho top hạng mục tiêu dùng trong card Tổng quan.
+const EXPENSE_CAT_META: Record<string, { label: string; emoji: string; bar: string }> = {
+  food:          { label: "Ăn uống",           emoji: "🍲", bar: "from-orange-500 to-orange-400" },
+  education2:    { label: "Học tập",           emoji: "📚", bar: "from-violet-500 to-violet-400" },
+  utilities:     { label: "Điện nước",         emoji: "⚡", bar: "from-amber-500 to-amber-400" },
+  shopping:      { label: "Mua sắm",           emoji: "🛍️", bar: "from-pink-500 to-pink-400" },
+  medical:       { label: "Y tế",              emoji: "💊", bar: "from-rose-500 to-rose-400" },
+  transport:     { label: "Đi lại",            emoji: "🚗", bar: "from-sky-500 to-sky-400" },
+  debt_bank:     { label: "Trả nợ ngân hàng",  emoji: "🏦", bar: "from-red-500 to-red-400" },
+  debt_personal: { label: "Trả nợ cá nhân",    emoji: "🤝", bar: "from-teal-500 to-teal-400" },
+  funeral:       { label: "Ma chay",           emoji: "🌸", bar: "from-zinc-500 to-zinc-400" },
+  ceremony:      { label: "Hiếu hỉ",           emoji: "🎁", bar: "from-yellow-500 to-yellow-400" },
+  rent:          { label: "Thuê nhà",          emoji: "🏠", bar: "from-indigo-500 to-indigo-400" },
+  internet:      { label: "Internet",          emoji: "🌐", bar: "from-cyan-500 to-cyan-400" },
+  phone:         { label: "Điện thoại",        emoji: "📱", bar: "from-purple-500 to-purple-400" },
+  insurance:     { label: "Bảo hiểm",          emoji: "🛡️", bar: "from-slate-500 to-slate-400" },
+};
+const expenseCatMeta = (cat: string) =>
+  EXPENSE_CAT_META[cat] || { label: "Khoản khác", emoji: "🏷️", bar: "from-slate-600 to-slate-500" };
 
 interface DashboardProps {
   currentUser: User;
@@ -274,9 +300,9 @@ function TrendRow({ values }: { values: number[] }) {
   const gid = `spark-${uid}`;
   const end = pts[pts.length - 1];
   return (
-    <div className="mt-2 space-y-1">
+    <div className="space-y-0.5">
       <div className="relative">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-9" preserveAspectRatio="none" aria-hidden>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-7" preserveAspectRatio="none" aria-hidden>
           <defs>
             <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
@@ -376,6 +402,25 @@ export function Dashboard({
   const financeTotal = financialSummary.income + financialSummary.expense;
   const incomePct = financeTotal > 0 ? (financialSummary.income / financeTotal) * 100 : 0;
   const expensePct = financeTotal > 0 ? (financialSummary.expense / financeTotal) * 100 : 0;
+
+  // Top 3 hạng mục CHI tiêu đứng đầu của tháng hiện tại (kèm % trên tổng chi)
+  const topExpenseCategories = useMemo(() => {
+    const byCat = new Map<string, number>();
+    transactions.forEach(t => {
+      if (t.type === "expense" && t.date.startsWith(currentMonth)) {
+        const key = t.category || "other";
+        byCat.set(key, (byCat.get(key) || 0) + t.amount);
+      }
+    });
+    return [...byCat.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([category, amount]) => ({
+        category,
+        amount,
+        pct: financialSummary.expense > 0 ? (amount / financialSummary.expense) * 100 : 0,
+      }));
+  }, [transactions, currentMonth, financialSummary.expense]);
 
   // 3. Sự kiện sắp diễn ra (30 ngày tới) — mở rộng cả sự kiện LẶP LẠI theo đúng
   // logic lịch (hằng ngày/tuần/tháng) và gộp thêm NGÀY LỄ, để khớp với lịch trình.
@@ -623,14 +668,14 @@ export function Dashboard({
       {countdowns.length > 0 && (
         <motion.div {...fadeUp(0.09)} className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6" id="dashboard-countdowns">
           {countdowns.map(c => {
-            const accentMap: Record<string, { ring: string; text: string; bg: string }> = {
-              amber: { ring: "border-amber-500/25", text: "text-amber-400", bg: "from-amber-500/10" },
-              pink: { ring: "border-pink-500/25", text: "text-pink-400", bg: "from-pink-500/10" },
-              rose: { ring: "border-rose-500/25", text: "text-rose-400", bg: "from-rose-500/10" }
+            const accentMap: Record<string, { text: string; bg: string }> = {
+              amber: { text: "text-amber-400", bg: "from-amber-500/12" },
+              pink: { text: "text-pink-400", bg: "from-pink-500/12" },
+              rose: { text: "text-rose-400", bg: "from-rose-500/12" }
             };
             const a = accentMap[c.accent] || accentMap.amber;
             return (
-              <div key={c.key} className={`relative overflow-hidden bg-gradient-to-br ${a.bg} via-slate-900 to-slate-900 border ${a.ring} rounded-2xl px-3.5 py-3 flex items-center gap-3 shadow-md`}>
+              <div key={c.key} className={`relative overflow-hidden bg-gradient-to-br ${a.bg} via-slate-900 to-slate-900 neu-raised rounded-2xl px-3.5 py-3 flex items-center gap-3`}>
                 <span className="text-2xl leading-none shrink-0">{c.icon}</span>
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-slate-300 truncate" title={c.title}>{c.title}</p>
@@ -662,7 +707,7 @@ export function Dashboard({
             ? "bg-rose-500/15 border-rose-500/40 text-rose-700 dark:text-rose-300"
             : "bg-amber-500/15 border-amber-500/40 text-amber-700 dark:text-amber-300";
           return (
-            <div className="relative overflow-hidden lg:col-span-1 bg-gradient-to-br from-sky-500/15 via-slate-900 to-slate-900 neu-raised rounded-2xl p-5 shadow-lg flex flex-col min-h-[188px]">
+            <div className="relative overflow-hidden lg:col-span-1 bg-gradient-to-br from-sky-500/15 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 shadow-lg flex flex-col min-h-[168px]">
               <ShimmerLine via="via-sky-500/60" />
               <div aria-hidden className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-sky-500/10 blur-2xl" />
 
@@ -675,7 +720,7 @@ export function Dashboard({
               <div className="relative flex items-start justify-between">
                 <div className="min-w-0">
                   {hasW ? (
-                    <p className="text-3xl font-extrabold text-slate-100 mt-1">
+                    <p className="text-2xl font-extrabold text-slate-100 mt-0.5">
                       <AnimatedNumber value={w.current.temperature_2m} format={(n) => `${Math.round(n)}°C`} />
                     </p>
                   ) : (
@@ -687,11 +732,11 @@ export function Dashboard({
                     <Skeleton className="h-3 w-32 mt-2" />
                   )}
                 </div>
-                <span className="text-4xl leading-none">{hasW ? cur!.icon : "🌡️"}</span>
+                <span className="text-3xl leading-none">{hasW ? cur!.icon : "🌡️"}</span>
               </div>
 
               {/* Chi tiết: độ ẩm, gió giật, tia UV, xác suất mưa */}
-              <div className="relative grid grid-cols-2 gap-1.5 mt-3 pt-3 border-t border-slate-800/60 text-[11px] text-slate-300">
+              <div className="relative grid grid-cols-2 gap-1.5 mt-2.5 pt-2.5 border-t border-slate-800/60 text-[11px] text-slate-300">
                 {hasW ? (
                   <>
                     <span className="inline-flex items-center gap-1.5"><Droplets className="w-3.5 h-3.5 text-sky-400 shrink-0" />Độ ẩm {w.current.relative_humidity_2m}%</span>
@@ -706,7 +751,7 @@ export function Dashboard({
 
               {/* Cảnh báo nguy cơ giông bão (ước lượng từ gió giật + mã dông) */}
               {hasW && storm && storm.level !== "none" && (
-                <div className={`relative mt-3 rounded-lg border px-2.5 py-2 flex items-start gap-2 ${stormStyle}`}>
+                <div className={`relative mt-2.5 rounded-lg border px-2.5 py-1.5 flex items-start gap-2 ${stormStyle}`}>
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold leading-tight">{storm.label}</p>
@@ -715,15 +760,15 @@ export function Dashboard({
                 </div>
               )}
 
-              <div className="relative flex justify-between mt-3 gap-2">
+              <div className="relative flex justify-between mt-2.5 gap-2">
                 {hasW && w.daily?.time ? (
                   w.daily.time.slice(0, 3).map((d: string, i: number) => {
                     const dc = describeWeather(w.daily.weather_code[i]);
                     const dayLabel = i === 0 ? "Hôm nay" : new Date(d).toLocaleDateString("vi-VN", { weekday: "short" });
                     return (
-                      <div key={d} className="flex-1 text-center bg-slate-950/40 backdrop-blur-sm rounded-lg py-2 hover:bg-slate-950/60 transition-colors">
+                      <div key={d} className="flex-1 text-center bg-slate-950/40 backdrop-blur-sm rounded-lg py-1.5 hover:bg-slate-950/60 transition-colors">
                         <p className="text-[10px] text-slate-500">{dayLabel}</p>
-                        <p className="text-lg leading-tight">{dc.icon}</p>
+                        <p className="text-base leading-tight">{dc.icon}</p>
                         <p className="text-[10px] text-slate-400 font-mono">{Math.round(w.daily.temperature_2m_min[i])}°/{Math.round(w.daily.temperature_2m_max[i])}°</p>
                       </div>
                     );
@@ -740,8 +785,8 @@ export function Dashboard({
               </div>
 
               {/* Động đất gần đây trong bán kính quanh địa phương (USGS) */}
-              <div className="relative mt-3 pt-3 border-t border-slate-800/60">
-                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1.5">
+              <div className="relative mt-2.5 pt-2.5 border-t border-slate-800/60">
+                <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-bold uppercase tracking-wide mb-1">
                   <Waves className="w-3.5 h-3.5 text-orange-400 shrink-0" />
                   Động đất gần đây {quakes?.radiusKm ? `(bán kính ${quakes.radiusKm}km)` : ""}
                 </div>
@@ -762,205 +807,210 @@ export function Dashboard({
           );
         })()}
 
-        {/* Market mini-cards */}
-        <div className="lg:col-span-2 grid grid-cols-2 gap-4 lg:gap-5">
+        {/* Chỉ số nhanh + Thị trường — 8 card cùng kích thước, cạnh thời tiết cho gọn trang */}
+        <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-5 auto-rows-fr">
           {/* Bitcoin */}
-          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
             <ShimmerLine via="via-amber-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-amber-400">₿ Bitcoin</span>
               {widgets?.crypto?.bitcoin ? changeBadge(widgets.crypto.bitcoin.usd_24h_change) : null}
             </div>
-            <div className="mt-2">
-              {widgets?.crypto?.bitcoin ? (
-                <>
-                  <p className="text-lg font-extrabold text-slate-100"><AnimatedNumber value={widgets.crypto.bitcoin.usd} format={fmtUsd} /></p>
-                  <p className="text-[10px] text-slate-500 font-mono"><AnimatedNumber value={widgets.crypto.bitcoin.vnd} format={fmtVnd} /></p>
-                </>
-              ) : (
-                <>
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-2.5 w-20 mt-1.5" />
-                </>
-              )}
-              <TrendRow values={marketSeries.btc} />
+            <div className="mt-3">
+              <div className="min-w-0">
+                {widgets?.crypto?.bitcoin ? (
+                  <>
+                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.crypto.bitcoin.usd} format={fmtUsd} /></p>
+                    <p className="text-[10px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.bitcoin.vnd} format={fmtVnd} /></p>
+                  </>
+                ) : (
+                  <>
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-2.5 w-20 mt-1.5" />
+                  </>
+                )}
+              </div>
+              <div className="w-full mt-1"><TrendRow values={marketSeries.btc} /></div>
             </div>
           </div>
 
           {/* Ethereum */}
-          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
             <ShimmerLine via="via-indigo-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-indigo-400">Ξ Ethereum</span>
               {widgets?.crypto?.ethereum ? changeBadge(widgets.crypto.ethereum.usd_24h_change) : null}
             </div>
-            <div className="mt-2">
-              {widgets?.crypto?.ethereum ? (
-                <>
-                  <p className="text-lg font-extrabold text-slate-100"><AnimatedNumber value={widgets.crypto.ethereum.usd} format={fmtUsd} /></p>
-                  <p className="text-[10px] text-slate-500 font-mono"><AnimatedNumber value={widgets.crypto.ethereum.vnd} format={fmtVnd} /></p>
-                </>
-              ) : (
-                <>
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-2.5 w-20 mt-1.5" />
-                </>
-              )}
-              <TrendRow values={marketSeries.eth} />
+            <div className="mt-3">
+              <div className="min-w-0">
+                {widgets?.crypto?.ethereum ? (
+                  <>
+                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.crypto.ethereum.usd} format={fmtUsd} /></p>
+                    <p className="text-[10px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.ethereum.vnd} format={fmtVnd} /></p>
+                  </>
+                ) : (
+                  <>
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-2.5 w-20 mt-1.5" />
+                  </>
+                )}
+              </div>
+              <div className="w-full mt-1"><TrendRow values={marketSeries.eth} /></div>
             </div>
           </div>
 
           {/* Gold */}
-          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-gradient-to-br from-yellow-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
             <ShimmerLine via="via-yellow-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-yellow-500">🪙 {widgets?.gold?.source || "Vàng"}</span>
               {widgets?.gold ? changeBadge(widgets.gold.changePct) : null}
             </div>
-            <div className="mt-2">
-              {widgets?.gold && (widgets.gold.sell || widgets.gold.vndPerTael || widgets.gold.usdPerOz) ? (
-                widgets.gold.sell ? (
-                  <>
-                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.sell} format={fmtVnd} /></p>
-                    <p className="text-[10px] text-slate-500">Bán /lượng{widgets.gold.buy ? ` • Mua ${fmtVnd(widgets.gold.buy)}` : ""}</p>
-                  </>
-                ) : widgets.gold.vndPerTael ? (
-                  <>
-                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.vndPerTael} format={fmtVnd} /></p>
-                    <p className="text-[10px] text-slate-500">≈ /lượng (tham khảo)</p>
-                  </>
+            <div className="mt-3">
+              <div className="min-w-0">
+                {widgets?.gold && (widgets.gold.sell || widgets.gold.vndPerTael || widgets.gold.usdPerOz) ? (
+                  widgets.gold.sell ? (
+                    <>
+                      <p className="text-sm font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.sell} format={fmtVnd} /></p>
+                      <p className="text-[10px] text-slate-500 truncate">Bán /lượng{widgets.gold.buy ? ` • Mua ${fmtVnd(widgets.gold.buy)}` : ""}</p>
+                    </>
+                  ) : widgets.gold.vndPerTael ? (
+                    <>
+                      <p className="text-sm font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.vndPerTael} format={fmtVnd} /></p>
+                      <p className="text-[10px] text-slate-500 truncate">≈ /lượng (tham khảo)</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.usdPerOz} format={fmtUsd} /><span className="text-[10px] text-slate-500"> /oz</span></p>
+                      <p className="text-[10px] text-slate-500 truncate">Thế giới</p>
+                    </>
+                  )
                 ) : (
                   <>
-                    <p className="text-lg font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.usdPerOz} format={fmtUsd} /><span className="text-[10px] text-slate-500"> /oz</span></p>
-                    <p className="text-[10px] text-slate-500">Thế giới</p>
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-2.5 w-20 mt-1.5" />
                   </>
-                )
-              ) : (
-                <>
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-2.5 w-20 mt-1.5" />
-                </>
-              )}
-              <TrendRow values={marketSeries.gold} />
+                )}
+              </div>
+              <div className="w-full mt-1"><TrendRow values={marketSeries.gold} /></div>
             </div>
           </div>
 
           {/* USD/VND */}
-          <div className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between min-h-[92px]">
+          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
             <ShimmerLine via="via-emerald-500/50" />
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-emerald-400">💵 USD/VND</span>
             </div>
-            <div className="mt-2">
-              {widgets?.fx?.usdVnd ? (
-                <>
-                  <p className="text-lg font-extrabold text-slate-100"><AnimatedNumber value={widgets.fx.usdVnd} format={fmtVnd} /></p>
-                  <p className="text-[10px] text-slate-500">Tỷ giá 1 USD</p>
-                </>
-              ) : (
-                <>
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-2.5 w-20 mt-1.5" />
-                </>
-              )}
-              <TrendRow values={marketSeries.fx} />
+            <div className="mt-3">
+              <div className="min-w-0">
+                {widgets?.fx?.usdVnd ? (
+                  <>
+                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.fx.usdVnd} format={fmtVnd} /></p>
+                    <p className="text-[10px] text-slate-500 truncate">Tỷ giá 1 USD</p>
+                  </>
+                ) : (
+                  <>
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-2.5 w-20 mt-1.5" />
+                  </>
+                )}
+              </div>
+              <div className="w-full mt-1"><TrendRow values={marketSeries.fx} /></div>
             </div>
           </div>
+
+          {/* Card 1: My Remaining Tasks */}
+          <motion.div
+            {...fadeUp(0.18)}
+            whileHover={reduceMotion ? undefined : { y: -4 }}
+            onClick={() => onNavigate("tasks")}
+            className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
+            id="stat-my-tasks"
+          >
+            <ShimmerLine via="via-sky-500/50" />
+            <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-sky-500/10 blur-2xl group-hover:bg-sky-500/20 transition-colors duration-500" />
+            <div className="relative flex items-center justify-between">
+              <span className="text-slate-400 text-xs font-medium">Task của tôi</span>
+              <div className="bg-gradient-to-br from-sky-500/25 to-sky-500/5 ring-1 ring-sky-500/20 p-2 rounded-xl text-sky-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                <CheckSquare className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="relative mt-3">
+              <span className="text-2xl font-bold text-slate-100 tabular-nums">{myRemainingTasks.length}</span>
+              <p className="text-slate-500 text-xs mt-1">Đang cần giải quyết</p>
+            </div>
+          </motion.div>
+
+          {/* Card 2: Urgent Tasks */}
+          <motion.div
+            {...fadeUp(0.23)}
+            whileHover={reduceMotion ? undefined : { y: -4 }}
+            onClick={() => onNavigate("tasks")}
+            className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
+            id="stat-urgent-tasks"
+          >
+            <ShimmerLine via="via-rose-500/50" />
+            <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-rose-500/10 blur-2xl group-hover:bg-rose-500/20 transition-colors duration-500" />
+            <div className="relative flex items-center justify-between">
+              <span className="text-slate-400 text-xs font-medium">Nhiệm vụ khẩn cấp</span>
+              <div className="bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 p-2 rounded-xl text-rose-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                <AlertCircle className={`w-5 h-5 ${urgentTasksCount > 0 && !reduceMotion ? "animate-bounce" : ""}`} />
+              </div>
+            </div>
+            <div className="relative mt-3">
+              <span className="text-2xl font-bold text-rose-400 tabular-nums">{urgentTasksCount}</span>
+              <p className="text-slate-500 text-xs mt-1">Mức ưu tiên cao</p>
+            </div>
+          </motion.div>
+
+          {/* Card 3: Cash balance this month */}
+          <motion.div
+            {...fadeUp(0.28)}
+            whileHover={reduceMotion ? undefined : { y: -4 }}
+            onClick={() => onNavigate("finance")}
+            className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
+            id="stat-monthly-balance"
+          >
+            <ShimmerLine via={balancePositive ? "via-emerald-500/50" : "via-rose-500/50"} />
+            <div aria-hidden className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl transition-colors duration-500 ${balancePositive ? "bg-emerald-500/10 group-hover:bg-emerald-500/20" : "bg-rose-500/10 group-hover:bg-rose-500/20"}`} />
+            <div className="relative flex items-center justify-between">
+              <span className="text-slate-400 text-xs font-medium">Số dư tháng này</span>
+              <div className={`p-2 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ${balancePositive ? "bg-gradient-to-br from-emerald-500/25 to-emerald-500/5 ring-1 ring-emerald-500/20 text-emerald-400" : "bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 text-rose-400"}`}>
+                <Wallet className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="relative mt-3">
+              <span className={`text-lg md:text-xl font-bold tabular-nums ${balancePositive ? "text-emerald-400" : "text-rose-400"}`}>
+                {financialSummary.balance.toLocaleString()}đ
+              </span>
+              <p className="text-slate-500 text-xs mt-1">Thu nhập trừ chi tiêu</p>
+            </div>
+          </motion.div>
+
+          {/* Card 4: Upcoming Schedule */}
+          <motion.div
+            {...fadeUp(0.33)}
+            whileHover={reduceMotion ? undefined : { y: -4 }}
+            onClick={() => onNavigate("plans")}
+            className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
+            id="stat-schedules"
+          >
+            <ShimmerLine via="via-amber-500/50" />
+            <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-amber-500/10 blur-2xl group-hover:bg-amber-500/20 transition-colors duration-500" />
+            <div className="relative flex items-center justify-between">
+              <span className="text-slate-400 text-xs font-medium">Lịch 20 ngày tới</span>
+              <div className="bg-gradient-to-br from-amber-500/25 to-amber-500/5 ring-1 ring-amber-500/20 p-2 rounded-xl text-amber-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                <Calendar className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="relative mt-3">
+              <span className="text-2xl font-bold text-slate-100 tabular-nums">{upcomingPlans.length}</span>
+              <p className="text-slate-500 text-xs mt-1">Sự kiện/Lịch trình</p>
+            </div>
+          </motion.div>
         </div>
       </motion.div>
-
-      {/* Main Stats Row — glass cards with an accent glow that answers hover */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6" id="dashboard-stats">
-        {/* Card 1: My Remaining Tasks */}
-        <motion.div
-          {...fadeUp(0.18)}
-          whileHover={reduceMotion ? undefined : { y: -4 }}
-          onClick={() => onNavigate("tasks")}
-          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
-          id="stat-my-tasks"
-        >
-          <ShimmerLine via="via-sky-500/50" />
-          <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-sky-500/10 blur-2xl group-hover:bg-sky-500/20 transition-colors duration-500" />
-          <div className="relative flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-medium">Task của tôi</span>
-            <div className="bg-gradient-to-br from-sky-500/25 to-sky-500/5 ring-1 ring-sky-500/20 p-2 rounded-xl text-sky-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-              <CheckSquare className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="relative mt-4">
-            <span className="text-2xl md:text-3xl font-bold text-slate-100 tabular-nums">{myRemainingTasks.length}</span>
-            <p className="text-slate-500 text-xs mt-1">Đang cần giải quyết</p>
-          </div>
-        </motion.div>
-
-        {/* Card 2: Urgent Tasks */}
-        <motion.div
-          {...fadeUp(0.23)}
-          whileHover={reduceMotion ? undefined : { y: -4 }}
-          onClick={() => onNavigate("tasks")}
-          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
-          id="stat-urgent-tasks"
-        >
-          <ShimmerLine via="via-rose-500/50" />
-          <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-rose-500/10 blur-2xl group-hover:bg-rose-500/20 transition-colors duration-500" />
-          <div className="relative flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-medium">Nhiệm vụ khẩn cấp</span>
-            <div className="bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 p-2 rounded-xl text-rose-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-              <AlertCircle className={`w-5 h-5 ${urgentTasksCount > 0 && !reduceMotion ? "animate-bounce" : ""}`} />
-            </div>
-          </div>
-          <div className="relative mt-4">
-            <span className="text-2xl md:text-3xl font-bold text-rose-400 tabular-nums">{urgentTasksCount}</span>
-            <p className="text-slate-500 text-xs mt-1">Mức ưu tiên cao</p>
-          </div>
-        </motion.div>
-
-        {/* Card 3: Cash balance this month */}
-        <motion.div
-          {...fadeUp(0.28)}
-          whileHover={reduceMotion ? undefined : { y: -4 }}
-          onClick={() => onNavigate("finance")}
-          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
-          id="stat-monthly-balance"
-        >
-          <ShimmerLine via={balancePositive ? "via-emerald-500/50" : "via-rose-500/50"} />
-          <div aria-hidden className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl transition-colors duration-500 ${balancePositive ? "bg-emerald-500/10 group-hover:bg-emerald-500/20" : "bg-rose-500/10 group-hover:bg-rose-500/20"}`} />
-          <div className="relative flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-medium">Số dư tháng này</span>
-            <div className={`p-2 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ${balancePositive ? "bg-gradient-to-br from-emerald-500/25 to-emerald-500/5 ring-1 ring-emerald-500/20 text-emerald-400" : "bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 text-rose-400"}`}>
-              <Wallet className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="relative mt-4">
-            <span className={`text-xl md:text-2xl font-bold tabular-nums ${balancePositive ? "text-emerald-400" : "text-rose-400"}`}>
-              {financialSummary.balance.toLocaleString()}đ
-            </span>
-            <p className="text-slate-500 text-xs mt-1">Thu nhập trừ chi tiêu</p>
-          </div>
-        </motion.div>
-
-        {/* Card 4: Upcoming Schedule */}
-        <motion.div
-          {...fadeUp(0.33)}
-          whileHover={reduceMotion ? undefined : { y: -4 }}
-          onClick={() => onNavigate("plans")}
-          className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
-          id="stat-schedules"
-        >
-          <ShimmerLine via="via-amber-500/50" />
-          <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-amber-500/10 blur-2xl group-hover:bg-amber-500/20 transition-colors duration-500" />
-          <div className="relative flex items-center justify-between">
-            <span className="text-slate-400 text-xs font-medium">Lịch 20 ngày tới</span>
-            <div className="bg-gradient-to-br from-amber-500/25 to-amber-500/5 ring-1 ring-amber-500/20 p-2 rounded-xl text-amber-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-              <Calendar className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="relative mt-4">
-            <span className="text-2xl md:text-3xl font-bold text-slate-100 tabular-nums">{upcomingPlans.length}</span>
-            <p className="text-slate-500 text-xs mt-1">Sự kiện/Lịch trình</p>
-          </div>
-        </motion.div>
-      </div>
 
       {/* Main Dashboard Bento Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" id="dashboard-grid">
@@ -1039,7 +1089,7 @@ export function Dashboard({
               </h3>
               <div className="space-y-2.5">
                 {upcomingBirthdays.map(b => (
-                  <div key={b.user.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all duration-300 hover:translate-x-1 ${b.daysUntil === 0 ? "bg-gradient-to-r from-pink-500/10 to-fuchsia-500/5 border-pink-500/20" : "bg-slate-950/60 border-slate-800/60 hover:bg-slate-800/30"}`}>
+                  <div key={b.user.id} className={`flex items-center justify-between p-3 rounded-xl neu-pressed-sm transition-all duration-300 hover:translate-x-1 ${b.daysUntil === 0 ? "bg-gradient-to-r from-pink-500/12 to-fuchsia-500/5" : "bg-slate-950/40 hover:bg-slate-800/30"}`}>
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar user={b.user} className="w-9 h-9 rounded-xl text-sm" extraClass="shrink-0" />
                       <div className="min-w-0">
@@ -1096,9 +1146,12 @@ export function Dashboard({
                           <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/10 text-yellow-400 rounded border border-yellow-500/10">Pinned</span>
                         </div>
                         <h4 className="text-xs font-bold text-slate-200 group-hover:text-sky-400 transition-colors line-clamp-1">{note.title}</h4>
-                        <p className="text-[11px] text-slate-500 line-clamp-4 leading-relaxed font-sans">
-                          {note.content.replace(/[#*`\-]/g, "")}
-                        </p>
+                        <div className="relative max-h-[4.75rem] overflow-hidden [&>div]:text-[11px] [&_*]:!mt-0 [&_*]:!mb-0 [&>div>*+*]:!mt-1">
+                          <Suspense fallback={<MarkdownFallback />}>
+                            <MarkdownView content={note.content} />
+                          </Suspense>
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-slate-950 to-transparent" />
+                        </div>
                       </div>
                       <div className="pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500">
                         <span>{creator ? creator.fullName.split(" ")[0] : "Thành viên"}</span>
@@ -1173,6 +1226,40 @@ export function Dashboard({
                 </div>
               </div>
             </div>
+
+            {/* Top 3 hạng mục tiêu dùng đứng đầu trong tháng */}
+            {topExpenseCategories.length > 0 && (
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400">
+                  <TrendingDown className="w-3.5 h-3.5 text-rose-400" /> Top hạng mục tiêu dùng
+                </div>
+                <div className="space-y-2">
+                  {topExpenseCategories.map(({ category, amount, pct }, i) => {
+                    const meta = expenseCatMeta(category);
+                    return (
+                      <div key={category} className="space-y-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="flex items-center gap-1.5 text-slate-300 font-medium truncate">
+                            <span className="text-slate-500 font-mono text-[10px] w-3.5 shrink-0">{i + 1}.</span>
+                            <span className="shrink-0">{meta.emoji}</span>
+                            <span className="truncate">{meta.label}</span>
+                          </span>
+                          <span className="font-mono text-slate-200 shrink-0 pl-2">{amount.toLocaleString()}đ</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${Math.max(4, pct)}%` }}
+                            transition={reduceMotion ? { duration: 0 } : { duration: 0.9, delay: 0.5 + i * 0.1, ease: "easeOut" }}
+                            className={`h-full bg-gradient-to-r ${meta.bar}`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Activity Logs inside family */}

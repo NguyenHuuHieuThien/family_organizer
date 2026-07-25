@@ -1749,7 +1749,7 @@ export default function App() {
         {/* TOP COMPONENT APP BAR HEADER */}
         <header className="shrink-0 sticky top-0 border-b border-slate-850 bg-slate-900/80 backdrop-blur-md px-5 pb-3.5 pt-[calc(env(safe-area-inset-top)_+_0.875rem)] flex items-center justify-between z-30">
           
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-4 min-w-0">
             {/* Mobile menu trigger */}
             <button
               onClick={() => setMobileMenuOpen(true)}
@@ -1758,7 +1758,7 @@ export default function App() {
               <Menu className="w-4.5 h-4.5" />
             </button>
 
-            {/* SSE replication indicators */}
+            {/* SSE replication indicators — bản đầy đủ (chữ) từ sm trở lên */}
             <div className="hidden sm:flex items-center gap-2 bg-slate-950 p-2 neu-pressed-sm rounded-xl text-[10px] text-slate-400">
               {isOnline ? (
                 <>
@@ -1770,6 +1770,25 @@ export default function App() {
                   <AlertCircle className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
                   <span>Đồng bộ: <span className="text-rose-400 font-bold">Mất kết nối</span></span>
                 </>
+              )}
+            </div>
+
+            {/* SSE replication indicators — mobile chỉ hiện icon trạng thái đồng bộ (nổi lên) */}
+            <div
+              className={`sm:hidden flex items-center justify-center p-2 bg-slate-950 neu-btn rounded-xl leading-none transition-shadow ${isOnline ? "text-emerald-400 shadow-[0_0_10px_-2px] shadow-emerald-500/40" : "text-rose-400"}`}
+              title={isOnline ? "Đồng bộ: Đang kết nối" : "Đồng bộ: Mất kết nối"}
+              aria-label={isOnline ? "Đồng bộ: Đang kết nối" : "Đồng bộ: Mất kết nối"}
+            >
+              {isOnline ? (
+                <span className="relative flex items-center justify-center">
+                  <Wifi className="w-4.5 h-4.5 animate-pulse" />
+                  <span className="absolute -top-1 -right-1 flex w-2 h-2">
+                    <span className="absolute inline-flex w-full h-full rounded-full bg-emerald-400 opacity-70 animate-ping" />
+                    <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-400 ring-2 ring-slate-950" />
+                  </span>
+                </span>
+              ) : (
+                <AlertCircle className="w-4.5 h-4.5 animate-bounce" />
               )}
             </div>
           </div>
@@ -2105,6 +2124,21 @@ export default function App() {
 
             {/* Sidebar logout */}
             <div className="shrink-0 space-y-4 pt-4 border-t border-slate-850">
+              {/* SSE replication indicators — mobile hiển thị ngay trên phần thông tin user, canh khớp nút cài PWA */}
+              <div className="w-full flex items-center gap-2 bg-slate-950 px-3 py-2.5 neu-pressed-sm rounded-xl text-[10px] text-slate-400">
+                {isOnline ? (
+                  <>
+                    <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0" />
+                    <span>Đồng bộ: <span className="text-emerald-400 font-bold">Đang kết nối</span></span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-400 animate-bounce shrink-0" />
+                    <span>Đồng bộ: <span className="text-rose-400 font-bold">Mất kết nối</span></span>
+                  </>
+                )}
+              </div>
+
               {/* PWA: nút cài app — đặt trên avatar, không còn nổi đè lên nút thêm nhanh */}
               {installPrompt && (
                 <button

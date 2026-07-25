@@ -372,9 +372,12 @@ export function Notes({
                           <h4 className="text-sm font-bold text-slate-100 line-clamp-1 group-hover:text-sky-400 transition-colors">{note.title}</h4>
                           <span className="shrink-0 text-[10px] px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-semibold rounded-lg">Đã ghim</span>
                         </div>
-                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed font-sans">
-                          {note.content.replace(/[#*`\-]/g, "")}
-                        </p>
+                        <div className="relative max-h-[4.75rem] overflow-hidden [&>div]:text-[11px] [&_*]:!mt-0 [&_*]:!mb-0 [&>div>*+*]:!mt-1">
+                          <Suspense fallback={<MarkdownFallback />}>
+                            <MarkdownView content={note.content} />
+                          </Suspense>
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-slate-900 to-transparent" />
+                        </div>
                       </div>
 
                       <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-sans">
@@ -442,9 +445,12 @@ export function Notes({
                             {note.isShared ? "Chung" : "Riêng"}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 line-clamp-3 leading-relaxed font-sans">
-                          {note.content.replace(/[#*`\-]/g, "")}
-                        </p>
+                        <div className="relative max-h-[4.75rem] overflow-hidden [&>div]:text-[11px] [&_*]:!mt-0 [&_*]:!mb-0 [&>div>*+*]:!mt-1">
+                          <Suspense fallback={<MarkdownFallback />}>
+                            <MarkdownView content={note.content} />
+                          </Suspense>
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-5 bg-gradient-to-t from-slate-900 to-transparent" />
+                        </div>
                       </div>
 
                       <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-sans">

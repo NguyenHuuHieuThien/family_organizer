@@ -847,7 +847,7 @@ export function Settings({
             onClick={() => { setActiveTab("backups"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "backups" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
-            <Database className="w-4 h-4 text-amber-400" /> Lưu trữ & Sao lưu tệp
+            <Database className="w-4 h-4 text-amber-400" /> Hệ thống & Sao lưu
           </button>
           <button
             onClick={() => { setActiveTab("logs"); setActionSuccess(""); setActionError(""); }}
@@ -1003,7 +1003,7 @@ export function Settings({
           </form>
 
           {/* Địa phương thời tiết (lưu riêng từng người trên máy này) */}
-          <div className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 space-y-3 max-w-md">
+          <div className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-3 max-w-md">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <MapPin className="w-4.5 h-4.5 text-sky-400" /> Địa phương xem thời tiết
             </h3>
@@ -1022,7 +1022,7 @@ export function Settings({
           </div>
 
           {/* Change password */}
-          <form onSubmit={handleChangePasswordSubmit} className="bg-slate-950 p-4.5 rounded-2xl border border-slate-800 space-y-3.5 max-w-md">
+          <form onSubmit={handleChangePasswordSubmit} className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-3.5 max-w-md">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <KeyRound className="w-4.5 h-4.5 text-amber-400" /> Đổi mật khẩu
             </h3>
@@ -1695,7 +1695,7 @@ export function Settings({
       )}
 
       {/* AI (Gemini) API key — admin configurable, no .env editing needed */}
-      {currentUser.role === UserRole.ADMIN && (
+      {activeTab === "backups" && currentUser.role === UserRole.ADMIN && (
         <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
           <div className="space-y-0.5">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -1742,7 +1742,7 @@ export function Settings({
       )}
 
       {/* Backup tự động qua Telegram — bản sao offsite hằng đêm, admin only */}
-      {currentUser.role === UserRole.ADMIN && (
+      {activeTab === "backups" && currentUser.role === UserRole.ADMIN && (
         <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="space-y-0.5">
@@ -1860,7 +1860,7 @@ export function Settings({
       )}
 
       {/* Đăng ký lịch gia đình vào app Lịch (ICS subscribe) — mọi thành viên */}
-      {icsUrl && (
+      {activeTab === "backups" && icsUrl && (
         <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
           <div className="space-y-0.5">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
@@ -1891,6 +1891,7 @@ export function Settings({
       )}
 
       {/* Version & self-update */}
+      {activeTab === "backups" && (
       <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-0.5">
@@ -1971,6 +1972,7 @@ export function Settings({
           </div>
         )}
       </div>
+      )}
 
       {/* In-app confirmation dialog */}
       {ConfirmDialog}
