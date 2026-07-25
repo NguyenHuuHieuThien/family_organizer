@@ -7,6 +7,7 @@ import { useState, useRef, useEffect, useCallback, type ReactNode } from "react"
 import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 export interface SelectOption {
   value: string;
@@ -40,11 +41,13 @@ export function FancySelect({
   onChange,
   options,
   className = "",
-  placeholder = "Chọn...",
+  placeholder,
   id,
   ariaLabel,
   leading
 }: FancySelectProps) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t("common.select");
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [pos, setPos] = useState<{ left: number; top: number; width: number; openUp: boolean } | null>(null);
@@ -150,7 +153,7 @@ export function FancySelect({
         <span className="flex items-center gap-2 min-w-0">
           {leading ?? selected?.leading}
           <span className={`truncate ${selected ? "text-slate-200" : "text-slate-500"}`}>
-            {selected ? selected.label : placeholder}
+            {selected ? selected.label : resolvedPlaceholder}
           </span>
         </span>
         <ChevronDown className={`w-4 h-4 shrink-0 text-slate-500 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />

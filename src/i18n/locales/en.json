@@ -5,7 +5,8 @@
     "close": "Close",
     "delete": "Delete",
     "edit": "Edit",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "select": "Select..."
   },
   "language": {
     "name": "Language",
