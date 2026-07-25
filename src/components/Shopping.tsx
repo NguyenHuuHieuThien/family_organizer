@@ -12,9 +12,7 @@ import { useTabFab } from "./FabHost.js";
 import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { generateMealPlan, FOOD_CATEGORY_ORDER, GroceryLine, FoodCategory } from "../utils/mealPlan.js";
 import { classifyMarketZone, MARKET_ZONE_ORDER, MARKET_ZONE_META, MarketZone } from "../utils/marketZones.js";
-
-const WEEKDAYS = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
-const dayLabel = (i: number) => (i < WEEKDAYS.length ? WEEKDAYS[i] : `Ngày ${i + 1}`);
+import { useTranslation } from "react-i18next";
 
 // Ghi chú "dùng ở buổi nào / cho món nào" (đầy đủ chữ) cho một nguyên liệu.
 function groceryNote(g: { meals?: string[]; dishes?: string[] }): string {
@@ -27,15 +25,20 @@ function groceryNote(g: { meals?: string[]; dishes?: string[] }): string {
 
 // Weekly menu table.
 function MealTable({ days }: { days: { day: number; meals: { meal: string; dishes: string[] }[] }[] }) {
+  const { t } = useTranslation();
+  const dayLabel = (i: number) => {
+    const weekdays = t("shopping.weekdays", { returnObjects: true }) as string[];
+    return i < weekdays.length ? weekdays[i] : t("shopping.dayLabel", { n: i + 1 });
+  };
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-800">
       <table className="w-full text-[11px] border-collapse">
         <thead>
           <tr>
-            <th className="bg-slate-950 px-2 py-1.5 text-left font-bold text-slate-400 border-b border-slate-800 sticky left-0">Ngày</th>
-            <th className="bg-slate-950 px-2 py-1.5 font-bold text-amber-400 border-b border-l border-slate-800">Sáng</th>
-            <th className="bg-slate-950 px-2 py-1.5 font-bold text-emerald-400 border-b border-l border-slate-800">Trưa</th>
-            <th className="bg-slate-950 px-2 py-1.5 font-bold text-sky-400 border-b border-l border-slate-800">Tối</th>
+            <th className="bg-slate-950 px-2 py-1.5 text-left font-bold text-slate-400 border-b border-slate-800 sticky left-0">{t("shopping.tableDay")}</th>
+            <th className="bg-slate-950 px-2 py-1.5 font-bold text-amber-400 border-b border-l border-slate-800">{t("shopping.mealMorning")}</th>
+            <th className="bg-slate-950 px-2 py-1.5 font-bold text-emerald-400 border-b border-l border-slate-800">{t("shopping.mealNoon")}</th>
+            <th className="bg-slate-950 px-2 py-1.5 font-bold text-sky-400 border-b border-l border-slate-800">{t("shopping.mealEvening")}</th>
           </tr>
         </thead>
         <tbody>
@@ -79,6 +82,7 @@ export function Shopping({
   onClearAll,
   authHeaders
 }: ShoppingProps) {
+  const { t } = useTranslation();
   const { confirm, ConfirmDialog } = useConfirm();
   const [name, setName] = useState("");
   const [quantity, setQuantity] = useState("");
@@ -91,7 +95,7 @@ export function Shopping({
     nameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     nameInputRef.current?.focus();
   };
-  useTabFab({ id: "shopping", color: "emerald", title: "Thêm món cần mua", icon: ShoppingCart, onClick: focusAddItem });
+  useTabFab({ id: "shopping", color: "emerald", title: t("shopping.fabAdd"), icon: ShoppingCart, onClick: focusAddItem });
 
   // ===== Thực đơn tuần (gắn ngay trên trang, lưu chung trong CSDL) =====
   const isChildUser = (u: User) => {
@@ -182,7 +186,7 @@ export function Shopping({
         signal: controller.signal
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Không tạo được thực đơn.");
+      if (!res.ok) throw new Error(data.error || t("shopping.errorGenerate"));
       setWeekPlan({
         days: data.days,
         groceries: data.groceries,
@@ -204,11 +208,11 @@ export function Shopping({
           updatedAt: new Date().toISOString(), updatedById: currentUser.id
         });
         setExcluded(new Set());
-        setPlanError("Dùng bộ món mẫu (không kết nối được máy chủ): " + (err?.message || ""));
+        setPlanError(t("shopping.errorOfflineTemplate", { msg: err?.message || "" }));
       } else if (err?.name === "AbortError") {
-        setPlanError("AI phản hồi quá lâu (có thể đang quá tải). Hãy giảm số ngày rồi thử lại, hoặc dùng \"Đổi thực đơn\".");
+        setPlanError(t("shopping.errorAiTimeout"));
       } else {
-        setPlanError(err.message || "Không tạo được thực đơn AI.");
+        setPlanError(err.message || t("shopping.errorGenerateAi"));
       }
     } finally {
       clearTimeout(timer);
@@ -237,7 +241,7 @@ export function Shopping({
       }
       setAddedCount(toAdd.length);
     } catch (err: any) {
-      setPlanError(err.message || "Không thêm được vào danh sách.");
+      setPlanError(err.message || t("shopping.errorAddToList"));
     } finally {
       setPlanBusy("");
     }
@@ -280,7 +284,7 @@ export function Shopping({
     e.preventDefault();
     setError("");
     if (!name.trim()) {
-      setError("Nhập tên món cần mua!");
+      setError(t("shopping.errorNameRequired"));
       return;
     }
     setAdding(true);
@@ -289,7 +293,7 @@ export function Shopping({
       setName("");
       setQuantity("");
     } catch (err: any) {
-      setError(err.message || "Không thêm được món này");
+      setError(err.message || t("shopping.errorAddFailed"));
     } finally {
       setAdding(false);
     }
@@ -297,9 +301,9 @@ export function Shopping({
 
   const handleClearPurchased = async () => {
     const ok = await confirm({
-      title: "Xóa các món đã mua?",
-      message: `${purchased.length} món đã đánh dấu hoàn thành sẽ bị xóa khỏi danh sách đi chợ.`,
-      confirmLabel: "Xóa hết đã mua",
+      title: t("shopping.clearPurchasedTitle"),
+      message: t("shopping.clearPurchasedMsg", { n: purchased.length }),
+      confirmLabel: t("shopping.clearPurchasedConfirm"),
       tone: "danger"
     });
     if (ok) await onClearPurchased();
@@ -307,9 +311,9 @@ export function Shopping({
 
   const handleClearAll = async () => {
     const ok = await confirm({
-      title: "Xóa tất cả món đi chợ?",
-      message: `Toàn bộ ${shoppingItems.length} món (cả chưa mua và đã mua) sẽ bị xóa khỏi danh sách. Không thể hoàn tác.`,
-      confirmLabel: "Xóa tất cả",
+      title: t("shopping.clearAllConfirmTitle"),
+      message: t("shopping.clearAllMsg", { n: shoppingItems.length }),
+      confirmLabel: t("shopping.clearAll"),
       tone: "danger"
     });
     if (ok) await onClearAll();
@@ -329,7 +333,7 @@ export function Shopping({
         <button
           onClick={() => onToggleItem(item.id)}
           className={`shrink-0 transition-all cursor-pointer ${done ? "text-emerald-400" : "text-slate-500 hover:text-emerald-400"}`}
-          title={done ? "Bỏ đánh dấu" : "Đánh dấu đã mua"}
+          title={done ? t("shopping.unmarkDone") : t("shopping.markDone")}
         >
           {done ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
         </button>
@@ -345,7 +349,7 @@ export function Shopping({
             </p>
           )}
           <p className="text-[10px] text-slate-500">
-            {creator ? creator.fullName.split(" ").slice(-1)[0] : "Thành viên"} thêm
+            {t("shopping.addedBy", { name: creator ? creator.fullName.split(" ").slice(-1)[0] : t("shopping.memberFallback") })}
           </p>
         </div>
 
@@ -353,7 +357,7 @@ export function Shopping({
           <button
             onClick={() => onDeleteItem(item.id)}
             className="shrink-0 p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-            title="Xóa món này"
+            title={t("shopping.deleteItem")}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -368,20 +372,20 @@ export function Shopping({
       <Reveal className="relative overflow-hidden bg-slate-900 neu-raised p-4.5 rounded-2xl shadow-xl space-y-3" id="shopping-add">
         <ShimmerLine accent="emerald" />
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-          <IconChip accent="emerald"><ShoppingCart className="w-4 h-4" /></IconChip> Danh sách đi chợ chung
+          <IconChip accent="emerald"><ShoppingCart className="w-4 h-4" /></IconChip> {t("shopping.listTitle")}
         </h3>
         <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2.5">
           <input
             ref={nameInputRef}
             type="text"
-            placeholder="Tên món cần mua (vd: Sữa tươi, Rau cải...)"
+            placeholder={t("shopping.namePlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="flex-1 bg-slate-950 neu-pressed-sm focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
           />
           <input
             type="text"
-            placeholder="Số lượng (tùy chọn)"
+            placeholder={t("shopping.qtyPlaceholder")}
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             className="sm:w-40 bg-slate-950 neu-pressed-sm focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
@@ -391,7 +395,7 @@ export function Shopping({
             disabled={adding}
             className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
           >
-            <Plus className="w-4 h-4" /> Thêm
+            <Plus className="w-4 h-4" /> {t("shopping.add")}
           </button>
         </form>
         {error && <p className="text-rose-400 text-[11px] font-medium">{error}</p>}
@@ -401,27 +405,27 @@ export function Shopping({
       <Reveal delay={0.06} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4.5 space-y-3 text-xs" id="shopping-weekly-menu">
         <ShimmerLine accent="violet" />
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-          <IconChip accent="violet"><ChefHat className="w-4 h-4" /></IconChip> Thực đơn tuần
+          <IconChip accent="violet"><ChefHat className="w-4 h-4" /></IconChip> {t("shopping.weekPlanTitle")}
         </h3>
 
         {/* Khẩu phần */}
         <div className="grid grid-cols-3 gap-2.5">
           <label className="space-y-1">
-            <span className="text-slate-400 font-semibold block">Người lớn</span>
+            <span className="text-slate-400 font-semibold block">{t("shopping.adults")}</span>
             <input type="text" inputMode="numeric" value={adultsInput}
               onChange={(e) => setAdultsInput(sanitizeInt(e.target.value).slice(0, 2))}
               onBlur={() => setAdultsInput(String(clampInt(adultsInput, 0, 10, householdDefaults.adults)))}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
           </label>
           <label className="space-y-1">
-            <span className="text-slate-400 font-semibold block">Trẻ em</span>
+            <span className="text-slate-400 font-semibold block">{t("shopping.children")}</span>
             <input type="text" inputMode="numeric" value={childrenInput}
               onChange={(e) => setChildrenInput(sanitizeInt(e.target.value).slice(0, 2))}
               onBlur={() => setChildrenInput(String(clampInt(childrenInput, 0, 10, householdDefaults.children)))}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
           </label>
           <label className="space-y-1">
-            <span className="text-slate-400 font-semibold block">Số ngày</span>
+            <span className="text-slate-400 font-semibold block">{t("shopping.daysCount")}</span>
             <input type="text" inputMode="numeric" value={daysInput}
               onChange={(e) => setDaysInput(sanitizeInt(e.target.value).slice(0, 1))}
               onBlur={() => setDaysInput(String(clampInt(daysInput, 1, 7, 7)))}
@@ -432,9 +436,9 @@ export function Shopping({
         {/* Lưu ý cho AI */}
         {aiEnabled && (
           <label className="space-y-1 block">
-            <span className="text-slate-400 font-semibold block">Lưu ý cho AI (dị ứng, kiêng khem, ngân sách, sở thích…)</span>
+            <span className="text-slate-400 font-semibold block">{t("shopping.aiNotesLabel")}</span>
             <textarea value={planNotes} onChange={(e) => setPlanNotes(e.target.value)} rows={2}
-              placeholder="VD: bé út dị ứng hải sản, hạn chế đồ chiên, ưu tiên món rẻ…"
+              placeholder={t("shopping.aiNotesPlaceholder")}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 resize-none" />
           </label>
         )}
@@ -443,13 +447,13 @@ export function Shopping({
           <button type="button" onClick={() => regenerate("random")} disabled={planBusy !== ""}
             className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all">
             {planBusy === "random" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shuffle className="w-4 h-4" />}
-            {planBusy === "random" ? "Đang lên thực đơn…" : (weekPlan ? "Đổi thực đơn" : "Tạo thực đơn")}
+            {planBusy === "random" ? t("shopping.generating") : (weekPlan ? t("shopping.regenerate") : t("shopping.generate"))}
           </button>
           {aiEnabled && (
             <button type="button" onClick={() => regenerate("ai")} disabled={planBusy !== ""}
               className="flex-1 bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-slate-950 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all">
               {planBusy === "ai" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              {planBusy === "ai" ? "Đang nghĩ thực đơn…" : "Tạo bằng AI"}
+              {planBusy === "ai" ? t("shopping.aiGenerating") : t("shopping.generateAi")}
             </button>
           )}
         </div>
@@ -462,11 +466,11 @@ export function Shopping({
           <div className="space-y-4">
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${weekPlan.source === "ai" ? "bg-violet-500/10 border-violet-500/20 text-violet-300" : weekPlan.source === "random" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300" : "bg-slate-800 border-slate-700 text-slate-300"}`}>
-                {weekPlan.source === "ai" ? "✨ AI" : weekPlan.source === "random" ? "🎲 Ngẫu nhiên" : "Mẫu cân bằng"}
+                {weekPlan.source === "ai" ? t("shopping.sourceAi") : weekPlan.source === "random" ? t("shopping.sourceRandom") : t("shopping.sourceTemplate")}
               </span>
-              <span className="text-slate-500">{weekPlan.days.length} ngày · {weekPlan.adults} người lớn, {weekPlan.children} trẻ em</span>
+              <span className="text-slate-500">{t("shopping.planSummary", { days: weekPlan.days.length, adults: weekPlan.adults, children: weekPlan.children })}</span>
               {weekPlan.source === "ai" && aiLearned !== null && aiLearned > 0 && (
-                <span className="text-[10px] text-violet-300/80">+{aiLearned} món mới đã lưu để xoay vòng</span>
+                <span className="text-[10px] text-violet-300/80">{t("shopping.aiLearned", { n: aiLearned })}</span>
               )}
             </div>
 
@@ -474,7 +478,7 @@ export function Shopping({
 
             {/* Danh sách nguyên liệu gộp — tick chọn rồi thêm vào giỏ */}
             <div className="space-y-2">
-              <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">Nguyên liệu cần mua ({selectedCount}/{weekPlan.groceries.length})</p>
+              <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">{t("shopping.groceriesTitle", { selected: selectedCount, total: weekPlan.groceries.length })}</p>
               {groceryByCat.map(group => (
                 <div key={group.cat} className="space-y-1">
                   <p className="text-[10px] font-bold text-slate-500 uppercase">{group.cat}</p>
@@ -509,7 +513,7 @@ export function Shopping({
             <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
               {addedCount !== null && (
                 <span className="text-[11px] text-emerald-400 flex items-center gap-1 mr-auto">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> {addedCount > 0 ? `Đã thêm ${addedCount} món vào đi chợ` : "Các món đã có sẵn trong danh sách"}
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {addedCount > 0 ? t("shopping.addedToList", { n: addedCount }) : t("shopping.allInList")}
                 </span>
               )}
               <button
@@ -519,13 +523,13 @@ export function Shopping({
                 className="w-full sm:w-auto sm:ml-auto bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all"
               >
                 {planBusy === "add" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                Thêm {selectedCount} món vào giỏ
+                {t("shopping.addToCart", { n: selectedCount })}
               </button>
             </div>
           </div>
         ) : (
           <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-xl py-6 text-center">
-            <p className="text-sm text-slate-500">Chưa có thực đơn tuần. Bấm <span className="text-emerald-400 font-semibold">"Tạo thực đơn"</span> để bốc ngẫu nhiên từ thư viện món.</p>
+            <p className="text-sm text-slate-500">{t("shopping.emptyPlanPrefix")} <span className="text-emerald-400 font-semibold">"{t("shopping.generate")}"</span> {t("shopping.emptyPlanSuffix")}</p>
           </div>
         )}
       </Reveal>
@@ -535,24 +539,24 @@ export function Shopping({
         <ShimmerLine accent="emerald" />
         <div className="flex items-center justify-between">
           <div>
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cần mua ({pending.length})</h4>
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("shopping.pendingTitle", { n: pending.length })}</h4>
             {pending.length > 0 && (
-              <p className="text-[10px] text-slate-500 mt-0.5">Đã gom theo khu quầy — đi từng khu là mua đủ, khỏi chạy tới lui.</p>
+              <p className="text-[10px] text-slate-500 mt-0.5">{t("shopping.pendingZoneHint")}</p>
             )}
           </div>
           {shoppingItems.length > 0 && (
             <button
               onClick={handleClearAll}
               className="text-[11px] text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors cursor-pointer shrink-0"
-              title="Xóa toàn bộ danh sách đi chợ"
+              title={t("shopping.clearAllTitle")}
             >
-              <Trash2 className="w-3.5 h-3.5" /> Xóa tất cả
+              <Trash2 className="w-3.5 h-3.5" /> {t("shopping.clearAll")}
             </button>
           )}
         </div>
         {pending.length === 0 ? (
           <div className="bg-slate-950/40 border border-dashed border-slate-800 rounded-xl py-8 text-center">
-            <p className="text-sm text-slate-500">Danh sách đi chợ đang trống. Thêm món cần mua ở trên nhé!</p>
+            <p className="text-sm text-slate-500">{t("shopping.emptyList")}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -581,12 +585,12 @@ export function Shopping({
         <Reveal delay={0.18} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-3" id="shopping-purchased">
           <ShimmerLine accent="sky" />
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Đã mua ({purchased.length})</h4>
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("shopping.purchasedTitle", { n: purchased.length })}</h4>
             <button
               onClick={handleClearPurchased}
               className="text-[11px] text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <Eraser className="w-3.5 h-3.5" /> Dọn các món đã mua
+              <Eraser className="w-3.5 h-3.5" /> {t("shopping.clearPurchased")}
             </button>
           </div>
           <div className="space-y-2">
