@@ -1629,7 +1629,7 @@ export default function App() {
 
   // Not logged in -> Show portal page
   if (!currentUser) {
-    return <Auth onLoginSuccess={handleLoginSuccess} />;
+    return <Auth onLoginSuccess={handleLoginSuccess} theme={theme} onToggleTheme={toggleTheme} />;
   }
 
   // Navigation Links definition

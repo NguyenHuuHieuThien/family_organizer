@@ -54,9 +54,13 @@ const EXPENSE_CAT_META: Record<string, { label: string; emoji: string; bar: stri
   internet:      { label: "Internet",          emoji: "🌐", bar: "from-cyan-500 to-cyan-400" },
   phone:         { label: "Điện thoại",        emoji: "📱", bar: "from-purple-500 to-purple-400" },
   insurance:     { label: "Bảo hiểm",          emoji: "🛡️", bar: "from-slate-500 to-slate-400" },
+  loan:          { label: "Trả nợ ngân hàng",  emoji: "🏦", bar: "from-red-500 to-red-400" },
+  other:         { label: "Khoản khác",        emoji: "🏷️", bar: "from-slate-600 to-slate-500" },
 };
+// Không có trong bảng (vd hạng mục do người dùng tự đặt) → giữ nguyên tên gốc,
+// khớp với cách tab Tài chính hiển thị (translateCategory: default trả về cat).
 const expenseCatMeta = (cat: string) =>
-  EXPENSE_CAT_META[cat] || { label: "Khoản khác", emoji: "🏷️", bar: "from-slate-600 to-slate-500" };
+  EXPENSE_CAT_META[cat] || { label: cat || "Khoản khác", emoji: "🏷️", bar: "from-slate-600 to-slate-500" };
 
 interface DashboardProps {
   currentUser: User;
