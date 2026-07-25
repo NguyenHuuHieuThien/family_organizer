@@ -8,6 +8,7 @@ import { AlertTriangle, Bot, CheckCircle2, Loader2, Mic, MicOff, Send, ShoppingC
 import { User } from "../types.js";
 import { motion, AnimatePresence } from "motion/react";
 import { useModalA11y } from "../hooks/useModalA11y.js";
+import { useTranslation } from "react-i18next";
 
 interface AssistantProps {
   currentUser: User;
@@ -36,15 +37,16 @@ interface ChatMessage {
 }
 
 export function Assistant({ currentUser, authHeaders }: AssistantProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       role: "assistant",
-      content: `Chào ${currentUser.fullName}. Mình có thể tóm tắt task, lịch, chi tiêu, thuốc và gợi ý việc nên xử lý hôm nay.`
+      content: t("assistant.welcome", { name: currentUser.fullName })
     }
   ]);
 
@@ -85,17 +87,17 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
         body: JSON.stringify({ message: question })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "AI assistant đang bận");
+      if (!res.ok) throw new Error(data.error || t("assistant.errorBusy"));
 
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: data.answer || "Mình đã chuẩn bị gợi ý cho bạn.",
+        content: data.answer || t("assistant.fallbackAnswer"),
         actions: Array.isArray(data.actions) ? data.actions : []
       }]);
     } catch (err: any) {
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: err.message || "Chưa gọi được AI assistant."
+        content: err.message || t("assistant.errorConnect")
       }]);
     } finally {
       setLoading(false);
@@ -112,7 +114,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
     if (!Recognition) {
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "Trình duyệt này chưa hỗ trợ nhận diện giọng nói. Bạn hãy thử Chrome hoặc Edge, hoặc nhập bằng bàn phím."
+        content: t("assistant.voiceNotSupported")
       }]);
       return;
     }
@@ -136,8 +138,8 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
       setIsListening(false);
       if (event?.error === "aborted") return;
       const message = event?.error === "not-allowed"
-        ? "Bạn cần cấp quyền micro cho trình duyệt để dùng nhập giọng nói."
-        : "Mình chưa nghe rõ. Bạn thử nói lại hoặc nhập bằng bàn phím nhé.";
+        ? t("assistant.voicePermission")
+        : t("assistant.voiceNotClear");
       setMessages(prev => [...prev, { role: "assistant", content: message }]);
     };
     recognition.onresult = (event: any) => {
@@ -157,12 +159,12 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
 
     try {
       if (action.type !== "create_shopping_items") {
-        throw new Error("Hành động này chưa được hỗ trợ.");
+        throw new Error(t("assistant.actionUnsupported"));
       }
 
       const items = action.items.filter(item => item.name.trim());
       if (items.length === 0) {
-        throw new Error("Không có món hợp lệ để thêm.");
+        throw new Error(t("assistant.actionNoItems"));
       }
 
       for (const item of items) {
@@ -172,24 +174,24 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
           body: JSON.stringify({
             name: item.name.trim(),
             quantity: item.quantity?.trim() || "",
-            note: item.note?.trim() || "Thêm bởi AI assistant"
+            note: item.note?.trim() || t("assistant.actionAddNote")
           })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
-          throw new Error(data.error || `Không thêm được "${item.name}"`);
+          throw new Error(data.error || t("assistant.actionAddError", { name: item.name }));
         }
       }
 
       updateAction(action.id, { status: "done", error: "" });
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: `Xong, mình đã thêm ${items.length} món vào danh sách đi chợ.`
+        content: t("assistant.actionAdded", { n: items.length })
       }]);
     } catch (err: any) {
       updateAction(action.id, {
         status: "error",
-        error: err.message || "Không thể thực hiện hành động này."
+        error: err.message || t("assistant.actionUnsupported")
       });
     }
   };
@@ -199,7 +201,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
       <button
         onClick={() => setOpen(true)}
         className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-30 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-full w-12 h-12 shadow-2xl shadow-sky-500/20 flex items-center justify-center"
-        title="AI assistant"
+        title={t("assistant.title")}
       >
         <Bot className="w-5 h-5" />
       </button>
@@ -215,13 +217,13 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
               exit={{ opacity: 0, y: 16, scale: 0.98 }}
               role="dialog"
               aria-modal="true"
-              aria-label="Trợ lý AI"
+              aria-label={t("assistant.dialogAria")}
               className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden outline-none"
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
                 <div className="flex items-center gap-2">
                   <Bot className="w-4 h-4 text-sky-400" />
-                  <span className="text-sm font-bold text-slate-100">AI assistant</span>
+                  <span className="text-sm font-bold text-slate-100">{t("assistant.title")}</span>
                 </div>
                 <button onClick={() => setOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-100 bg-slate-950 rounded-lg">
                   <X className="w-4 h-4" />
@@ -268,7 +270,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                             {action.status === "done" ? (
                               <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Đã thêm vào Đi chợ</span>
+                                <span>{t("assistant.actionDone")}</span>
                               </div>
                             ) : (
                               <button
@@ -282,7 +284,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                                 ) : (
                                   <ShoppingCart className="w-3.5 h-3.5" />
                                 )}
-                                {action.status === "running" ? "Đang thêm..." : `Thêm ${action.items.length} món vào Đi chợ`}
+                                {action.status === "running" ? t("assistant.actionAdding") : t("assistant.actionAddBtn", { n: action.items.length })}
                               </button>
                             )}
                           </div>
@@ -291,7 +293,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                     )}
                   </div>
                 ))}
-                {loading && <div className="text-xs text-slate-500">Đang suy nghĩ...</div>}
+                {loading && <div className="text-xs text-slate-500">{t("assistant.thinking")}</div>}
               </div>
 
               <form onSubmit={ask} className="p-3 border-t border-slate-800 flex gap-2">
@@ -300,14 +302,14 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                   onClick={startVoiceInput}
                   disabled={loading}
                   className={`shrink-0 rounded-xl px-3 py-2 border transition-all cursor-pointer disabled:opacity-60 ${isListening ? "bg-rose-500 text-slate-950 border-rose-400" : "bg-slate-950 text-slate-400 hover:text-slate-100 border-slate-800 hover:bg-slate-800"}`}
-                  title={isListening ? "Dừng nghe" : "Nhập bằng giọng nói"}
+                  title={isListening ? t("assistant.voiceStopTitle") : t("assistant.voiceMicTitle")}
                 >
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                 </button>
                 <input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder={isListening ? "Đang nghe..." : "Hỏi: lên menu trưa và thêm đồ đi chợ"}
+                  placeholder={isListening ? t("assistant.inputListening") : t("assistant.inputPlaceholder")}
                   className="flex-1 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 min-w-0"
                 />
                 <button disabled={loading} type="submit" className="bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2">

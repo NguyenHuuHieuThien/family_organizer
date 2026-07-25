@@ -1044,5 +1044,29 @@
     "closeAria": "Đóng hộp xác nhận",
     "cancelLabel": "Hủy bỏ",
     "confirmLabel": "Xác nhận"
+  },
+  "assistant": {
+    "title": "AI assistant",
+    "dialogAria": "Trợ lý AI",
+    "welcome": "Chào {{name}}. Mình có thể tóm tắt task, lịch, chi tiêu, thuốc và gợi ý việc nên xử lý hôm nay.",
+    "thinking": "Đang suy nghĩ...",
+    "fallbackAnswer": "Mình đã chuẩn bị gợi ý cho bạn.",
+    "errorBusy": "AI assistant đang bận",
+    "errorConnect": "Chưa gọi được AI assistant.",
+    "voiceNotSupported": "Trình duyệt này chưa hỗ trợ nhận diện giọng nói. Bạn hãy thử Chrome hoặc Edge, hoặc nhập bằng bàn phím.",
+    "voicePermission": "Bạn cần cấp quyền micro cho trình duyệt để dùng nhập giọng nói.",
+    "voiceNotClear": "Mình chưa nghe rõ. Bạn thử nói lại hoặc nhập bằng bàn phím nhé.",
+    "voiceMicTitle": "Nhập bằng giọng nói",
+    "voiceStopTitle": "Dừng nghe",
+    "inputPlaceholder": "Hỏi: lên menu trưa và thêm đồ đi chợ",
+    "inputListening": "Đang nghe...",
+    "actionUnsupported": "Hành động này chưa được hỗ trợ.",
+    "actionNoItems": "Không có món hợp lệ để thêm.",
+    "actionAddNote": "Thêm bởi AI assistant",
+    "actionAddError": "Không thêm được \"{{name}}\"",
+    "actionAdded": "Xong, mình đã thêm {{n}} món vào danh sách đi chợ.",
+    "actionDone": "Đã thêm vào Đi chợ",
+    "actionAdding": "Đang thêm...",
+    "actionAddBtn": "Thêm {{n}} món vào Đi chợ"
   }
 }

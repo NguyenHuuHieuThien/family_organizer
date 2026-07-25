@@ -1044,5 +1044,29 @@
     "closeAria": "Close confirmation dialog",
     "cancelLabel": "Cancel",
     "confirmLabel": "Confirm"
+  },
+  "assistant": {
+    "title": "AI assistant",
+    "dialogAria": "AI Assistant",
+    "welcome": "Hi {{name}}! I can summarize tasks, schedule, spending, medications and suggest what to handle today.",
+    "thinking": "Thinking...",
+    "fallbackAnswer": "I've prepared some suggestions for you.",
+    "errorBusy": "AI assistant is busy",
+    "errorConnect": "Could not reach the AI assistant.",
+    "voiceNotSupported": "This browser does not support speech recognition. Try Chrome or Edge, or type instead.",
+    "voicePermission": "Please grant microphone permission to use voice input.",
+    "voiceNotClear": "I didn't catch that. Please try again or type your question.",
+    "voiceMicTitle": "Voice input",
+    "voiceStopTitle": "Stop listening",
+    "inputPlaceholder": "Ask: suggest lunch menu and add shopping items",
+    "inputListening": "Listening...",
+    "actionUnsupported": "This action is not supported yet.",
+    "actionNoItems": "No valid items to add.",
+    "actionAddNote": "Added by AI assistant",
+    "actionAddError": "Could not add \"{{name}}\"",
+    "actionAdded": "Done, added {{n}} items to the shopping list.",
+    "actionDone": "Added to Shopping",
+    "actionAdding": "Adding...",
+    "actionAddBtn": "Add {{n}} items to Shopping"
   }
 }

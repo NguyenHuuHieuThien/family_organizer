@@ -1044,5 +1044,29 @@
     "closeAria": "关闭确认对话框",
     "cancelLabel": "取消",
     "confirmLabel": "确认"
+  },
+  "assistant": {
+    "title": "AI助手",
+    "dialogAria": "AI助手",
+    "welcome": "你好{{name}}！我可以汇总任务、日程、收支、用药，并建议今天需要处理的事项。",
+    "thinking": "思考中...",
+    "fallbackAnswer": "我已为您准备了建议。",
+    "errorBusy": "AI助手正忙",
+    "errorConnect": "无法连接AI助手。",
+    "voiceNotSupported": "此浏览器不支持语音识别。请尝试Chrome或Edge，或改用键盘输入。",
+    "voicePermission": "请授予浏览器麦克风权限以使用语音输入。",
+    "voiceNotClear": "没有听清楚，请再试一次或用键盘输入。",
+    "voiceMicTitle": "语音输入",
+    "voiceStopTitle": "停止收听",
+    "inputPlaceholder": "询问：推荐午餐菜单并添加购物清单",
+    "inputListening": "聆听中...",
+    "actionUnsupported": "此操作尚不支持。",
+    "actionNoItems": "没有有效的商品可添加。",
+    "actionAddNote": "由AI助手添加",
+    "actionAddError": "无法添加「{{name}}」",
+    "actionAdded": "完成，已将{{n}}件商品添加到购物清单。",
+    "actionDone": "已添加到购物清单",
+    "actionAdding": "添加中...",
+    "actionAddBtn": "将{{n}}件商品添加到购物清单"
   }
 }
