@@ -29,6 +29,7 @@ import {
   X
 } from "lucide-react";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import {
   AccountType,
   AssetPhoto,
@@ -71,29 +72,7 @@ interface AssetsProps {
 // Hạng mục thu nhập dùng khi ghi nhận tiền bán tài sản vào sổ thu chi.
 const ASSET_SALE_CATEGORY = "Bán tài sản";
 
-const SELL_ACCOUNTS: { value: AccountType; label: string }[] = [
-  { value: AccountType.BANK, label: "Ngân hàng 💳" },
-  { value: AccountType.CASH, label: "Tiền mặt 💵" },
-  { value: AccountType.E_WALLET, label: "Ví điện tử 📱" }
-];
-
-const ASSET_TYPES: { value: AssetType; label: string; short: string }[] = [
-  { value: "crypto", label: "Tài sản mã hóa / crypto", short: "Crypto" },
-  { value: "land", label: "Sổ đất / bất động sản", short: "Sổ đất" },
-  { value: "gold_bar", label: "Vàng miếng", short: "Vàng miếng" },
-  { value: "gold_ring", label: "Vàng nhẫn", short: "Vàng nhẫn" },
-  { value: "gold_jewelry", label: "Vàng trang sức", short: "Trang sức" },
-  { value: "gold_other", label: "Vàng loại khác", short: "Vàng khác" },
-  { value: "vehicle", label: "Xe cộ", short: "Xe" },
-  { value: "stock", label: "Cổ phần / cổ phiếu", short: "Cổ phiếu" },
-  { value: "other", label: "Tài sản khác", short: "Khác" }
-];
-
 const MAX_ASSET_PHOTOS = 8;
-
-function assetTypeLabel(type: AssetType) {
-  return ASSET_TYPES.find(t => t.value === type)?.short || "Khác";
-}
 
 function defaultUnitForType(type: AssetType) {
   if (type === "crypto") return "coin";
@@ -137,6 +116,7 @@ export function Assets({
   onSaveTransaction
 }: AssetsProps) {
   const { confirm, ConfirmDialog } = useConfirm();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState<AssetType | "all">("all");
   const [ownerFilter, setOwnerFilter] = useState<string>("all");
@@ -181,6 +161,28 @@ export function Assets({
   const [formGoldPurity, setFormGoldPurity] = useState("");
   const [formBrand, setFormBrand] = useState("");
   const [formSerialNo, setFormSerialNo] = useState("");
+
+  const SELL_ACCOUNTS = useMemo(() => [
+    { value: AccountType.BANK, label: t("accounts.bankEmoji") },
+    { value: AccountType.CASH, label: t("accounts.cashEmoji") },
+    { value: AccountType.E_WALLET, label: t("accounts.eWalletEmoji") }
+  ], [t]);
+
+  const ASSET_TYPES = useMemo(() => [
+    { value: "crypto" as AssetType, label: t("assets.typeCryptoLabel"), short: t("assets.typeCryptoShort") },
+    { value: "land" as AssetType, label: t("assets.typeLandLabel"), short: t("assets.typeLandShort") },
+    { value: "gold_bar" as AssetType, label: t("assets.typeGoldBarLabel"), short: t("assets.typeGoldBarShort") },
+    { value: "gold_ring" as AssetType, label: t("assets.typeGoldRingLabel"), short: t("assets.typeGoldRingShort") },
+    { value: "gold_jewelry" as AssetType, label: t("assets.typeGoldJewelryLabel"), short: t("assets.typeGoldJewelryShort") },
+    { value: "gold_other" as AssetType, label: t("assets.typeGoldOtherLabel"), short: t("assets.typeGoldOtherShort") },
+    { value: "vehicle" as AssetType, label: t("assets.typeVehicleLabel"), short: t("assets.typeVehicleShort") },
+    { value: "stock" as AssetType, label: t("assets.typeStockLabel"), short: t("assets.typeStockShort") },
+    { value: "other" as AssetType, label: t("assets.typeOtherLabel"), short: t("assets.typeOtherShort") }
+  ], [t]);
+
+  const assetTypeLabel = useCallback((type: AssetType) => {
+    return ASSET_TYPES.find(at => at.value === type)?.short || t("assets.typeOtherShort");
+  }, [ASSET_TYPES, t]);
 
   const widgetsOverview = widgets ?? null;
 
@@ -229,18 +231,18 @@ export function Assets({
       else ppu = isUsd ? gold.pricePerChiUsd : gold.pricePerChiVnd;
       const factor = goldPurityFactor(formGoldPurity);
       const v = Math.round(formQuantity * ppu * factor);
-      const purityNote = factor < 1 ? ` × ${Math.round(factor * 100)}% tuổi vàng` : "";
-      return v > 0 ? { value: v, label: `${formQuantity} ${formUnit} × giá 9999${purityNote}` } : null;
+      const purityNote = factor < 1 ? t("assets.goldPurityPctSuffix", { pct: Math.round(factor * 100) }) : "";
+      return v > 0 ? { value: v, label: t("assets.goldAutoCalcLabel", { qty: formQuantity, unit: formUnit, purityNote }) } : null;
     }
     if (formType === "crypto" && formSymbol && formQuantity > 0) {
       const coin = marketPrices.crypto[formSymbol.toUpperCase()];
       if (!coin) return null;
       const price = formCurrency === "USD" ? coin.usd : coin.vnd;
       const v = Math.round(formQuantity * price);
-      return v > 0 ? { value: v, label: `${formQuantity} ${formSymbol} × $${coin.usd.toLocaleString("en-US")}` } : null;
+      return v > 0 ? { value: v, label: t("assets.cryptoAutoCalcLabel", { qty: formQuantity, symbol: formSymbol, price: coin.usd.toLocaleString("en-US") }) } : null;
     }
     return null;
-  }, [marketPrices, formType, formGoldPurity, formCurrency, formSymbol, formQuantity, formUnit]);
+  }, [t, marketPrices, formType, formGoldPurity, formCurrency, formSymbol, formQuantity, formUnit]);
 
   const filteredAssets = useMemo(() => {
     const text = searchTerm.trim().toLowerCase();
@@ -377,7 +379,7 @@ export function Assets({
   // Nút nổi thêm tài sản — icon trùng tab con "Tài sản gia đình", ẩn khi đang mở modal
   useTabFab(
     !isFormOpen && !selectedPhoto && !showGoldPurityInfo && !sellingAsset
-      ? { id: "assets", color: "emerald", title: "Thêm tài sản gia đình", icon: FileText, onClick: openCreateForm }
+      ? { id: "assets", color: "emerald", title: t("assets.fabTitle"), icon: FileText, onClick: openCreateForm }
       : null
   );
 
@@ -393,10 +395,9 @@ export function Assets({
   const addPhotoFiles = async (files: File[]) => {
     if (files.length === 0) return;
     if (formPhotos.length + files.length > MAX_ASSET_PHOTOS) {
-      setFormError(`Mỗi tài sản chỉ lưu được tối đa ${MAX_ASSET_PHOTOS} ảnh.`);
+      setFormError(t("assets.errorMaxPhotos", { max: MAX_ASSET_PHOTOS }));
       return;
     }
-
     setFormError("");
     setImageProcessing(true);
     try {
@@ -434,7 +435,7 @@ export function Assets({
       }
       setFormPhotos(prev => [...prev, ...optimizedPhotos]);
     } catch (err: any) {
-      setFormError(err.message || "Không xử lý được ảnh tài sản.");
+      setFormError(err.message || t("assets.errorProcessingPhoto"));
     } finally {
       setImageProcessing(false);
     }
@@ -468,7 +469,7 @@ export function Assets({
     e.preventDefault();
     setFormError("");
     if (!formName.trim()) {
-      setFormError("Vui lòng nhập tên tài sản.");
+      setFormError(t("assets.errorAssetNameRequired"));
       return;
     }
 
@@ -506,16 +507,16 @@ export function Assets({
       setEditingAsset(null);
       setIsFormOpen(false);
     } catch (err: any) {
-      setFormError(err.message || "Không lưu được tài sản.");
+      setFormError(err.message || t("assets.errorSavingAsset"));
     }
   };
 
   const handleDelete = async (asset: FamilyAsset) => {
     const ok = await confirm({
-      title: `Xóa tài sản "${asset.name}"?`,
-      message: "Tài sản này cùng toàn bộ ảnh đính kèm sẽ bị xóa khỏi hệ thống. Bạn có chắc chắn muốn tiếp tục không?",
-      confirmLabel: "Xóa tài sản",
-      cancelLabel: "Đóng lại",
+      title: t("assets.confirmDeleteTitle", { name: asset.name }),
+      message: t("assets.confirmDeleteMessage"),
+      confirmLabel: t("assets.confirmDeleteButton"),
+      cancelLabel: t("common.close"),
       tone: "danger"
     });
     if (!ok) return;
@@ -545,11 +546,11 @@ export function Assets({
     setSellError("");
     const price = Number(sellPrice) || 0;
     if (price <= 0) {
-      setSellError("Vui lòng nhập giá bán lớn hơn 0.");
+      setSellError(t("assets.errorSellPriceRequired"));
       return;
     }
     if (!onSaveTransaction) {
-      setSellError("Không ghi nhận được khoản thu từ bán tài sản.");
+      setSellError(t("assets.errorSellTransaction"));
       return;
     }
     // Sổ thu chi chỉ tính bằng VNĐ — tài sản định giá USD sẽ quy đổi theo tỷ giá hiện tại.
@@ -569,7 +570,7 @@ export function Assets({
       await onDeleteAsset(sellingAsset.id);
       setSellingAsset(null);
     } catch (err: any) {
-      setSellError(err.message || "Không ghi nhận được giao dịch bán tài sản.");
+      setSellError(err.message || t("assets.errorSellTransactionFailed"));
     } finally {
       setSelling(false);
     }
@@ -635,7 +636,7 @@ export function Assets({
         <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-yellow-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-yellow-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
           <ShimmerLine accent="yellow" />
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-yellow-500">🪙 {widgetsOverview?.gold?.source || "Vàng"}</span>
+            <span className="text-xs font-bold text-yellow-500">🪙 {widgetsOverview?.gold?.source || t("dashboard.market.gold")}</span>
             {widgetsOverview?.gold ? changeBadge(widgetsOverview.gold.changePct) : null}
           </div>
           <div className="mt-2 flex flex-col gap-0.5">
@@ -643,7 +644,7 @@ export function Assets({
               <>
                 <p className="text-base font-extrabold text-slate-100 tabular-nums">{fmtVnd(Math.round(marketPrices.gold.pricePerLuongVnd))}</p>
                 <p className="text-[10px] text-slate-500">
-                  {widgetsOverview?.gold?.buy ? `Mua ${fmtVnd(widgetsOverview.gold.buy)} • ` : ""}Bán /lượng
+                  {widgetsOverview?.gold?.buy ? `${t("dashboard.market.goldBuy")} ${fmtVnd(widgetsOverview.gold.buy)} • ` : ""}{t("dashboard.market.goldSell")}
                 </p>
               </>
             ) : <PriceSkeleton />}
@@ -670,7 +671,7 @@ export function Assets({
               <>
                 <p className="text-base font-extrabold text-slate-100 tabular-nums">{fmtVnd(marketPrices.usdVndRate)}</p>
                 <p className="text-[10px] text-slate-500">
-                  Tỷ giá 1 USD
+                  {t("dashboard.market.usdRate")}
                   {marketPrices.lastUpdated ? ` · ${new Date(marketPrices.lastUpdated).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}` : ""}
                 </p>
               </>
@@ -681,22 +682,22 @@ export function Assets({
 
       <Reveal delay={0.06} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 xl:gap-6">
         <div className="bg-slate-900 neu-raised rounded-2xl p-4">
-          <p className="text-[11px] text-slate-500">Tổng tài sản ước tính</p>
+          <p className="text-[11px] text-slate-500">{t("assets.totalEstimatedValue")}</p>
           <p className="mt-1 text-xl font-extrabold text-slate-100 tabular-nums">{formatMoney(stats.totalVnd)}</p>
           {stats.totalUsd > 0 && <p className="text-xs font-bold text-slate-400 tabular-nums">+ {formatMoney(stats.totalUsd, "USD")}</p>}
         </div>
         <div className="bg-slate-900 neu-raised rounded-2xl p-4">
-          <p className="text-[11px] text-slate-500">Vàng các loại</p>
+          <p className="text-[11px] text-slate-500">{t("assets.goldTotal")}</p>
           <p className="mt-1 text-lg font-extrabold text-amber-400 tabular-nums">{formatMoney(stats.goldVnd)}</p>
           {stats.goldUsd > 0 && <p className="text-xs font-bold text-amber-400/70 tabular-nums">+ {formatMoney(stats.goldUsd, "USD")}</p>}
         </div>
         <div className="bg-slate-900 neu-raised rounded-2xl p-4">
-          <p className="text-[11px] text-slate-500">Crypto</p>
+          <p className="text-[11px] text-slate-500">{t("assets.cryptoTotal")}</p>
           <p className="mt-1 text-lg font-extrabold text-sky-400 tabular-nums">{formatMoney(stats.cryptoVnd)}</p>
           {stats.cryptoUsd > 0 && <p className="text-xs font-bold text-sky-400/70 tabular-nums">+ {formatMoney(stats.cryptoUsd, "USD")}</p>}
         </div>
         <div className="bg-slate-900 neu-raised rounded-2xl p-4">
-          <p className="text-[11px] text-slate-500">Sổ đất / BĐS</p>
+          <p className="text-[11px] text-slate-500">{t("assets.landTotal")}</p>
           <p className="mt-1 text-lg font-extrabold text-emerald-400 tabular-nums">{formatMoney(stats.landVnd)}</p>
           {stats.landUsd > 0 && <p className="text-xs font-bold text-emerald-400/70 tabular-nums">+ {formatMoney(stats.landUsd, "USD")}</p>}
         </div>
@@ -710,7 +711,7 @@ export function Assets({
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Tìm tên tài sản, mã sổ, ví crypto, vị trí lưu giữ..."
+              placeholder={t("assets.searchPlaceholder")}
               className="w-full pl-9 pr-3 py-2 bg-slate-950 neu-pressed-sm rounded-xl text-xs text-slate-200 outline-none focus:border-emerald-500"
             />
           </div>
@@ -719,28 +720,28 @@ export function Assets({
             onClick={openCreateForm}
             className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Plus className="size-4" /> Thêm tài sản
+            <Plus className="size-4" /> {t("assets.addAssetButton")}
           </button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
           <div>
-            <label className="text-slate-500 block mb-1">Loại tài sản</label>
+            <label className="text-slate-500 block mb-1">{t("assets.typeFilterLabel")}</label>
             <FancySelect
               value={typeFilter}
               onChange={(v) => setTypeFilter(v as AssetType | "all")}
-              ariaLabel="Lọc theo loại tài sản"
-              options={[{ value: "all", label: "Tất cả tài sản" }, ...ASSET_TYPES]}
+              ariaLabel={t("assets.typeFilterLabel")}
+              options={[{ value: "all", label: t("assets.typeFilterAll") }, ...ASSET_TYPES]}
             />
           </div>
           <div>
-            <label className="text-slate-500 block mb-1">Chủ sở hữu</label>
+            <label className="text-slate-500 block mb-1">{t("assets.ownerFilterLabel")}</label>
             <FancySelect
               value={ownerFilter}
               onChange={setOwnerFilter}
-              ariaLabel="Lọc theo chủ sở hữu"
+              ariaLabel={t("assets.ownerFilterLabel")}
               options={[
-                { value: "all", label: "Cả gia đình" },
-                { value: "", label: "Chưa gán chủ sở hữu" },
+                { value: "all", label: t("assets.ownerFilterAll") },
+                { value: "", label: t("assets.ownerFilterUnassigned") },
                 ...users.map(user => ({ value: user.id, label: user.fullName }))
               ]}
             />
@@ -750,9 +751,9 @@ export function Assets({
 
       {filteredAssets.length === 0 ? (
         <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl py-12 text-center space-y-3">
-          <p className="text-sm text-slate-500">Chưa có tài sản nào phù hợp với bộ lọc.</p>
+          <p className="text-sm text-slate-500">{t("assets.noAssetsMessage")}</p>
           <button type="button" onClick={openCreateForm} className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
-            <Plus className="size-4" /> Thêm tài sản đầu tiên
+            <Plus className="size-4" /> {t("assets.addFirstAssetButton")}
           </button>
         </div>
       ) : (
@@ -771,7 +772,7 @@ export function Assets({
                     disabled={!firstPhoto}
                     onClick={() => firstPhoto && setSelectedPhoto({ asset, photo: firstPhoto })}
                     className="size-20 rounded-xl neu-btn bg-slate-950 overflow-hidden shrink-0 flex items-center justify-center disabled:cursor-default cursor-pointer"
-                    aria-label={firstPhoto ? `Xem ảnh tài sản ${asset.name}` : `Tài sản ${asset.name} chưa có ảnh`}
+                    aria-label={firstPhoto ? t("assets.viewPhotoAriaLabel", { name: asset.name }) : t("assets.noPhotoAriaLabel", { name: asset.name })}
                   >
                     {firstPhoto ? (
                       <img src={firstPhoto.thumbnailDataUrl} alt={asset.name} className="size-full object-cover" />
@@ -790,14 +791,14 @@ export function Assets({
                       {canManageAsset(asset) && (
                         <div className="flex items-center gap-1 shrink-0">
                           {onSaveTransaction && (
-                            <button type="button" onClick={() => openSellForm(asset)} aria-label={`Bán tài sản ${asset.name}`} title="Bán tài sản" className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-emerald-400 flex items-center justify-center cursor-pointer">
+                            <button type="button" onClick={() => openSellForm(asset)} aria-label={t("assets.sellAssetAriaLabel", { name: asset.name })} title={t("assets.sellAssetDialogTitle")} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-emerald-400 flex items-center justify-center cursor-pointer">
                               <HandCoins className="size-3.5" />
                             </button>
                           )}
-                          <button type="button" onClick={() => openEditForm(asset)} aria-label={`Sửa tài sản ${asset.name}`} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
+                          <button type="button" onClick={() => openEditForm(asset)} aria-label={t("assets.editAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
                             <Pencil className="size-3.5" />
                           </button>
-                          <button type="button" onClick={() => handleDelete(asset)} aria-label={`Xóa tài sản ${asset.name}`} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
+                          <button type="button" onClick={() => handleDelete(asset)} aria-label={t("assets.deleteAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
                             <Trash2 className="size-3.5" />
                           </button>
                         </div>
@@ -824,7 +825,7 @@ export function Assets({
                             )}
                             {ev.source === "purchase" && (
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-800 border border-slate-700 text-slate-400">
-                                giá mua
+                                {t("assets.purchasePriceBadge")}
                               </span>
                             )}
                             {showPL && (
@@ -836,9 +837,9 @@ export function Assets({
                           </div>
                           {showPL && (
                             <p className="mt-1 text-[11px] text-slate-500">
-                              Vốn {formatMoney(purchase, asset.currency)} ·{" "}
+                              {t("assets.capitalLabel")} {formatMoney(purchase, asset.currency)} ·{" "}
                               <span className={up ? "text-emerald-400" : "text-rose-400"}>
-                                {up ? "Lời" : "Lỗ"} {formatMoney(Math.abs(diff), asset.currency)}
+                                {up ? t("assets.profitLabel") : t("assets.lossLabel")} {formatMoney(Math.abs(diff), asset.currency)}
                               </span>
                             </p>
                           )}
@@ -846,7 +847,7 @@ export function Assets({
                       );
                     })()}
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                      <span className="flex items-center gap-1"><UserIcon className="size-3" /> {owner ? owner.fullName : "Tài sản chung"}</span>
+                      <span className="flex items-center gap-1"><UserIcon className="size-3" /> {owner ? owner.fullName : t("assets.sharedAsset")}</span>
                       <span className="tabular-nums">
                         {isGoldType(asset.type)
                           ? `${effectiveGoldWeight(asset)} ${asset.weightUnit || asset.unit}`
@@ -860,32 +861,32 @@ export function Assets({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
                   {asset.type === "crypto" && (
                     <>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Mã: <span className="text-sky-400 font-bold">{asset.symbol || "—"}</span></p>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Mạng: <span className="text-slate-200">{asset.network || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.symbolLabel")} <span className="text-sky-400 font-bold">{asset.symbol || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.networkLabel")} <span className="text-slate-200">{asset.network || "—"}</span></p>
                     </>
                   )}
                   {asset.type === "land" && (
                     <>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Diện tích: <span className="text-emerald-400 font-bold tabular-nums">{asset.areaM2 ? `${asset.areaM2} m2` : "—"}</span></p>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Số sổ: <span className="text-slate-200">{asset.certificateNo || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.areaLabel")} <span className="text-emerald-400 font-bold tabular-nums">{asset.areaM2 ? `${asset.areaM2} m2` : "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.certificateLabel")} <span className="text-slate-200">{asset.certificateNo || "—"}</span></p>
                     </>
                   )}
                   {isGoldType(asset.type) && (
                     <>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Trọng lượng: <span className="text-amber-400 font-bold tabular-nums">{asset.weight ? `${asset.weight} ${asset.weightUnit || asset.unit}` : "—"}</span></p>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Tuổi vàng: <span className="text-slate-200">{goldPurityLabel(asset.goldPurity)}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.weightLabel")} <span className="text-amber-400 font-bold tabular-nums">{asset.weight ? `${asset.weight} ${asset.weightUnit || asset.unit}` : "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.goldPurityCardLabel")} <span className="text-slate-200">{goldPurityLabel(asset.goldPurity)}</span></p>
                     </>
                   )}
                   {asset.type === "vehicle" && (
                     <>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Hãng / dòng: <span className="text-orange-400 font-bold">{asset.brand || "—"}</span></p>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Biển số / số khung: <span className="text-slate-200">{asset.serialNo || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.brandLabel")} <span className="text-orange-400 font-bold">{asset.brand || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.serialLabel")} <span className="text-slate-200">{asset.serialNo || "—"}</span></p>
                     </>
                   )}
                   {asset.type === "stock" && (
                     <>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Mã CP: <span className="text-violet-400 font-bold">{asset.symbol || "—"}</span></p>
-                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">Sàn / Cty CK: <span className="text-slate-200">{asset.brand || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.stockSymbolLabel")} <span className="text-violet-400 font-bold">{asset.symbol || "—"}</span></p>
+                      <p className="bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-400">{t("assets.stockExchangeLabel")} <span className="text-slate-200">{asset.brand || "—"}</span></p>
                     </>
                   )}
                 </div>
@@ -896,7 +897,7 @@ export function Assets({
                     {asset.photos?.length > 1 && (
                       <div className="flex flex-wrap gap-2">
                         {asset.photos.map(photo => (
-                          <button key={photo.id} type="button" onClick={() => setSelectedPhoto({ asset, photo })} className="size-10 rounded-lg neu-btn overflow-hidden bg-slate-950 cursor-pointer" aria-label={`Xem ảnh ${photo.fileName}`}>
+                          <button key={photo.id} type="button" onClick={() => setSelectedPhoto({ asset, photo })} className="size-10 rounded-lg neu-btn overflow-hidden bg-slate-950 cursor-pointer" aria-label={t("assets.viewPhotoButtonAriaLabel", { name: photo.fileName })}>
                             <img src={photo.thumbnailDataUrl} alt={photo.fileName} className="size-full object-cover" />
                           </button>
                         ))}
@@ -906,7 +907,7 @@ export function Assets({
                 )}
 
                 <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-600">
-                  <span>Tạo bởi {creator ? creator.fullName : "thành viên"}</span>
+                  <span>{t("assets.createdByLabel")} {creator ? creator.fullName : t("assets.sharedAsset")}</span>
                   <span className="tabular-nums">{new Date(asset.updatedAt).toLocaleDateString("vi-VN")}</span>
                 </div>
               </Reveal>
@@ -928,8 +929,8 @@ export function Assets({
             className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 shrink-0">
-              <h3 className="text-md font-bold text-slate-100">{editingAsset ? "Chỉnh sửa tài sản" : "Thêm tài sản gia đình"}</h3>
-              <button type="button" onClick={closeForm} aria-label="Đóng form tài sản" className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
+              <h3 className="text-md font-bold text-slate-100">{editingAsset ? t("assets.editAssetTitle") : t("assets.addAssetTitle")}</h3>
+              <button type="button" onClick={closeForm} aria-label={t("assets.closeFormAriaLabel")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
                 <X className="size-4" />
               </button>
             </div>
@@ -944,30 +945,30 @@ export function Assets({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-slate-400 block font-semibold">Loại tài sản</label>
+                    <label className="text-slate-400 block font-semibold">{t("assets.formTypeLabel")}</label>
                     <FancySelect
                       value={formType}
                       onChange={(v) => handleTypeChange(v as AssetType)}
-                      ariaLabel="Loại tài sản"
+                      ariaLabel={t("assets.formTypeLabel")}
                       options={ASSET_TYPES}
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-slate-400 block font-semibold">Tên tài sản <span className="text-rose-400">*</span></label>
-                    <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder="VD: 2 lượng SJC, BTC ví lạnh, sổ đất Long An..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
+                    <label className="text-slate-400 block font-semibold">{t("assets.formNameLabel")} <span className="text-rose-400">*</span></label>
+                    <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t("assets.formNamePlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                   <div className="space-y-1">
-                    <label className="text-slate-400 block font-semibold">Chủ sở hữu</label>
+                    <label className="text-slate-400 block font-semibold">{t("assets.formOwnerLabel")}</label>
                     <FancySelect
                       value={formOwnerId}
                       onChange={setFormOwnerId}
-                      ariaLabel="Chủ sở hữu"
-                      placeholder="Tài sản chung"
+                      ariaLabel={t("assets.formOwnerLabel")}
+                      placeholder={t("assets.sharedAsset")}
                       options={[
-                        { value: "", label: "Tài sản chung" },
+                        { value: "", label: t("assets.sharedAsset") },
                         ...users.map(user => ({ value: user.id, label: user.fullName }))
                       ]}
                     />
@@ -975,16 +976,16 @@ export function Assets({
                   {formType !== "land" && (
                     <>
                       <div className="space-y-1">
-                        <label className="text-slate-400 block font-semibold">{isGoldType(formType) ? "Trọng lượng" : "Số lượng"}</label>
+                        <label className="text-slate-400 block font-semibold">{isGoldType(formType) ? t("assets.formWeightLabel") : t("assets.formQuantityLabel")}</label>
                         <input type="number" min="0" step="0.000001" value={formQuantity || ""} onChange={(e) => setFormQuantity(Number(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                       </div>
                       <div className="space-y-1">
-                        <label className="text-slate-400 block font-semibold">Đơn vị</label>
+                        <label className="text-slate-400 block font-semibold">{t("assets.formUnitLabel")}</label>
                         {isGoldType(formType) ? (
                           <FancySelect
                             value={formUnit}
                             onChange={setFormUnit}
-                            ariaLabel="Đơn vị"
+                            ariaLabel={t("assets.formUnitLabel")}
                             options={[
                               { value: "chỉ", label: "chỉ" },
                               { value: "lượng", label: "lượng" },
@@ -998,11 +999,11 @@ export function Assets({
                     </>
                   )}
                   <div className="space-y-1">
-                    <label className="text-slate-400 block font-semibold">Tiền tệ</label>
+                    <label className="text-slate-400 block font-semibold">{t("assets.formCurrencyLabel")}</label>
                     <FancySelect
                       value={formCurrency}
                       onChange={(v) => setFormCurrency(v as "VND" | "USD")}
-                      ariaLabel="Tiền tệ"
+                      ariaLabel={t("assets.formCurrencyLabel")}
                       options={[
                         { value: "VND", label: "VND" },
                         { value: "USD", label: "USD" }
@@ -1014,7 +1015,7 @@ export function Assets({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">
-                      Giá trị ước tính
+                      {t("assets.formEstimatedValueLabel")}
                       {formAutoValue && formEstimatedValue === 0 && (
                         <span className="ml-1.5 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">AUTO</span>
                       )}
@@ -1025,33 +1026,33 @@ export function Assets({
                         <TrendingUp className="size-3 shrink-0" />
                         ≈ {formatMoney(formAutoValue.value, formCurrency)}
                         <span className="text-slate-600">({formAutoValue.label})</span>
-                        {formEstimatedValue === 0 && <span className="text-slate-500"> — Để 0 để dùng tự động</span>}
+                        {formEstimatedValue === 0 && <span className="text-slate-500"> — {t("assets.autoValueHint")}</span>}
                       </p>
                     )}
                     {!formAutoValue && (isGoldType(formType) || formType === "crypto") && marketPrices && (
                       <p className="text-[10px] text-slate-600">
                         {isGoldType(formType)
-                          ? `Nhập trọng lượng để tự tính từ giá vàng thị trường`
-                          : `Nhập mã coin & số lượng để tự tính giá thị trường`}
+                          ? t("assets.goldPriceHint")
+                          : t("assets.cryptoPriceHint")}
                       </p>
                     )}
                   </div>
                   <div className="space-y-1">
-                    <label className="text-slate-400 block font-semibold">Giá mua ban đầu</label>
+                    <label className="text-slate-400 block font-semibold">{t("assets.formPurchaseValueLabel")}</label>
                     <input inputMode="numeric" value={formatMoneyInput(formPurchaseValue)} onChange={(e) => setFormPurchaseValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-slate-400 block font-semibold">Ngày mua / ghi nhận</label>
+                    <label className="text-slate-400 block font-semibold">{t("assets.formPurchaseDateLabel")}</label>
                     <DateInputDMY value={formPurchaseDate} onChange={setFormPurchaseDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                   </div>
                 </div>
 
                 {formType === "crypto" && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder="Mã coin: BTC" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formNetwork} onChange={(e) => setFormNetwork(e.target.value)} placeholder="Network: Bitcoin/ERC20" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formWalletLabel} onChange={(e) => setFormWalletLabel(e.target.value)} placeholder="Ví: Ledger/Binance" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formWalletAddressMasked} onChange={(e) => setFormWalletAddressMasked(e.target.value)} placeholder="Địa chỉ rút gọn" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder={t("assets.formCryptoSymbolPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formNetwork} onChange={(e) => setFormNetwork(e.target.value)} placeholder={t("assets.formNetworkPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formWalletLabel} onChange={(e) => setFormWalletLabel(e.target.value)} placeholder={t("assets.formWalletLabelPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formWalletAddressMasked} onChange={(e) => setFormWalletAddressMasked(e.target.value)} placeholder={t("assets.formWalletAddressPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                     {marketPrices && formSymbol && marketPrices.crypto[formSymbol.toUpperCase()] && (
                       <div className="md:col-span-4 flex items-center gap-2 text-[10px] text-sky-400/80">
                         <TrendingUp className="size-3 shrink-0" />
@@ -1061,17 +1062,17 @@ export function Assets({
                       </div>
                     )}
                     {marketPrices && formSymbol && !marketPrices.crypto[formSymbol.toUpperCase()] && formSymbol.length >= 2 && (
-                      <p className="md:col-span-4 text-[10px] text-slate-600">Chưa có giá live cho {formSymbol} — nhập giá trị ước tính thủ công.</p>
+                      <p className="md:col-span-4 text-[10px] text-slate-600">{t("assets.noPriceAvailable", { symbol: formSymbol })}</p>
                     )}
                   </div>
                 )}
 
                 {formType === "land" && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder="Địa chỉ/thửa đất" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input type="number" min="0" step="0.01" value={formAreaM2 || ""} onChange={(e) => setFormAreaM2(Number(e.target.value))} placeholder="Diện tích m2" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formCertificateNo} onChange={(e) => setFormCertificateNo(e.target.value)} placeholder="Số sổ" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formParcelNo} onChange={(e) => setFormParcelNo(e.target.value)} placeholder="Số thửa/tờ bản đồ" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={t("assets.formAddressPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input type="number" min="0" step="0.01" value={formAreaM2 || ""} onChange={(e) => setFormAreaM2(Number(e.target.value))} placeholder={t("assets.formAreaPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formCertificateNo} onChange={(e) => setFormCertificateNo(e.target.value)} placeholder={t("assets.formCertificatePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formParcelNo} onChange={(e) => setFormParcelNo(e.target.value)} placeholder={t("assets.formParcelPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
@@ -1081,27 +1082,27 @@ export function Assets({
                       <FancySelect
                         value={normalizeGoldPurity(formGoldPurity)}
                         onChange={setFormGoldPurity}
-                        ariaLabel="Tuổi vàng"
-                        placeholder="— Tuổi vàng —"
+                        ariaLabel={t("assets.formGoldPurityAriaLabel")}
+                        placeholder={t("assets.formGoldPurityPlaceholder")}
                         className="flex-1 min-w-0"
                         options={[
-                          { value: "", label: "— Tuổi vàng —" },
+                          { value: "", label: t("assets.formGoldPurityPlaceholder") },
                           ...GOLD_PURITY_OPTIONS.map(o => ({ value: o.value, label: `${o.label} (${Math.round(o.factor * 100)}%)` }))
                         ]}
                       />
-                      <button type="button" onClick={() => setShowGoldPurityInfo(true)} aria-label="Bảng quy ước tuổi vàng" title="Bảng quy ước tuổi vàng" className="shrink-0 size-9 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700 flex items-center justify-center cursor-pointer">
+                      <button type="button" onClick={() => setShowGoldPurityInfo(true)} aria-label={t("assets.goldPurityInfoButtonTitle")} title={t("assets.goldPurityInfoButtonTitle")} className="shrink-0 size-9 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700 flex items-center justify-center cursor-pointer">
                         <Info className="size-4" />
                       </button>
                     </div>
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="SJC/PNJ/DOJI" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder="Số seri nếu có" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formBrandPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder={t("assets.formSerialPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                     {marketPrices?.gold && (
                       <div className="md:col-span-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-amber-400/80">
-                        <span className="flex items-center gap-1"><TrendingUp className="size-3" /> Giá vàng 9999 tham chiếu:</span>
+                        <span className="flex items-center gap-1"><TrendingUp className="size-3" /> {t("assets.referenceGoldPrice")}</span>
                         <span className="font-bold">{formatMoney(Math.round(marketPrices.gold.pricePerChiVnd))}/chỉ</span>
                         <span className="text-amber-400/50">· {formatMoney(Math.round(marketPrices.gold.pricePerLuongVnd))}/lượng</span>
                         <span className="text-amber-400/50">· {formatMoney(Math.round(marketPrices.gold.pricePerGramVnd))}/gram</span>
-                        <span className="text-slate-500">— giá tuổi vàng khác = giá 9999 × hệ số quy ước</span>
+                        <span className="text-slate-500">{t("assets.goldPurityFormulaHint")}</span>
                       </div>
                     )}
                   </div>
@@ -1109,31 +1110,31 @@ export function Assets({
 
                 {formType === "vehicle" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="Hãng / dòng xe: Honda SH, Toyota Vios" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder="Biển số / số khung" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formVehicleBrandPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder={t("assets.formVehicleSerialPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
                 {formType === "stock" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder="Mã CP: VNM, FPT, HPG" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder="Sàn / Cty CK: HOSE, SSI, VND" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder={t("assets.formStockSymbolPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formStockExchangePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder="Nơi lưu giữ / vị trí" className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                  <textarea rows={2} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder="Ghi chú: tình trạng, người giữ, lưu ý bảo mật..." className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <input value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder={t("assets.formLocationPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <textarea rows={2} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("assets.formNotesPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                 </div>
 
                 <div className="bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <p className="text-xs font-bold text-slate-200 flex items-center gap-1.5"><ImageIcon className="size-4 text-sky-400" /> Ảnh tài sản</p>
-                      <p className="text-[10px] text-slate-500">Ảnh sẽ tự thu nhỏ cho nhẹ máy mà vẫn xem rõ.</p>
+                      <p className="text-xs font-bold text-slate-200 flex items-center gap-1.5"><ImageIcon className="size-4 text-sky-400" /> {t("assets.photosLabel")}</p>
+                      <p className="text-[10px] text-slate-500">{t("assets.photosHint")}</p>
                     </div>
                     <label className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 text-sky-400 hover:bg-slate-700 ${imageProcessing ? "opacity-60 cursor-wait pointer-events-none" : "cursor-pointer"}`}>
-                      <Upload className="size-4" /> {imageProcessing ? "Đang tối ưu..." : "Chụp / tải ảnh"}
+                      <Upload className="size-4" /> {imageProcessing ? t("assets.optimizingPhotos") : t("assets.uploadPhotosButton")}
                       <input type="file" accept="image/*,.heic,.heif" multiple onChange={handlePhotoFiles} disabled={imageProcessing} className="hidden" />
                     </label>
                   </div>
@@ -1142,7 +1143,7 @@ export function Assets({
                       {formPhotos.map(photo => (
                         <div key={photo.id} className="relative rounded-xl overflow-hidden neu-pressed-sm bg-slate-950 aspect-square">
                           <img src={photo.thumbnailDataUrl} alt={photo.fileName} className="size-full object-cover" />
-                          <button type="button" onClick={() => setFormPhotos(prev => prev.filter(p => p.id !== photo.id))} aria-label={`Xóa ảnh ${photo.fileName}`} className="absolute right-1 top-1 size-6 rounded-lg bg-slate-950/90 text-slate-400 hover:text-rose-400 flex items-center justify-center">
+                          <button type="button" onClick={() => setFormPhotos(prev => prev.filter(p => p.id !== photo.id))} aria-label={t("assets.deletePhotoAriaLabel", { name: photo.fileName })} className="absolute right-1 top-1 size-6 rounded-lg bg-slate-950/90 text-slate-400 hover:text-rose-400 flex items-center justify-center">
                             <X className="size-3.5" />
                           </button>
                         </div>
@@ -1154,10 +1155,10 @@ export function Assets({
 
               <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
                 <button type="button" onClick={closeForm} disabled={imageProcessing} className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl font-bold disabled:opacity-50">
-                  Đóng lại
+                  {t("assets.closeFormButton")}
                 </button>
                 <button type="submit" disabled={imageProcessing} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold disabled:opacity-50">
-                  {editingAsset ? "Lưu thay đổi" : "Lưu tài sản"}
+                  {editingAsset ? t("assets.saveChangesButton") : t("assets.saveAssetButton")}
                 </button>
               </div>
             </form>
@@ -1167,13 +1168,13 @@ export function Assets({
 
       {selectedPhoto && (
         <div onClick={() => setSelectedPhoto(null)} className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-50 p-4" id="asset-photo-viewer">
-          <div ref={photoRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Xem ảnh tài sản" className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
+          <div ref={photoRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t("assets.addAssetTitle")} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
             <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-100 truncate">{selectedPhoto.asset.name}</p>
                 <p className="text-[11px] text-slate-500 tabular-nums">{selectedPhoto.photo.width}x{selectedPhoto.photo.height} • {selectedPhoto.photo.sizeKb}KB</p>
               </div>
-              <button type="button" onClick={() => setSelectedPhoto(null)} aria-label="Đóng ảnh tài sản" className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
+              <button type="button" onClick={() => setSelectedPhoto(null)} aria-label={t("assets.closePhotoAriaLabel")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
                 <X className="size-4" />
               </button>
             </div>
@@ -1188,22 +1189,23 @@ export function Assets({
         <div onClick={() => setShowGoldPurityInfo(false)} className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-50 p-4" id="gold-purity-info">
           <div ref={goldInfoRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
             <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
-              <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5"><Gem className="size-4 text-amber-400" /> Bảng quy ước tuổi vàng</p>
-              <button type="button" onClick={() => setShowGoldPurityInfo(false)} aria-label="Đóng" className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
+              <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5"><Gem className="size-4 text-amber-400" /> {t("assets.goldPurityInfoTitle")}</p>
+              <button type="button" onClick={() => setShowGoldPurityInfo(false)} aria-label={t("common.close")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
                 <X className="size-4" />
               </button>
             </div>
             <div className="overflow-y-auto p-4 space-y-3">
               <p className="text-[11px] text-slate-400 leading-relaxed">
-                Giá trị vàng ước tính theo công thức: <span className="text-amber-400 font-semibold">trọng lượng × giá vàng 9999 × hệ số tuổi vàng</span>.
-                Vàng tuổi cao gần đúng hàm lượng; tuổi thấp bị trừ thêm hao công và chênh lệch thu mua nên hệ số thấp hơn hàm lượng lý thuyết một chút (sát giá bán lại thực tế).
+                {t("assets.goldValueFormula").split(t("assets.goldValueFormula")).length > 0
+                  ? <>Giá trị vàng ước tính theo công thức: <span className="text-amber-400 font-semibold">{t("assets.goldValueFormula")}</span>. {t("assets.goldPurityExplanation")}</>
+                  : t("assets.goldPurityExplanation")}
               </p>
               <table className="w-full text-[11px] tabular-nums">
                 <thead>
                   <tr className="text-slate-500 border-b border-slate-800">
-                    <th className="text-left font-semibold py-1.5">Tuổi vàng</th>
-                    <th className="text-right font-semibold py-1.5">Hàm lượng</th>
-                    <th className="text-right font-semibold py-1.5">Hệ số</th>
+                    <th className="text-left font-semibold py-1.5">{t("assets.goldPurityTableHeader")}</th>
+                    <th className="text-right font-semibold py-1.5">{t("assets.goldContentTableHeader")}</th>
+                    <th className="text-right font-semibold py-1.5">{t("assets.goldFactorTableHeader")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1217,8 +1219,7 @@ export function Assets({
                 </tbody>
               </table>
               <p className="text-[10px] text-slate-600 leading-relaxed">
-                Số liệu tham khảo thị trường (06/2026, vàng 9999 ~14.7tr/chỉ): 18K bán ~11tr, 14K ~8.3tr, 10K ~5.8tr/chỉ.
-                Đây là ước lượng tương đối — bạn có thể nhập "Giá trị ước tính" thủ công để ghi đè.
+                {t("assets.goldMarketReference")} {t("assets.goldEstimateHint")}
               </p>
             </div>
           </div>
@@ -1239,9 +1240,9 @@ export function Assets({
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
-                <HandCoins className="size-5 text-emerald-400" /> Bán tài sản
+                <HandCoins className="size-5 text-emerald-400" /> {t("assets.sellAssetDialogTitle")}
               </h3>
-              <button type="button" onClick={closeSell} disabled={selling} aria-label="Đóng" className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center disabled:opacity-50">
+              <button type="button" onClick={closeSell} disabled={selling} aria-label={t("common.close")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center disabled:opacity-50">
                 <X className="size-4" />
               </button>
             </div>
@@ -1252,11 +1253,11 @@ export function Assets({
               )}
 
               <div className="bg-slate-950/50 neu-pressed-sm rounded-xl p-3">
-                <p className="text-[11px] text-slate-500">Tài sản</p>
+                <p className="text-[11px] text-slate-500">{t("assets.sellAssetLabel")}</p>
                 <p className="text-sm font-bold text-slate-100 truncate">{sellingAsset.name}</p>
                 <p className="mt-1 text-[11px] text-slate-500">
-                  Giá trị ước lượng hiện tại:{" "}
-                  <span className="text-emerald-400 font-bold">{sellEstimate > 0 ? formatMoney(sellEstimate, sellingAsset.currency) : "Chưa xác định"}</span>
+                  {t("assets.estimatedValueLabel")}{" "}
+                  <span className="text-emerald-400 font-bold">{sellEstimate > 0 ? formatMoney(sellEstimate, sellingAsset.currency) : t("assets.undefinedValue")}</span>
                 </p>
               </div>
 
@@ -1268,19 +1269,19 @@ export function Assets({
                   disabled={sellEstimate <= 0}
                   className={`px-3 py-2.5 rounded-xl font-bold border transition-all ${sellMode === "estimate" ? "bg-emerald-500 text-slate-950 border-emerald-500" : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"} disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
-                  Theo giá ước lượng
+                  {t("assets.sellByEstimate")}
                 </button>
                 <button
                   type="button"
                   onClick={() => handleSellModeChange("custom")}
                   className={`px-3 py-2.5 rounded-xl font-bold border transition-all ${sellMode === "custom" ? "bg-emerald-500 text-slate-950 border-emerald-500" : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"}`}
                 >
-                  Tự nhập giá
+                  {t("assets.sellCustomPrice")}
                 </button>
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Giá bán thực tế ({sellingAsset.currency})</label>
+                <label className="text-slate-400 block font-semibold">{t("assets.actualSellPriceLabel", { currency: sellingAsset.currency })}</label>
                 <input
                   inputMode="numeric"
                   value={formatMoneyInput(sellPrice)}
@@ -1289,7 +1290,7 @@ export function Assets({
                 />
                 {sellingAsset.currency === "USD" && sellPrice > 0 && (
                   <p className="text-[10px] text-slate-500">
-                    ≈ {formatMoney(Math.round(sellPrice * (marketPrices?.usdVndRate || 25000)))} (quy đổi theo tỷ giá {(marketPrices?.usdVndRate || 25000).toLocaleString("vi-VN")}đ/USD)
+                    ≈ {formatMoney(Math.round(sellPrice * (marketPrices?.usdVndRate || 25000)))} ({t("assets.convertByRate")} {(marketPrices?.usdVndRate || 25000).toLocaleString("vi-VN")}đ/USD)
                   </p>
                 )}
                 {(() => {
@@ -1301,7 +1302,7 @@ export function Assets({
                   return (
                     <p className={`text-[10px] flex items-center gap-1 ${up ? "text-emerald-400" : "text-rose-400"}`}>
                       {up ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
-                      So với giá mua {formatMoney(purchase, sellingAsset.currency)}: {up ? "Lời" : "Lỗ"} {formatMoney(Math.abs(diff), sellingAsset.currency)} ({up ? "+" : "−"}{Math.abs(pct).toFixed(1)}%)
+                      {t("assets.comparePurchasePrice")} {formatMoney(purchase, sellingAsset.currency)}: {up ? t("assets.profitLabel") : t("assets.lossLabel")} {formatMoney(Math.abs(diff), sellingAsset.currency)} ({up ? "+" : "−"}{Math.abs(pct).toFixed(1)}%)
                     </p>
                   );
                 })()}
@@ -1309,36 +1310,36 @@ export function Assets({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <label className="text-slate-400 block font-semibold">Tiền vào ví</label>
+                  <label className="text-slate-400 block font-semibold">{t("assets.accountLabel")}</label>
                   <FancySelect
                     value={sellAccount}
                     onChange={(v) => setSellAccount(v as AccountType)}
-                    ariaLabel="Tiền vào ví"
+                    ariaLabel={t("assets.accountLabel")}
                     options={SELL_ACCOUNTS}
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-slate-400 block font-semibold">Ngày bán</label>
+                  <label className="text-slate-400 block font-semibold">{t("assets.sellDateLabel")}</label>
                   <DateInputDMY value={sellDate} onChange={setSellDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Ghi chú (không bắt buộc)</label>
-                <input value={sellNote} onChange={(e) => setSellNote(e.target.value)} placeholder="VD: bán cho người quen, đã nhận đủ tiền..." className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
+                <label className="text-slate-400 block font-semibold">{t("assets.sellNoteLabel")}</label>
+                <input value={sellNote} onChange={(e) => setSellNote(e.target.value)} placeholder={t("assets.sellNotePlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
 
               <p className="text-[10px] text-slate-500 leading-relaxed">
-                Khi xác nhận: hệ thống ghi một khoản <span className="text-emerald-400 font-semibold">THU</span> với hạng mục "{ASSET_SALE_CATEGORY}" vào sổ thu chi, sau đó xóa tài sản này khỏi danh sách.
+                {t("assets.sellConfirmPrefix")} <span className="text-emerald-400 font-semibold">{t("assets.incomeLabel")}</span> {t("assets.sellConfirmSuffix", { category: ASSET_SALE_CATEGORY })}
               </p>
             </div>
 
             <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
               <button type="button" onClick={closeSell} disabled={selling} className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl font-bold disabled:opacity-50">
-                Hủy
+                {t("common.cancel")}
               </button>
               <button type="button" onClick={handleConfirmSell} disabled={selling || sellPrice <= 0} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold disabled:opacity-50 flex items-center gap-1.5">
-                <HandCoins className="size-4" /> {selling ? "Đang ghi nhận..." : "Xác nhận bán"}
+                <HandCoins className="size-4" /> {selling ? t("assets.processingLabel") : t("assets.confirmSellButton")}
               </button>
             </div>
           </motion.div>
