@@ -1364,11 +1364,11 @@ export function Settings({
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {backups.map(b => (
-                    <div 
+                    <div
                       key={b.id}
-                      className="bg-slate-955 border border-slate-800 p-4 rounded-xl flex items-center justify-between hover:border-slate-700 transition-all text-xs"
+                      className="bg-slate-955 border border-slate-800 p-4 rounded-xl flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between hover:border-slate-700 transition-all text-xs"
                     >
-                      <div className="space-y-1.5 flex-1 max-w-[65%]">
+                      <div className="space-y-1.5 min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span className={`text-[9px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded ${b.type === "auto" ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/10" : "bg-yellow-500/10 text-yellow-500 border border-yellow-500/10"}`}>
                             {b.type === "auto" ? "Tự động" : "Thủ công"}
@@ -1379,7 +1379,7 @@ export function Settings({
                         <p className="text-slate-500 text-[10px] font-mono">{new Date(b.createdAt).toLocaleString("vi-VN")}</p>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                         {/* Restore trigger */}
                         <button 
                           disabled={Boolean(loadingAction && loadingAction.startsWith("restore"))}

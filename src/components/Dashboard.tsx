@@ -696,7 +696,7 @@ export function Dashboard({
           return (
             <div className="relative overflow-hidden lg:col-span-1 bg-gradient-to-br from-sky-500/15 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 shadow-lg flex flex-col min-h-[168px]">
               <ShimmerLine via="via-sky-500/60" />
-              <div aria-hidden className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-sky-500/10 blur-2xl" />
+              <div aria-hidden className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.sky.500/0.18),transparent_65%)] pointer-events-none" />
 
               {/* Địa phương (đổi trong Thiết lập → Hồ sơ của tôi) */}
               <div className="relative flex items-center gap-1.5 mb-1">
@@ -916,7 +916,7 @@ export function Dashboard({
             id="stat-my-tasks"
           >
             <ShimmerLine via="via-sky-500/50" />
-            <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-sky-500/10 blur-2xl group-hover:bg-sky-500/20 transition-colors duration-500" />
+            <div aria-hidden className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.sky.500/0.18),transparent_65%)] pointer-events-none" />
             <div className="relative flex items-center justify-between">
               <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.myTasks")}</span>
               <div className="bg-gradient-to-br from-sky-500/25 to-sky-500/5 ring-1 ring-sky-500/20 p-2 rounded-xl text-sky-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
@@ -938,7 +938,7 @@ export function Dashboard({
             id="stat-urgent-tasks"
           >
             <ShimmerLine via="via-rose-500/50" />
-            <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-rose-500/10 blur-2xl group-hover:bg-rose-500/20 transition-colors duration-500" />
+            <div aria-hidden className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.rose.500/0.18),transparent_65%)] pointer-events-none" />
             <div className="relative flex items-center justify-between">
               <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.urgent")}</span>
               <div className="bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 p-2 rounded-xl text-rose-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
@@ -960,7 +960,7 @@ export function Dashboard({
             id="stat-monthly-balance"
           >
             <ShimmerLine via={balancePositive ? "via-emerald-500/50" : "via-rose-500/50"} />
-            <div aria-hidden className={`absolute -top-8 -right-8 w-24 h-24 rounded-full blur-2xl transition-colors duration-500 ${balancePositive ? "bg-emerald-500/10 group-hover:bg-emerald-500/20" : "bg-rose-500/10 group-hover:bg-rose-500/20"}`} />
+            <div aria-hidden className={`absolute inset-0 rounded-2xl pointer-events-none ${balancePositive ? "bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.emerald.500/0.18),transparent_65%)]" : "bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.rose.500/0.18),transparent_65%)]"}`} />
             <div className="relative flex items-center justify-between">
               <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.balance")}</span>
               <div className={`p-2 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ${balancePositive ? "bg-gradient-to-br from-emerald-500/25 to-emerald-500/5 ring-1 ring-emerald-500/20 text-emerald-400" : "bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 text-rose-400"}`}>
@@ -984,7 +984,7 @@ export function Dashboard({
             id="stat-schedules"
           >
             <ShimmerLine via="via-amber-500/50" />
-            <div aria-hidden className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-amber-500/10 blur-2xl group-hover:bg-amber-500/20 transition-colors duration-500" />
+            <div aria-hidden className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.amber.500/0.18),transparent_65%)] pointer-events-none" />
             <div className="relative flex items-center justify-between">
               <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.schedule")}</span>
               <div className="bg-gradient-to-br from-amber-500/25 to-amber-500/5 ring-1 ring-amber-500/20 p-2 rounded-xl text-amber-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
