@@ -4,9 +4,10 @@
  */
 
 import React, { useState } from "react";
-import { Lock, User as UserIcon, Home, AlertCircle, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Sun, Moon } from "lucide-react";
+import { Lock, User as UserIcon, Home, AlertCircle, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Sun, Moon, Languages, Check, ChevronDown } from "lucide-react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGUAGES } from "../i18n";
 
 interface AuthProps {
   onLoginSuccess: (user: any, token: string) => void;
@@ -27,7 +28,12 @@ const PARTICLES = Array.from({ length: 30 }, (_, i) => ({
 }));
 
 export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [langOpen, setLangOpen] = useState(false);
+  const currentLang =
+    SUPPORTED_LANGUAGES.find(
+      (l) => l.code === (i18n.resolvedLanguage || i18n.language || "vi").split("-")[0]
+    ) ?? SUPPORTED_LANGUAGES[0];
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -117,22 +123,85 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
         <div className="absolute inset-0 opacity-[0.025] bg-[linear-gradient(to_right,currentColor_1px,transparent_1px),linear-gradient(to_bottom,currentColor_1px,transparent_1px)] bg-[size:46px_46px] text-slate-400" />
       </div>
 
-      {/* Nút đổi Sáng/Tối — góc trên phải, tôn trọng notch iPhone */}
-      {onToggleTheme && (
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          title={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
-          aria-label={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
-          className="absolute right-4 top-[calc(env(safe-area-inset-top)_+_1rem)] z-20 p-2.5 text-slate-400 hover:text-slate-100 bg-slate-900 neu-btn rounded-xl leading-none cursor-pointer group flex items-center justify-center"
-        >
-          {theme === "light" ? (
-            <Moon className="w-4.5 h-4.5 transition-transform group-hover:scale-110" />
-          ) : (
-            <Sun className="w-4.5 h-4.5 text-amber-500 transition-transform group-hover:rotate-45" />
+      {/* Bộ chọn ngôn ngữ + nút đổi Sáng/Tối — góc trên phải, tôn trọng notch iPhone */}
+      <div className="absolute right-4 top-[calc(env(safe-area-inset-top)_+_1rem)] z-20 flex items-center gap-2">
+        {/* Bộ chọn ngôn ngữ */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setLangOpen((o) => !o)}
+            aria-haspopup="listbox"
+            aria-expanded={langOpen}
+            aria-label={t("language.name")}
+            title={t("language.name")}
+            className="flex items-center gap-1.5 px-2.5 py-2 text-slate-400 hover:text-slate-100 bg-slate-900 neu-btn rounded-xl leading-none cursor-pointer group"
+          >
+            <span className="text-sm leading-none">{currentLang.flag}</span>
+            <Languages className="w-4 h-4 transition-transform group-hover:scale-110" />
+            <ChevronDown className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} />
+          </button>
+
+          {langOpen && (
+            <>
+              {/* Lớp phủ đóng menu khi bấm ra ngoài */}
+              <div
+                aria-hidden
+                className="fixed inset-0 z-10"
+                onClick={() => setLangOpen(false)}
+              />
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.15 }}
+                role="listbox"
+                className="absolute right-0 mt-2 w-40 z-20 bg-slate-900 neu-raised rounded-xl p-1.5 space-y-0.5 shadow-xl shadow-black/40"
+              >
+                {SUPPORTED_LANGUAGES.map((l) => {
+                  const active = l.code === currentLang.code;
+                  return (
+                    <button
+                      key={l.code}
+                      type="button"
+                      role="option"
+                      aria-selected={active}
+                      onClick={() => {
+                        i18n.changeLanguage(l.code);
+                        setLangOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                        active
+                          ? "bg-sky-500/15 text-sky-300"
+                          : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                      }`}
+                    >
+                      <span className="text-base leading-none">{l.flag}</span>
+                      <span className="flex-1 text-left">{l.label}</span>
+                      {active && <Check className="w-3.5 h-3.5 text-sky-400" />}
+                    </button>
+                  );
+                })}
+              </motion.div>
+            </>
           )}
-        </button>
-      )}
+        </div>
+
+        {/* Nút đổi Sáng/Tối */}
+        {onToggleTheme && (
+          <button
+            type="button"
+            onClick={onToggleTheme}
+            title={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
+            aria-label={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
+            className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-900 neu-btn rounded-xl leading-none cursor-pointer group flex items-center justify-center"
+          >
+            {theme === "light" ? (
+              <Moon className="w-4.5 h-4.5 transition-transform group-hover:scale-110" />
+            ) : (
+              <Sun className="w-4.5 h-4.5 text-amber-500 transition-transform group-hover:rotate-45" />
+            )}
+          </button>
+        )}
+      </div>
 
       <motion.div
         initial={{ opacity: 0, y: 18, scale: 0.98 }}

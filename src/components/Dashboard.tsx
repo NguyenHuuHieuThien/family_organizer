@@ -673,6 +673,21 @@ export function Dashboard({
           const uvToday = hasW && w.daily?.uv_index_max ? w.daily.uv_index_max[0] : null;
           const rainToday = hasW && w.daily?.precipitation_probability_max ? w.daily.precipitation_probability_max[0] : null;
           const storm = w?.stormRisk;
+          // Văn bản cảnh báo giông bão dịch qua i18n (server chỉ trả dữ liệu có cấu trúc).
+          // Dự phòng cả payload cũ (có label/detail) để không hiện khoá thô khi cache cũ.
+          const stormHasType = !!storm && typeof storm.type === "string" && storm.type !== "none";
+          const stormLabel = stormHasType
+            ? t(`dashboard.weather.storm.${storm.type}`)
+            : (storm?.label || "");
+          const stormDetail = stormHasType
+            ? storm.type === "typhoon"
+              ? t("dashboard.weather.storm.gustTyphoon", { gust: storm.gust })
+              : storm.type === "wind"
+                ? t("dashboard.weather.storm.gustWind", { gust: storm.gust })
+                : storm.thunderNow
+                  ? t("dashboard.weather.storm.thunderNow")
+                  : t("dashboard.weather.storm.heavyRain", { rain: storm.rain })
+            : (storm?.detail || "");
           const quakes = widgets?.quakes;
           const quakeList: any[] = quakes?.events || [];
           const stormStyle = storm?.level === "warning"
@@ -726,8 +741,8 @@ export function Dashboard({
                 <div className={`relative mt-2.5 rounded-lg border px-2.5 py-1.5 flex items-start gap-2 ${stormStyle}`}>
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold leading-tight">{storm.label}</p>
-                    {storm.detail && <p className="text-[10px] opacity-80 leading-tight mt-0.5">{storm.detail} · {t("dashboard.weather.estimate")}</p>}
+                    <p className="text-[11px] font-bold leading-tight">{stormLabel}</p>
+                    {stormDetail && <p className="text-[10px] opacity-80 leading-tight mt-0.5">{stormDetail} · {t("dashboard.weather.estimate")}</p>}
                   </div>
                 </div>
               )}

@@ -2518,6 +2518,8 @@ async function cachedFetch(key: string, ttlMs: number, fetcher: () => Promise<an
 // Suy ra "nguy cơ giông bão" (ước lượng, KHÔNG phải đường đi bão chính thức) từ
 // mã thời tiết dông + gió giật hiện tại/tối đa trong các ngày dự báo. Thang gió
 // tham chiếu cấp bão VN: cấp 8 (bão) ≈ 62 km/h, cấp 10 ≈ 89 km/h.
+// Chỉ trả về dữ liệu có cấu trúc (level/type + số), phần văn bản dịch qua i18n
+// ở client (dashboard.weather.storm.*) để hỗ trợ đa ngôn ngữ.
 function deriveStormRisk(current: any, daily: any): any {
   const codeNow = Number(current?.weather_code);
   const gustNow = Number(current?.wind_gusts_10m) || 0;
@@ -2526,17 +2528,19 @@ function deriveStormRisk(current: any, daily: any): any {
   const peakGust = Math.max(gustNow, ...(gustsMax.length ? gustsMax : [0]));
   const peakRain = rainProb.length ? Math.max(...rainProb) : 0;
   const thunderNow = [95, 96, 99].includes(codeNow);
+  const gust = Math.round(peakGust);
+  const rain = Math.round(peakRain);
 
   if (peakGust >= 89) {
-    return { level: "warning", label: "Cảnh báo gió bão", detail: `Gió giật tới ~${Math.round(peakGust)} km/h (cấp 10+)`, gust: Math.round(peakGust) };
+    return { level: "warning", type: "typhoon", gust, rain, thunderNow };
   }
   if (peakGust >= 62) {
-    return { level: "watch", label: "Đề phòng gió mạnh", detail: `Gió giật tới ~${Math.round(peakGust)} km/h (cấp 8-9)`, gust: Math.round(peakGust) };
+    return { level: "watch", type: "wind", gust, rain, thunderNow };
   }
   if (thunderNow || (peakRain >= 80 && peakGust >= 45)) {
-    return { level: "watch", label: "Đề phòng giông", detail: thunderNow ? "Đang có dông gần khu vực" : `Mưa lớn khả năng cao (${Math.round(peakRain)}%)`, gust: Math.round(peakGust) };
+    return { level: "watch", type: "thunder", gust, rain, thunderNow };
   }
-  return { level: "none", label: "Không có cảnh báo giông bão", detail: "", gust: Math.round(peakGust) };
+  return { level: "none", type: "none", gust, rain, thunderNow: false };
 }
 
 async function fetchWeather(lat: number, lon: number, city: string) {
@@ -2683,7 +2687,7 @@ app.get("/api/widgets/overview", requireAuth, async (req: AuthRequest, res: Resp
   const city = typeof req.query.city === "string" && req.query.city.trim() ? req.query.city.trim().slice(0, 60) : WEATHER_CITY;
   const geoKey = `${lat.toFixed(3)}_${lon.toFixed(3)}`;
 
-  const weather = await cachedFetch(`weather_${geoKey}`, 15 * 60 * 1000, () => fetchWeather(lat, lon, city));
+  const weather = await cachedFetch(`weather_v2_${geoKey}`, 15 * 60 * 1000, () => fetchWeather(lat, lon, city));
   const quakes = await cachedFetch(`quakes_${geoKey}`, 30 * 60 * 1000, () => fetchQuakes(lat, lon));
   const cryptoPrices = await cachedFetch("crypto", 5 * 60 * 1000, fetchCrypto);
   const fx = await cachedFetch("fx", 30 * 60 * 1000, fetchFx);

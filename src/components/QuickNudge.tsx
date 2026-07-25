@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Megaphone, Send, Loader2, Users, AlertCircle, CheckCircle2 } from "lucide-react";
 import { User, UserRole } from "../types.js";
 import { Avatar } from "./Avatar.js";
@@ -13,18 +14,13 @@ function authHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-// One-tap quick messages. Tapping one sends it to the selected recipient.
-const PRESETS = [
-  "Về nhà ăn cơm nhé! 🍚",
-  "Gọi điện cho mình nha 📞",
-];
-
 interface QuickNudgeProps {
   currentUser: User;
   users: User[];
 }
 
 export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
+  const { t } = useTranslation();
   const recipients = users.filter(u => u.id !== currentUser.id);
   const [recipient, setRecipient] = useState<string | null>(null);
   const [custom, setCustom] = useState("");
@@ -34,15 +30,17 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
   // Guests can only receive, never send. Also hide when there's nobody to nudge.
   if (currentUser.role === UserRole.GUEST || recipients.length === 0) return null;
 
+  const PRESETS = [t("dashboard.quickNudge.preset1"), t("dashboard.quickNudge.preset2")];
+
   const givenName = (full: string) => full.trim().split(/\s+/).pop() || full;
   const recipientLabel = recipient === "all"
-    ? "cả nhà"
+    ? t("dashboard.quickNudge.recipientAll")
     : recipients.find(u => u.id === recipient)?.fullName || "";
 
   const send = async (message: string) => {
     const text = message.trim();
-    if (!recipient) { setMsg({ kind: "err", text: "Chọn người nhận trước nhé." }); return; }
-    if (!text) { setMsg({ kind: "err", text: "Nội dung lời nhắc đang trống." }); return; }
+    if (!recipient) { setMsg({ kind: "err", text: t("dashboard.quickNudge.errNoRecipient") }); return; }
+    if (!text) { setMsg({ kind: "err", text: t("dashboard.quickNudge.errEmptyMsg") }); return; }
     setBusy(true); setMsg(null);
     try {
       const res = await fetch("/api/notifications/send", {
@@ -51,11 +49,11 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
         body: JSON.stringify({ toUserId: recipient, message: text }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Gửi lời nhắc thất bại.");
-      setMsg({ kind: "ok", text: `Đã gửi tới ${recipientLabel}! 📨` });
+      if (!res.ok) throw new Error(data.error || t("dashboard.quickNudge.errSendFailed"));
+      setMsg({ kind: "ok", text: t("dashboard.quickNudge.sentOk", { name: recipientLabel }) });
       setCustom("");
     } catch (e: any) {
-      setMsg({ kind: "err", text: e?.message || "Gửi lời nhắc thất bại." });
+      setMsg({ kind: "err", text: e?.message || t("dashboard.quickNudge.errSendFailed") });
     } finally {
       setBusy(false);
     }
@@ -70,8 +68,8 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
           <Megaphone className="w-4.5 h-4.5" />
         </span>
         <div>
-          <h3 className="text-sm font-bold text-slate-200">Nhắc người nhà</h3>
-          <p className="text-[11px] text-slate-500">Gửi lời nhắc tới điện thoại người thân — 1 chạm là tới.</p>
+          <h3 className="text-sm font-bold text-slate-200">{t("dashboard.quickNudge.title")}</h3>
+          <p className="text-[11px] text-slate-500">{t("dashboard.quickNudge.subtitle")}</p>
         </div>
       </div>
 
@@ -85,7 +83,7 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
           <span className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center shrink-0">
             <Users className="w-3.5 h-3.5" />
           </span>
-          Cả nhà
+          {t("dashboard.quickNudge.recipientAll")}
         </button>
         {recipients.map(u => (
           <button
@@ -123,7 +121,7 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
           maxLength={300}
           onChange={(e) => setCustom(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && !busy) send(custom); }}
-          placeholder="Hoặc gõ lời nhắc của riêng bạn…"
+          placeholder={t("dashboard.quickNudge.customPlaceholder")}
           className="flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
         />
         <button
@@ -132,7 +130,7 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
           onClick={() => send(custom)}
           className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0"
         >
-          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Gửi
+          {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {t("dashboard.quickNudge.sendBtn")}
         </button>
       </div>
 

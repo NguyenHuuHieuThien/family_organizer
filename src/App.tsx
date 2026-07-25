@@ -1766,12 +1766,12 @@ export default function App() {
               {isOnline ? (
                 <>
                   <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                  <span>Đồng bộ: <span className="text-emerald-400 font-bold">Đang kết nối</span></span>
+                  <span>{t("sync.label")}: <span className="text-emerald-400 font-bold">{t("sync.connected")}</span></span>
                 </>
               ) : (
                 <>
                   <AlertCircle className="w-3.5 h-3.5 text-rose-400 animate-bounce" />
-                  <span>Đồng bộ: <span className="text-rose-400 font-bold">Mất kết nối</span></span>
+                  <span>{t("sync.label")}: <span className="text-rose-400 font-bold">{t("sync.disconnected")}</span></span>
                 </>
               )}
             </div>
@@ -1779,8 +1779,8 @@ export default function App() {
             {/* SSE replication indicators — mobile chỉ hiện icon trạng thái đồng bộ (nổi lên) */}
             <div
               className={`sm:hidden flex items-center justify-center p-2 bg-slate-950 neu-btn rounded-xl leading-none transition-shadow ${isOnline ? "text-emerald-400 shadow-[0_0_10px_-2px] shadow-emerald-500/40" : "text-rose-400"}`}
-              title={isOnline ? "Đồng bộ: Đang kết nối" : "Đồng bộ: Mất kết nối"}
-              aria-label={isOnline ? "Đồng bộ: Đang kết nối" : "Đồng bộ: Mất kết nối"}
+              title={isOnline ? `${t("sync.label")}: ${t("sync.connected")}` : `${t("sync.label")}: ${t("sync.disconnected")}`}
+              aria-label={isOnline ? `${t("sync.label")}: ${t("sync.connected")}` : `${t("sync.label")}: ${t("sync.disconnected")}`}
             >
               {isOnline ? (
                 <span className="relative flex items-center justify-center">
@@ -1806,7 +1806,7 @@ export default function App() {
             <button
               onClick={toggleTheme}
               className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none cursor-pointer group flex items-center justify-center"
-              title={theme === "light" ? "Chuyển sang Giao diện Tối" : "Chuyển sang Giao diện Sáng"}
+              title={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
             >
               {theme === "light" ? (
                 <Moon className="w-4.5 h-4.5 transition-transform group-hover:scale-110" />
@@ -2132,12 +2132,12 @@ export default function App() {
                 {isOnline ? (
                   <>
                     <Wifi className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0" />
-                    <span>Đồng bộ: <span className="text-emerald-400 font-bold">Đang kết nối</span></span>
+                    <span>{t("sync.label")}: <span className="text-emerald-400 font-bold">{t("sync.connected")}</span></span>
                   </>
                 ) : (
                   <>
                     <AlertCircle className="w-3.5 h-3.5 text-rose-400 animate-bounce shrink-0" />
-                    <span>Đồng bộ: <span className="text-rose-400 font-bold">Mất kết nối</span></span>
+                    <span>{t("sync.label")}: <span className="text-rose-400 font-bold">{t("sync.disconnected")}</span></span>
                   </>
                 )}
               </div>
