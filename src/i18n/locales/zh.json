@@ -1039,5 +1039,10 @@
     "kindNote": "笔记",
     "kindTransaction": "收支",
     "kindDocument": "文件"
+  },
+  "confirmDialog": {
+    "closeAria": "关闭确认对话框",
+    "cancelLabel": "取消",
+    "confirmLabel": "确认"
   }
 }

@@ -1039,5 +1039,10 @@
     "kindNote": "Ghi chú",
     "kindTransaction": "Thu chi",
     "kindDocument": "Giấy tờ"
+  },
+  "confirmDialog": {
+    "closeAria": "Đóng hộp xác nhận",
+    "cancelLabel": "Hủy bỏ",
+    "confirmLabel": "Xác nhận"
   }
 }

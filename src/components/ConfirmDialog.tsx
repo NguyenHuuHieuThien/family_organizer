@@ -7,6 +7,7 @@ import React, { useCallback, useRef, useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { motion } from "motion/react";
 import { useModalA11y } from "../hooks/useModalA11y.js";
+import { useTranslation } from "react-i18next";
 
 interface ConfirmOptions {
   title: string;
@@ -27,6 +28,7 @@ interface ConfirmOptions {
  *   // render {ConfirmDialog} somewhere in the component's JSX.
  */
 export function useConfirm() {
+  const { t } = useTranslation();
   const [options, setOptions] = useState<ConfirmOptions | null>(null);
   const resolverRef = useRef<((value: boolean) => void) | null>(null);
   const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -74,7 +76,7 @@ export function useConfirm() {
           </div>
           <button
             type="button"
-            aria-label="Đóng hộp xác nhận"
+            aria-label={t("confirmDialog.closeAria")}
             onClick={() => close(false)}
             className="text-slate-400 hover:text-slate-200 bg-slate-800 p-1.5 rounded-lg shrink-0"
           >
@@ -92,14 +94,14 @@ export function useConfirm() {
             onClick={() => close(false)}
             className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
           >
-            {options.cancelLabel || "Hủy bỏ"}
+            {options.cancelLabel || t("confirmDialog.cancelLabel")}
           </button>
           <button
             type="button"
             onClick={() => close(true)}
             className={`px-4 py-2 rounded-xl font-bold transition-all cursor-pointer text-xs text-slate-950 ${isDanger ? "bg-rose-500 hover:bg-rose-400" : "bg-sky-500 hover:bg-sky-400"}`}
           >
-            {options.confirmLabel || "Xác nhận"}
+            {options.confirmLabel || t("confirmDialog.confirmLabel")}
           </button>
         </div>
       </motion.div>

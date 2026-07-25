@@ -1039,5 +1039,10 @@
     "kindNote": "Notes",
     "kindTransaction": "Transactions",
     "kindDocument": "Documents"
+  },
+  "confirmDialog": {
+    "closeAria": "Close confirmation dialog",
+    "cancelLabel": "Cancel",
+    "confirmLabel": "Confirm"
   }
 }
