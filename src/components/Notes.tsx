@@ -1,9 +1,10 @@
-/**
+﻿/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import React, { useState, useMemo, useCallback, useEffect, useRef, lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 import {
   FileText,
   Plus,
@@ -42,8 +43,6 @@ interface NotesProps {
 // initial bundle and only loads when a note is opened or previewed.
 const MarkdownView = lazy(() => import("./Markdown.js"));
 
-const MarkdownFallback = () => <p className="text-slate-500 text-xs">Đang hiển thị…</p>;
-
 export function Notes({
   currentUser,
   users,
@@ -52,6 +51,9 @@ export function Notes({
   onDeleteNote,
   authHeaders
 }: NotesProps) {
+  const { t } = useTranslation();
+  const MarkdownFallback = () => <p className="text-slate-500 text-xs">{t("notes.loadingMarkdown")}</p>;
+
   // Query states
   const [searchTerm, setSearchTerm] = useState("");
   const [tagFilter, setTagFilter] = useState("all");
@@ -105,7 +107,7 @@ export function Notes({
         return `${pre}${snippet}${post}`;
       });
     } catch (err: any) {
-      setFormError(err.message || "Không dán được ảnh vào ghi chú.");
+      setFormError(err.message || t("notes.errPaste"));
     } finally {
       setImagePasting(false);
     }
@@ -126,7 +128,7 @@ export function Notes({
 
   const handleAiDraft = async () => {
     const p = aiPrompt.trim();
-    if (!p) { setAiError("Hãy mô tả nội dung bạn muốn AI viết."); return; }
+    if (!p) { setAiError(t("notes.aiErrPromptEmpty")); return; }
     setAiBusy(true);
     setAiError("");
     try {
@@ -136,13 +138,13 @@ export function Notes({
         body: JSON.stringify({ prompt: p, title: formTitle.trim() })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Không tạo được ghi chú bằng AI.");
+      if (!res.ok) throw new Error(data.error || t("notes.aiErr"));
       if (!formTitle.trim() && data.title) setFormTitle(data.title);
       setFormContent(prev => (prev.trim() ? `${prev.trim()}\n\n${data.content}` : data.content));
       setEditorPreview(true); // hiển thị kết quả đã render
       setAiPrompt("");
     } catch (err: any) {
-      setAiError(err.message || "Không tạo được ghi chú bằng AI.");
+      setAiError(err.message || t("notes.aiErr"));
     } finally {
       setAiBusy(false);
     }
@@ -215,7 +217,7 @@ export function Notes({
   // Nút nổi viết nhanh — ẩn khi đang mở trình soạn hoặc tài khoản khách
   useTabFab(
     currentUser.role !== UserRole.GUEST && !isEditorOpen
-      ? { id: "notes", color: "sky", title: "Viết ghi chú mới", icon: FileText, onClick: handleOpenCreateForm }
+      ? { id: "notes", color: "sky", title: t("notes.fabTitle"), icon: FileText, onClick: handleOpenCreateForm }
       : null
   );
 
@@ -241,7 +243,7 @@ export function Notes({
     setFormError("");
 
     if (!formTitle.trim()) {
-      setFormError("Vui lòng nhập tựa đề ghi chú!");
+      setFormError(t("notes.errTitleRequired"));
       return;
     }
 
@@ -265,17 +267,17 @@ export function Notes({
       setIsEditorOpen(false);
       setEditingNote(null);
     } catch (err: any) {
-      setFormError(err.message || "Lưu ghi chú thất bại");
+      setFormError(err.message || t("notes.errSave"));
     }
   };
 
   // Delete note trigger
   const handleDeleteClick = async (noteId: string) => {
     const ok = await confirm({
-      title: "Xóa ghi chú?",
-      message: "Ghi chú này sẽ bị xóa vĩnh viễn và không thể phục hồi. Bạn có chắc chắn muốn tiếp tục không?",
-      confirmLabel: "Xóa ghi chú",
-      cancelLabel: "Đóng lại",
+      title: t("notes.deleteTitle"),
+      message: t("notes.deleteMsg"),
+      confirmLabel: t("notes.deleteConfirm"),
+      cancelLabel: t("notes.deleteCancel"),
       tone: "danger"
     });
     if (!ok) return;
@@ -307,9 +309,9 @@ export function Notes({
         <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 flex-1">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-500" />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm nhãn ghi chú, đề tài gia đình..."
+            <input
+              type="text"
+              placeholder={t("notes.searchPlaceholder")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
@@ -322,9 +324,9 @@ export function Notes({
               <FancySelect
                 value={tagFilter}
                 onChange={setTagFilter}
-                ariaLabel="Lọc theo thẻ nhãn"
+                ariaLabel={t("notes.tagFilterAria")}
                 options={[
-                  { value: "all", label: "Mọi thẻ nhãn" },
+                  { value: "all", label: t("notes.tagFilterAll") },
                   ...tagsPool.map(tg => ({ value: tg, label: `#${tg}` }))
                 ]}
               />
@@ -338,14 +340,14 @@ export function Notes({
           onClick={handleOpenCreateForm}
           className="bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all self-start md:self-auto shrink-0 shadow-md shadow-sky-500/5 cursor-pointer"
         >
-          <Plus className="w-4 h-4" /> Viết ghi chú mới
+          <Plus className="w-4 h-4" /> {t("notes.addNoteBtn")}
         </button>
       </Reveal>
 
       {/* Grid of Results: Pinned block at top, normal block underneath */}
       {filteredNotes.length === 0 ? (
         <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl py-12 text-center" id="empty-notes">
-          <p className="text-sm text-slate-500">Không tìm thấy tài liệu ghi chú nào phù hợp.</p>
+          <p className="text-sm text-slate-500">{t("notes.emptyState")}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -353,7 +355,7 @@ export function Notes({
           {pinnedNotes.length > 0 && (
             <div className="space-y-3" id="pinned-notes-block">
               <h3 className="text-xs font-bold text-slate-400 flex items-center gap-1.5 uppercase tracking-wider">
-                <Pin className="w-4 h-4 text-yellow-400" /> Được ghim ở đầu ({pinnedNotes.length})
+                <Pin className="w-4 h-4 text-yellow-400" /> {t("notes.pinnedSectionTitle", { n: pinnedNotes.length })}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 {pinnedNotes.map((note, noteIndex) => {
@@ -370,7 +372,7 @@ export function Notes({
                       <div className="space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <h4 className="text-sm font-bold text-slate-100 line-clamp-1 group-hover:text-sky-400 transition-colors">{note.title}</h4>
-                          <span className="shrink-0 text-[10px] px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-semibold rounded-lg">Đã ghim</span>
+                          <span className="shrink-0 text-[10px] px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 font-semibold rounded-lg">{t("notes.pinnedBadge")}</span>
                         </div>
                         <div className="relative max-h-[4.75rem] overflow-hidden [&>div]:text-[11px] [&_*]:!mt-0 [&_*]:!mb-0 [&>div>*+*]:!mt-1">
                           <Suspense fallback={<MarkdownFallback />}>
@@ -381,33 +383,33 @@ export function Notes({
                       </div>
 
                       <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-sans">
-                        <span>Lập bởi: {creator ? creator.fullName.split(" ")[0] : "Thành viên"}</span>
+                        <span>{t("notes.createdBy", { name: creator ? creator.fullName.split(" ")[0] : t("notes.unknownMember") })}</span>
                         <span>{new Date(note.updatedAt).toLocaleDateString("vi-VN", { month: "numeric", day: "numeric" })}</span>
                       </div>
 
                       {/* Sticky hover actions */}
                       <div className="absolute right-3.5 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-slate-900 p-1 rounded-lg shadow-md border border-slate-800">
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleTogglePin(note); }}
                           className="p-1.5 hover:bg-slate-800 rounded text-yellow-400"
-                          title="Bỏ ghim"
+                          title={t("notes.btnUnpin")}
                         >
                           <PinOff className="w-3.5 h-3.5" />
                         </button>
                         {currentUser.role !== UserRole.GUEST && (
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleOpenEditForm(note); }}
                             className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-sky-400"
-                            title="Chỉnh sửa"
+                            title={t("notes.btnEdit")}
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                         )}
                         {(note.creatorId === currentUser.id || currentUser.role === UserRole.ADMIN) && (
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteClick(note.id); }}
                             className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-rose-400"
-                            title="Xóa"
+                            title={t("notes.btnDelete")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -424,7 +426,7 @@ export function Notes({
           {normalNotes.length > 0 && (
             <div className="space-y-4" id="all-notes-block">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Ghi chú khác ({normalNotes.length})
+                {t("notes.normalSectionTitle", { n: normalNotes.length })}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
                 {normalNotes.map((note, noteIndex) => {
@@ -442,7 +444,7 @@ export function Notes({
                           <h4 className="text-sm font-bold text-slate-100 line-clamp-1 group-hover:text-sky-400 transition-colors">{note.title}</h4>
                           <span className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
                             {note.isShared ? <Share2 className="w-3 h-3 text-sky-400/90" /> : <Lock className="w-3 h-3 text-indigo-400" />}
-                            {note.isShared ? "Chung" : "Riêng"}
+                            {note.isShared ? t("notes.visPublic") : t("notes.visPrivate")}
                           </span>
                         </div>
                         <div className="relative max-h-[4.75rem] overflow-hidden [&>div]:text-[11px] [&_*]:!mt-0 [&_*]:!mb-0 [&>div>*+*]:!mt-1">
@@ -454,33 +456,33 @@ export function Notes({
                       </div>
 
                       <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-500 font-sans">
-                        <span>Lập bởi: {creator ? creator.fullName.split(" ")[0] : "Thành viên"}</span>
+                        <span>{t("notes.createdBy", { name: creator ? creator.fullName.split(" ")[0] : t("notes.unknownMember") })}</span>
                         <span>{new Date(note.updatedAt).toLocaleDateString("vi-VN", { month: "numeric", day: "numeric" })}</span>
                       </div>
 
                       {/* Hover actions */}
                       <div className="absolute right-3.5 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-slate-900 p-1 rounded-lg shadow-md border border-slate-800">
-                        <button 
+                        <button
                           onClick={(e) => { e.stopPropagation(); handleTogglePin(note); }}
                           className="p-1.5 hover:bg-slate-800 rounded text-slate-500 hover:text-yellow-400"
-                          title="Ghim đầu trang"
+                          title={t("notes.btnPin")}
                         >
                           <Pin className="w-3.5 h-3.5" />
                         </button>
                         {currentUser.role !== UserRole.GUEST && (
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleOpenEditForm(note); }}
                             className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-sky-400"
-                            title="Sửa"
+                            title={t("notes.btnEdit")}
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                         )}
                         {(note.creatorId === currentUser.id || currentUser.role === UserRole.ADMIN) && (
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleDeleteClick(note.id); }}
                             className="p-1.5 hover:bg-slate-800 rounded text-slate-400 hover:text-rose-400"
-                            title="Xóa"
+                            title={t("notes.btnDelete")}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -514,7 +516,7 @@ export function Notes({
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
                 <FileText className="w-5 h-5 text-sky-400" />
-                {editingNote ? `Sửa ghi chú "${editingNote.title}"` : "Soạn thảo tài liệu mới"}
+                {editingNote ? t("notes.formTitleEdit", { title: editingNote.title }) : t("notes.formTitleCreate")}
               </h3>
               <button
                 onClick={() => setIsEditorOpen(false)}
@@ -537,7 +539,7 @@ export function Notes({
                 <label className="text-slate-400 block font-semibold">Tựa đề ghi chú <span className="text-rose-400">*</span></label>
                 <input 
                   type="text" 
-                  placeholder="Ví dụ: Công thức nấu ăn cốt lết, Ghi chú bảo hiểm xe máy..."
+                  placeholder={t("notes.formNamePlaceholder")}
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-sky-500 text-sm font-bold"
@@ -548,14 +550,14 @@ export function Notes({
               {aiEnabled && (
                 <div className="space-y-1.5 bg-violet-500/5 border border-violet-500/20 rounded-xl p-3">
                   <label className="text-violet-300 font-semibold flex items-center gap-1.5 text-[11px]">
-                    <Sparkles className="w-3.5 h-3.5" /> Nhờ AI viết giúp
+                    <Sparkles className="w-3.5 h-3.5" /> {t("notes.aiLabel")}
                   </label>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <input
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAiDraft(); } }}
-                      placeholder="VD: lập kế hoạch dọn nhà cuối tuần, công thức bún bò Huế…"
+                      placeholder={t("notes.aiPlaceholder")}
                       className="flex-1 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-violet-500"
                     />
                     <button
@@ -565,32 +567,32 @@ export function Notes({
                       className="bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-slate-950 font-bold px-3.5 py-2 rounded-lg flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all"
                     >
                       {aiBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                      {aiBusy ? "Đang viết…" : "Tạo bằng AI"}
+                      {aiBusy ? t("notes.aiGenerating") : t("notes.aiGenBtn")}
                     </button>
                   </div>
                   {aiError && <p className="text-[11px] text-rose-400">{aiError}</p>}
-                  <p className="text-[10px] text-violet-300/60">AI sẽ chèn nội dung Markdown vào ô bên dưới (nối thêm nếu đã có sẵn).</p>
+                  <p className="text-[10px] text-violet-300/60">{t("notes.aiHint")}</p>
                 </div>
               )}
 
               {/* Content: trình soạn Markdown đầy đủ + xem trước trực tiếp */}
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center gap-2">
-                  <label className="text-slate-400 font-semibold">Nội dung (Markdown đầy đủ)</label>
+                  <label className="text-slate-400 font-semibold">{t("notes.contentLabel")}</label>
                   <div className="flex bg-slate-950 neu-pressed-sm rounded-lg p-0.5 text-[10px] font-bold">
                     <button
                       type="button"
                       onClick={() => setEditorPreview(false)}
                       className={`px-2.5 py-1 rounded-md flex items-center gap-1 cursor-pointer transition-colors ${!editorPreview ? "bg-sky-500 text-slate-950" : "text-slate-400 hover:text-slate-200"}`}
                     >
-                      <Edit3 className="w-3 h-3" /> Soạn
+                      <Edit3 className="w-3 h-3" /> {t("notes.editorTab")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditorPreview(true)}
                       className={`px-2.5 py-1 rounded-md flex items-center gap-1 cursor-pointer transition-colors ${editorPreview ? "bg-sky-500 text-slate-950" : "text-slate-400 hover:text-slate-200"}`}
                     >
-                      <Eye className="w-3 h-3" /> Xem trước
+                      <Eye className="w-3 h-3" /> {t("notes.previewTab")}
                     </button>
                   </div>
                 </div>
@@ -612,17 +614,17 @@ export function Notes({
                   />
                 )}
                 <p className="text-[10px] text-slate-500">
-                  Hỗ trợ Markdown đầy đủ: tiêu đề, in đậm/nghiêng, danh sách, checkbox, liên kết, trích dẫn, code, bảng… Dán ảnh Ctrl+V được.
-                  {imagePasting && <span className="text-sky-400 font-semibold"> Đang tải ảnh…</span>}
+                  {t("notes.contentHint")}
+                  {imagePasting && <span className="text-sky-400 font-semibold">{t("notes.imagePasting")}</span>}
                 </p>
               </div>
 
               {/* Tags, Pinned and Shared row */}
               <div className="space-y-1">
-                <label className="text-slate-400 block font-semibold">Đính nhãn tags (ngăn bằng dấu phẩy)</label>
+                <label className="text-slate-400 block font-semibold">{t("notes.tagsLabel")}</label>
                 <input 
                   type="text" 
-                  placeholder="Ví dụ: Quan trọng, Món ngon, Thiết bị..."
+                  placeholder={t("notes.tagsPlaceholder")}
                   value={formTagsStr}
                   onChange={(e) => setFormTagsStr(e.target.value)}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2 text-slate-200 focus:outline-none focus:border-sky-500"
@@ -637,7 +639,7 @@ export function Notes({
                     onChange={(e) => setFormIsPinned(e.target.checked)}
                     className="rounded bg-slate-950 border-slate-800 text-sky-500 focus:ring-0 w-4 h-4 cursor-pointer"
                   />
-                  <span>Ghim trực tiếp lên màn hình chính (Pin)</span>
+                  <span>{t("notes.pinCheckbox")}</span>
                 </label>
 
                 <label className="flex items-center gap-2 cursor-pointer text-slate-300 font-semibold select-none">
@@ -647,7 +649,7 @@ export function Notes({
                     onChange={(e) => setFormIsShared(e.target.checked)}
                     className="rounded bg-slate-950 border-slate-800 text-sky-500 focus:ring-0 w-4 h-4 cursor-pointer"
                   />
-                  <span>Chia sẻ công khai cho các thành viên đều xem được</span>
+                  <span>{t("notes.shareCheckbox")}</span>
                 </label>
               </div>
 
@@ -660,13 +662,13 @@ export function Notes({
                   onClick={() => setIsEditorOpen(false)}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
-                  Đóng lại
+                  {t("notes.closeBtn")}
                 </button>
                 <button 
                   type="submit" 
                   className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer"
                 >
-                  Lưu trữ ghi chú
+                  {t("notes.saveBtn")}
                 </button>
               </div>
             </form>
@@ -692,7 +694,7 @@ export function Notes({
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="space-y-0.5">
-                <span className="text-[10px] text-slate-500 font-mono">Đang đọc tài liệu gia đình:</span>
+                <span className="text-[10px] text-slate-500 font-mono">{t("notes.readerReading")}</span>
                 <h3 className="text-md font-bold text-sky-400 flex items-center gap-1.5">{readingNote.title}</h3>
               </div>
               <button 
@@ -717,7 +719,7 @@ export function Notes({
                   <span key={i} className="text-[10px] text-sky-400/80">#{tg}</span>
                 ))}
               </div>
-              <span>Cập nhật ngày: {new Date(readingNote.updatedAt).toLocaleDateString("vi-VN", { month: "long", day: "numeric" })}</span>
+              <span>{t("notes.readerUpdated", { date: new Date(readingNote.updatedAt).toLocaleDateString("vi-VN", { month: "long", day: "numeric" }) })}</span>
             </div>
 
             {/* Reading window footer buttons */}
@@ -727,7 +729,7 @@ export function Notes({
                   onClick={() => handleDeleteClick(readingNote.id)}
                   className="px-3.5 py-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl text-xs font-semibold cursor-pointer"
                 >
-                  Xóa ghi chú
+                  {t("notes.readerDeleteBtn")}
                 </button>
               ) : <div />}
 
@@ -736,14 +738,14 @@ export function Notes({
                   onClick={() => setReadingNote(null)}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
                 >
-                  Đóng cửa sổ
+                  {t("notes.readerCloseBtn")}
                 </button>
                 {currentUser.role !== UserRole.GUEST && (
                   <button 
                     onClick={() => handleOpenEditForm(readingNote)}
                     className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer text-xs"
                   >
-                    Chỉnh sửa nội dung
+                    {t("notes.readerEditBtn")}
                   </button>
                 )}
               </div>
