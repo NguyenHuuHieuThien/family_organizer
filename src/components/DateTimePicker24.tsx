@@ -7,6 +7,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { Calendar, Clock, ChevronLeft, ChevronRight, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Browser-independent 24-hour time controls.
@@ -106,7 +107,6 @@ function getCalendarGrid(year: number, month: number) {
   return grid;
 }
 
-const MONTH_NAMES_SHORT = ["Th1","Th2","Th3","Th4","Th5","Th6","Th7","Th8","Th9","Th10","Th11","Th12"];
 
 export function DateInputDMY({
   value,
@@ -127,6 +127,9 @@ export function DateInputDMY({
   max?: string;
   ariaLabel?: string;
 }) {
+  const { t } = useTranslation();
+  const monthsShort = React.useMemo(() => t("datePicker.monthsShort", { returnObjects: true }) as string[], [t]);
+  const weekdaysShort = React.useMemo(() => t("datePicker.weekdaysShort", { returnObjects: true }) as string[], [t]);
   const [draft, setDraft] = React.useState(() => isoToDateVN(value));
   const [open, setOpen] = React.useState(false);
   const [pos, setPos] = React.useState<{ left: number; top: number; openUp: boolean } | null>(null);
@@ -292,8 +295,8 @@ export function DateInputDMY({
       />
       <button
         type="button"
-        aria-label="Chọn ngày từ lịch"
-        title="Chọn ngày từ lịch"
+        aria-label={t("datePicker.calendarAriaLabel")}
+        title={t("datePicker.calendarAriaLabel")}
         onMouseDown={(e) => e.preventDefault()}
         onClick={toggleOpen}
         className="absolute right-2 top-1/2 -translate-y-1/2 size-7 rounded-md text-slate-500 hover:text-sky-400 hover:bg-slate-800 grid place-items-center cursor-pointer transition-colors"
@@ -324,17 +327,17 @@ export function DateInputDMY({
                 onClick={prevMonth}
                 disabled={showYearMonthPicker}
                 className="size-9 rounded-lg bg-slate-900 neu-btn hover:border-slate-700 text-slate-400 hover:text-slate-100 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
-                title="Tháng trước"
+                title={t("datePicker.prevMonth")}
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setShowYearMonthPicker(v => !v)}
-                title="Chọn tháng & năm nhanh"
+                title={t("datePicker.pickMonthYear")}
                 className="flex items-center gap-1 px-2 py-2 rounded-lg hover:bg-slate-800 text-xs font-bold text-slate-200 hover:text-sky-400 transition-colors cursor-pointer min-h-[44px]"
               >
-                Tháng {viewMonth + 1}, {viewYear}
+                {monthsShort[viewMonth]} {viewYear}
                 <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showYearMonthPicker ? "rotate-180" : ""}`} />
               </button>
               <button
@@ -342,7 +345,7 @@ export function DateInputDMY({
                 onClick={nextMonth}
                 disabled={showYearMonthPicker}
                 className="size-9 rounded-lg bg-slate-900 neu-btn hover:border-slate-700 text-slate-400 hover:text-slate-100 disabled:opacity-30 flex items-center justify-center cursor-pointer transition-colors"
-                title="Tháng sau"
+                title={t("datePicker.nextMonth")}
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -365,7 +368,7 @@ export function DateInputDMY({
                       className="flex-1 overflow-y-scroll overscroll-contain scrollbar-none flex flex-col gap-0.5 pr-1"
                       style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
                     >
-                      <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center sticky top-0 bg-slate-950 py-1 border-b border-slate-800/60 z-10 mb-0.5">Năm</div>
+                      <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center sticky top-0 bg-slate-950 py-1 border-b border-slate-800/60 z-10 mb-0.5">{t("datePicker.yearHeader")}</div>
                       {Array.from({ length: 201 }, (_, i) => 1950 + i).map(yr => {
                         const isSelYr = yr === viewYear;
                         return (
@@ -388,9 +391,9 @@ export function DateInputDMY({
 
                     {/* Month grid 3×4 */}
                     <div className="flex-1 flex flex-col gap-1 pt-1">
-                      <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center border-b border-slate-800/60 pb-1 mb-0.5">Tháng</div>
+                      <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center border-b border-slate-800/60 pb-1 mb-0.5">{t("datePicker.monthHeader")}</div>
                       <div className="grid grid-cols-3 gap-1">
-                        {MONTH_NAMES_SHORT.map((mn, mi) => {
+                        {monthsShort.map((mn, mi) => {
                           const isSelMo = mi === viewMonth;
                           return (
                             <button
@@ -414,8 +417,8 @@ export function DateInputDMY({
 
             {/* Weekdays — Monday first */}
             <div className="grid grid-cols-7 text-center text-[10px] text-slate-500 font-extrabold mb-1.5 uppercase">
-              {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(d => (
-                <div key={d} className={d === "CN" ? "text-rose-500/70" : ""}>{d}</div>
+              {weekdaysShort.map((d, i) => (
+                <div key={d} className={i === 6 ? "text-rose-500/70" : ""}>{d}</div>
               ))}
             </div>
 
@@ -459,14 +462,14 @@ export function DateInputDMY({
                 }}
                 className="flex-1 min-h-[44px] py-2 bg-sky-500 hover:bg-sky-400 text-[11px] font-bold text-slate-950 rounded-lg transition-colors cursor-pointer"
               >
-                Hôm nay
+                {t("datePicker.todayBtn")}
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="flex-1 min-h-[44px] py-2 bg-slate-900 hover:bg-slate-800 text-[11px] font-bold text-slate-300 neu-btn hover:border-slate-700 rounded-lg transition-colors cursor-pointer"
               >
-                Đóng
+                {t("datePicker.closeBtn")}
               </button>
             </div>
           </motion.div>
@@ -486,6 +489,7 @@ export function TimeSelect24({
   onChange: (v: string) => void;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [hh = "", mm = ""] = (value || "").split(":");
   const [open, setOpen] = React.useState(false);
   const [pos, setPos] = React.useState<{ left: number; top: number; openUp: boolean } | null>(null);
@@ -585,7 +589,7 @@ export function TimeSelect24({
         className="w-full flex items-center justify-between gap-1.5 bg-slate-950 neu-pressed-sm hover:border-slate-700 rounded-lg px-3 py-2.5 text-slate-200 focus:outline-none focus:border-sky-500 font-mono text-xs cursor-pointer select-none"
       >
         <span className={value ? "text-slate-200 font-bold" : "text-slate-500"}>
-          {value || "Chọn giờ"}
+          {value || t("datePicker.timePlaceholder")}
         </span>
         <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0" />
       </button>
@@ -614,7 +618,7 @@ export function TimeSelect24({
                 className="flex-1 overflow-y-scroll overscroll-contain scrollbar-none flex flex-col gap-0.5"
                 style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
               >
-                <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center sticky top-0 bg-slate-950 py-1 border-b border-slate-800/60 z-10">Giờ</div>
+                <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center sticky top-0 bg-slate-950 py-1 border-b border-slate-800/60 z-10">{t("datePicker.hourHeader")}</div>
                 {HOURS.map(h => {
                   const isSel = h === hh;
                   return (
@@ -639,7 +643,7 @@ export function TimeSelect24({
                 className="flex-1 overflow-y-scroll overscroll-contain scrollbar-none flex flex-col gap-0.5"
                 style={{ WebkitOverflowScrolling: "touch" } as React.CSSProperties}
               >
-                <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center sticky top-0 bg-slate-950 py-1 border-b border-slate-800/60 z-10">Phút</div>
+                <div className="text-[9px] text-sky-400 font-extrabold uppercase tracking-wider text-center sticky top-0 bg-slate-950 py-1 border-b border-slate-800/60 z-10">{t("datePicker.minuteHeader")}</div>
                 {MINUTES.map(m => {
                   const isSel = m === mm;
                   return (
@@ -663,7 +667,7 @@ export function TimeSelect24({
                 onClick={() => setOpen(false)}
                 className="w-full min-h-[44px] py-2 bg-sky-500 hover:bg-sky-400 text-xs font-bold text-slate-950 rounded-lg transition-colors cursor-pointer"
               >
-                Xác nhận
+                {t("datePicker.confirmBtn")}
               </button>
             </div>
           </motion.div>

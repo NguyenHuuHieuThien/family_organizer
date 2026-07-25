@@ -1181,5 +1181,21 @@
     "errSendTest": "Failed to send test notification.",
     "infoTestNoDevice": "No devices received the test. Try disabling and re-enabling notifications.",
     "okTestSent": "Sent to {{n}} device(s). Check your lock screen!"
+  },
+  "datePicker": {
+    "calendarAriaLabel": "Pick a date from calendar",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "pickMonthYear": "Jump to month & year",
+    "yearHeader": "Year",
+    "monthHeader": "Month",
+    "weekdaysShort": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"],
+    "monthsShort": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "todayBtn": "Today",
+    "closeBtn": "Close",
+    "timePlaceholder": "Select time",
+    "hourHeader": "Hr",
+    "minuteHeader": "Min",
+    "confirmBtn": "Confirm"
   }
 }
