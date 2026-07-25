@@ -14,6 +14,7 @@ import { useModalA11y } from "../hooks/useModalA11y.js";
 import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
+import { useTranslation } from "react-i18next";
 
 interface DocumentsProps {
   currentUser: User;
@@ -43,6 +44,7 @@ function daysUntil(dateStr?: string): number | null {
 }
 
 export function Documents({ currentUser, users, documents, onSaveDocument, onDeleteDocument }: DocumentsProps) {
+  const { t } = useTranslation();
   const [type, setType] = useState<DocumentType>("cccd");
   const [title, setTitle] = useState("");
   const [titleManual, setTitleManual] = useState(false); // người dùng đã tự sửa tên?
@@ -89,14 +91,15 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
     doc.ownerId === currentUser.id ||
     (doc.isShared && currentUser.role === UserRole.ADMIN);
 
-  useTabFab({ id: "documents", color: "emerald", title: "Thêm giấy tờ", icon: FileText, onClick: () => {
+  useTabFab({ id: "documents", color: "emerald", title: t("documents.fabAdd"), icon: FileText, onClick: () => {
     resetForm();
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }});
 
-  // Tự tạo tên giấy tờ từ loại + chủ sở hữu, vd: "CCCD của Ba", "Đăng kiểm xe".
-  const autoTitle = (t: DocumentType, oId: string) => {
-    const label = DOCUMENT_TYPE_LABELS[t];
+  // Tự tạo tên giấy tờ từ loại + chủ sở hữu — dùng labels gốc (tiếng Việt) vì tên này
+  // được lưu vào DB và cần nhất quán bất kể ngôn ngữ hiển thị hiện tại.
+  const autoTitle = (docType: DocumentType, oId: string) => {
+    const label = DOCUMENT_TYPE_LABELS[docType];
     const owner = users.find(u => u.id === oId);
     return owner ? `${label} của ${owner.fullName}` : label;
   };
@@ -135,7 +138,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const addPickedFiles = async (picked: File[]) => {
     if (picked.length === 0) return;
     if (files.length + picked.length > MAX_DOC_FILES) {
-      setError(`Mỗi giấy tờ chỉ đính kèm tối đa ${MAX_DOC_FILES} tệp.`);
+      setError(t("documents.errorMaxFiles", { max: MAX_DOC_FILES }));
       return;
     }
     setError("");
@@ -146,11 +149,11 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
         const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
         let url: string; let sizeKb: number;
         if (isPdf) {
-          if (file.size > 10 * 1024 * 1024) throw new Error(`PDF "${file.name}" quá lớn (tối đa 10MB).`);
+          if (file.size > 10 * 1024 * 1024) throw new Error(t("documents.errorPdfTooLarge", { name: file.name }));
           const dataUrl = await new Promise<string>((resolve, reject) => {
             const r = new FileReader();
             r.onload = () => resolve(String(r.result));
-            r.onerror = () => reject(new Error("Không đọc được tệp PDF."));
+            r.onerror = () => reject(new Error(t("documents.errorPdfRead")));
             r.readAsDataURL(file);
           });
           url = await uploadDataUrl(dataUrl, "documents");
@@ -176,7 +179,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
       }
       setFiles(prev => [...prev, ...added]);
     } catch (err: any) {
-      setError(err.message || "Không tải được tệp giấy tờ.");
+      setError(err.message || t("documents.errorUpload"));
     } finally {
       setUploading(false);
     }
@@ -230,7 +233,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
       await onSaveDocument(payload);
       resetForm();
     } catch (err: any) {
-      setError(err.message || "Không lưu được giấy tờ.");
+      setError(err.message || t("documents.errorSave"));
     } finally {
       setSaving(false);
     }
@@ -238,9 +241,9 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
 
   const handleDelete = async (doc: FamilyDocument) => {
     const ok = await confirm({
-      title: "Xóa giấy tờ?",
-      message: `Xóa "${doc.title}"? Ảnh/scan đính kèm cũng sẽ bị xóa và không thể khôi phục.`,
-      confirmLabel: "Xóa",
+      title: t("documents.deleteTitle"),
+      message: t("documents.deleteMsg", { title: doc.title }),
+      confirmLabel: t("common.delete"),
       tone: "danger"
     });
     if (!ok) return;
@@ -248,7 +251,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
       await onDeleteDocument(doc.id);
       if (editingId === doc.id) resetForm();
     } catch (err) {
-      console.error("Không xóa được giấy tờ", err);
+      console.error("delete document failed", err);
     }
   };
 
@@ -273,10 +276,10 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const expiryBadge = (dateStr?: string) => {
     const n = daysUntil(dateStr);
     if (n === null) return null;
-    if (n < 0) return { text: `Đã hết hạn ${-n} ngày`, cls: "bg-rose-500/15 text-rose-400 border-rose-500/30" };
-    if (n === 0) return { text: "Hết hạn hôm nay", cls: "bg-rose-500/15 text-rose-400 border-rose-500/30" };
-    if (n <= 30) return { text: `Còn ${n} ngày`, cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" };
-    return { text: `HSD ${formatDateVN(dateStr)}`, cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
+    if (n < 0) return { text: t("documents.expiredDaysAgo", { n: -n }), cls: "bg-rose-500/15 text-rose-400 border-rose-500/30" };
+    if (n === 0) return { text: t("documents.expiresToday"), cls: "bg-rose-500/15 text-rose-400 border-rose-500/30" };
+    if (n <= 30) return { text: t("documents.daysLeft", { n }), cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" };
+    return { text: t("documents.expiryOn", { date: formatDateVN(dateStr) }), cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" };
   };
 
   return (
@@ -287,15 +290,15 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
         <ShimmerLine accent="indigo" />
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-            <IconChip accent="indigo"><FileText className="w-4 h-4" /></IconChip> {editingId ? "Sửa giấy tờ" : "Kho giấy tờ gia đình"}
+            <IconChip accent="indigo"><FileText className="w-4 h-4" /></IconChip> {editingId ? t("documents.editDoc") : t("documents.title")}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             {expiringCount > 0 && (
               <span className="text-[10px] font-bold px-2 py-1 rounded-lg border bg-amber-500/10 text-amber-400 border-amber-500/20 flex items-center gap-1">
-                <ShieldAlert className="w-3 h-3" /> {expiringCount} sắp/đã hết hạn
+                <ShieldAlert className="w-3 h-3" /> {t("documents.expiringCount", { n: expiringCount })}
               </span>
             )}
-            <span className="text-[10px] text-slate-500 font-mono">{documents.length} giấy tờ</span>
+            <span className="text-[10px] text-slate-500 font-mono">{t("documents.docCount", { n: documents.length })}</span>
           </div>
         </div>
 
@@ -304,15 +307,15 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             <FancySelect
               value={type}
               onChange={(v) => setType(v as DocumentType)}
-              ariaLabel="Loại giấy tờ"
-              options={DOC_TYPE_ORDER.map(t => ({ value: t, label: DOCUMENT_TYPE_LABELS[t] }))}
+              ariaLabel={t("documents.docTypeLabel")}
+              options={DOC_TYPE_ORDER.map(dt => ({ value: dt, label: t(`documents.docTypes.${dt}`) }))}
             />
           </div>
           <div className="md:col-span-4 relative">
             <input
               value={title}
               onChange={(e) => { setTitle(e.target.value); setTitleManual(e.target.value.trim() !== ""); }}
-              placeholder="Tên tự tạo từ loại + chủ sở hữu (có thể sửa)"
+              placeholder={t("documents.titlePlaceholder")}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 pr-16 text-slate-200 outline-none focus:border-indigo-500"
             />
             {titleManual && (
@@ -320,9 +323,9 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                 type="button"
                 onClick={() => { setTitleManual(false); setTitle(autoTitle(type, ownerId)); }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 bg-slate-800 rounded-md px-1.5 py-0.5 cursor-pointer"
-                title="Quay lại tên tự tạo"
+                title={t("documents.resetAutoTitleTooltip")}
               >
-                Tự tạo
+                {t("documents.autoTitleBtn")}
               </button>
             )}
           </div>
@@ -331,35 +334,35 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             <FancySelect
               value={ownerId}
               onChange={setOwnerId}
-              ariaLabel="Chủ sở hữu"
-              placeholder="Chủ sở hữu (tùy chọn)"
+              ariaLabel={t("documents.ownerLabel")}
+              placeholder={t("documents.ownerPlaceholder")}
               options={[
-                { value: "", label: "Chủ sở hữu (tùy chọn)" },
+                { value: "", label: t("documents.ownerPlaceholder") },
                 ...users.map(u => ({ value: u.id, label: u.fullName }))
               ]}
             />
           </div>
-          <input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder="Số giấy tờ" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
-          <input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder="Nơi cấp" className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder={t("documents.docNumberPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder={t("documents.issuerPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
 
           <div className="md:col-span-3 space-y-1">
-            <label className="text-slate-500 text-[10px] block">Ngày cấp</label>
+            <label className="text-slate-500 text-[10px] block">{t("documents.issueDateLabel")}</label>
             <DateInputDMY value={issueDate} onChange={setIssueDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
           </div>
           <div className="md:col-span-3 space-y-1">
-            <label className="text-slate-500 text-[10px] block">Ngày hết hạn (để nhắc)</label>
+            <label className="text-slate-500 text-[10px] block">{t("documents.expiryDateLabel")}</label>
             <DateInputDMY value={expiryDate} onChange={setExpiryDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
           </div>
 
-          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ghi chú thêm..." className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("documents.notesPlaceholder")} className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
           <div className="md:col-span-2">
             <FancySelect
               value={isShared ? "true" : "false"}
               onChange={(v) => setIsShared(v === "true")}
-              ariaLabel="Phạm vi chia sẻ"
+              ariaLabel={t("documents.shareScopeLabel")}
               options={[
-                { value: "false", label: "Riêng tư (người tạo & chủ sở hữu)" },
-                { value: "true", label: "Chia sẻ (người lớn trong nhà)" }
+                { value: "false", label: t("documents.sharePrivateOption") },
+                { value: "true", label: t("documents.shareSharedOption") }
               ]}
             />
           </div>
@@ -368,11 +371,11 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
           <div className="md:col-span-6 bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <label className="text-slate-400 font-semibold flex items-center gap-1.5 min-w-0">
-                <Paperclip className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> Ảnh/PDF đính kèm ({files.length}/{MAX_DOC_FILES})
-                <span className="hidden sm:inline text-[10px] text-slate-600 font-normal">— dán ảnh Ctrl+V được</span>
+                <Paperclip className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> {t("documents.attachmentsLabel", { count: files.length, max: MAX_DOC_FILES })}
+                <span className="hidden sm:inline text-[10px] text-slate-600 font-normal">{t("documents.pasteHint")}</span>
               </label>
               <label className={`text-[11px] font-bold rounded-lg px-2.5 py-1 cursor-pointer flex items-center gap-1 shrink-0 ${uploading || files.length >= MAX_DOC_FILES ? "bg-slate-800 text-slate-600 cursor-not-allowed" : "bg-slate-800 hover:bg-slate-700 text-indigo-400"}`}>
-                <Plus className="w-3 h-3" /> {uploading ? "Đang tải..." : "Thêm tệp"}
+                <Plus className="w-3 h-3" /> {uploading ? t("documents.uploading") : t("documents.addFile")}
                 <input type="file" accept="image/*,application/pdf,.pdf" multiple disabled={uploading || files.length >= MAX_DOC_FILES} onChange={handleFilePick} className="hidden" />
               </label>
             </div>
@@ -388,7 +391,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                     ) : (
                       <img src={f.url} alt={f.fileName} className="w-16 h-16 object-cover rounded-lg border border-slate-700" />
                     )}
-                    <button type="button" onClick={() => removeFile(f.id)} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 cursor-pointer" title="Gỡ tệp">
+                    <button type="button" onClick={() => removeFile(f.id)} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 cursor-pointer" title={t("documents.removeFileTooltip")}>
                       <X className="w-3 h-3" />
                     </button>
                   </div>
@@ -399,11 +402,11 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
 
           <div className="md:col-span-6 flex items-center gap-2">
             <button disabled={saving || uploading} type="submit" className="bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 text-white rounded-xl px-4 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
-              <Plus className="w-4 h-4" /> {editingId ? "Lưu thay đổi" : "Thêm giấy tờ"}
+              <Plus className="w-4 h-4" /> {editingId ? t("documents.saveChanges") : t("documents.addDoc")}
             </button>
             {editingId && (
               <button type="button" onClick={resetForm} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl px-4 py-2.5 font-bold cursor-pointer">
-                Hủy
+                {t("documents.cancelBtn")}
               </button>
             )}
           </div>
@@ -415,15 +418,15 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
       {/* Bộ lọc loại */}
       {documents.length > 0 && (
         <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-500">Lọc:</span>
+          <span className="text-slate-500">{t("documents.filterLabel")}</span>
           <div className="min-w-[150px]">
             <FancySelect
               value={filterType}
               onChange={setFilterType}
-              ariaLabel="Lọc theo loại giấy tờ"
+              ariaLabel={t("documents.filterAriaLabel")}
               options={[
-                { value: "all", label: "Tất cả loại" },
-                ...DOC_TYPE_ORDER.map(t => ({ value: t, label: DOCUMENT_TYPE_LABELS[t] }))
+                { value: "all", label: t("documents.filterAll") },
+                ...DOC_TYPE_ORDER.map(dt => ({ value: dt, label: t(`documents.docTypes.${dt}`) }))
               ]}
             />
           </div>
@@ -433,7 +436,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
       {/* Danh sách */}
       {sorted.length === 0 ? (
         <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl py-12 text-center">
-          <p className="text-sm text-slate-500">Chưa có giấy tờ nào. Thêm CCCD, đăng kiểm, bảo hiểm... để được nhắc khi sắp hết hạn.</p>
+          <p className="text-sm text-slate-500">{t("documents.emptyState")}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6">
@@ -455,16 +458,16 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <span className="text-[10px] px-2 py-0.5 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-semibold">
-                        {DOCUMENT_TYPE_LABELS[doc.type]}
+                        {t(`documents.docTypes.${doc.type}`)}
                       </span>
                       <h4 className="text-sm font-bold text-slate-100 mt-1.5 truncate">{doc.title}</h4>
                     </div>
                     {canManage && (
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => startEdit(doc)} className="p-1.5 text-slate-500 hover:text-amber-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title="Sửa">
+                      <button onClick={() => startEdit(doc)} className="p-1.5 text-slate-500 hover:text-amber-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title={t("documents.editTooltip")}>
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
-                      <button onClick={() => handleDelete(doc)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title="Xóa">
+                      <button onClick={() => handleDelete(doc)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title={t("documents.deleteTooltip")}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -472,9 +475,9 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                   </div>
 
                   <div className="space-y-1.5 text-[11px] text-slate-400">
-                    {doc.documentNumber && <p>Số: <span className="text-slate-200 font-mono">{doc.documentNumber}</span></p>}
+                    {doc.documentNumber && <p>{t("documents.numberPrefix")} <span className="text-slate-200 font-mono">{doc.documentNumber}</span></p>}
                     {owner && <p className="flex items-center gap-1"><UserIcon className="w-3 h-3 text-slate-500" /> {owner.fullName}</p>}
-                    {doc.issuer && <p className="text-slate-500">Nơi cấp: {doc.issuer}</p>}
+                    {doc.issuer && <p className="text-slate-500">{t("documents.issuerPrefix", { issuer: doc.issuer })}</p>}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -484,7 +487,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                       </span>
                     )}
                     <span className={`text-[10px] px-2 py-0.5 rounded-lg border font-semibold ${doc.isShared ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-slate-800 text-slate-400 border-slate-700"}`}>
-                      {doc.isShared ? "Chia sẻ" : "Riêng tư"}
+                      {doc.isShared ? t("documents.shared") : t("documents.private")}
                     </span>
                   </div>
 
@@ -497,7 +500,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                             href={f.url}
                             target="_blank"
                             rel="noreferrer"
-                            title={`Mở ${f.fileName}`}
+                            title={t("documents.openFile", { name: f.fileName })}
                             className="w-14 h-14 rounded-lg border border-slate-700 bg-slate-950/60 flex flex-col items-center justify-center gap-0.5 text-rose-400 hover:bg-slate-800 transition-colors"
                           >
                             <FileText className="w-5 h-5" />
@@ -512,7 +515,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                               setViewer({ files: imgs, index: Math.max(0, imgs.findIndex(x => x.id === f.id)), title: doc.title });
                             }}
                             className="relative group cursor-pointer"
-                            title={`Xem ${f.fileName}`}
+                            title={t("documents.viewFile", { name: f.fileName })}
                           >
                             <img src={f.url} alt={f.fileName} className="w-14 h-14 object-cover rounded-lg border border-slate-700" />
                             <span className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 rounded-lg flex items-center justify-center transition-colors">
@@ -535,7 +538,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
       {/* Trình xem ảnh giấy tờ */}
       {viewer && viewer.files[viewer.index] && (
         <div onClick={closeViewer} className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-[60] p-4" id="document-photo-viewer">
-          <div ref={viewerRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Xem ảnh giấy tờ" className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
+          <div ref={viewerRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={t("documents.viewerAriaLabel")} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
             <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-sm font-bold text-slate-100 truncate">{viewer.title}</p>
@@ -545,10 +548,10 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <a href={viewer.files[viewer.index].url} target="_blank" rel="noreferrer" aria-label="Mở ảnh gốc" title="Mở ảnh gốc trong tab mới" className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
+                <a href={viewer.files[viewer.index].url} target="_blank" rel="noreferrer" aria-label={t("documents.openOriginalAria")} title={t("documents.openOriginalTooltip")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
                   <ExternalLink className="size-4" />
                 </a>
-                <button type="button" onClick={closeViewer} aria-label="Đóng" className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
+                <button type="button" onClick={closeViewer} aria-label={t("documents.closeViewerAria")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
                   <X className="size-4" />
                 </button>
               </div>
@@ -557,10 +560,10 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
               <img src={viewer.files[viewer.index].url} alt={viewer.files[viewer.index].fileName} className="max-h-[72vh] max-w-full object-contain rounded-lg" />
               {viewer.files.length > 1 && (
                 <>
-                  <button type="button" onClick={viewerPrev} aria-label="Ảnh trước" className="absolute left-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
+                  <button type="button" onClick={viewerPrev} aria-label={t("documents.prevImage")} className="absolute left-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
                     <ChevronLeft className="size-5" />
                   </button>
-                  <button type="button" onClick={viewerNext} aria-label="Ảnh sau" className="absolute right-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
+                  <button type="button" onClick={viewerNext} aria-label={t("documents.nextImage")} className="absolute right-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
                     <ChevronRight className="size-5" />
                   </button>
                 </>

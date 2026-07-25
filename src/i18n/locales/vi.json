@@ -381,7 +381,11 @@
     "errorPdfTooLarge": "PDF \"{{name}}\" quá lớn (tối đa 10MB).",
     "errorPdfRead": "Không đọc được tệp PDF.",
     "errorUpload": "Không tải được tệp giấy tờ.",
-    "errorSave": "Không lưu được giấy tờ."
+    "errorSave": "Không lưu được giấy tờ.",
+    "fabAdd": "Thêm giấy tờ",
+    "cancelBtn": "Hủy",
+    "deleteTooltip": "Xóa",
+    "closeViewerAria": "Đóng"
   },
   "tasks": {
     "fabTitle": "Thêm công việc mới",
