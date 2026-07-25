@@ -255,7 +255,13 @@
     "editBillHint": "Changes do not affect previously paid periods.",
     "editBillCancel": "Cancel",
     "editBillSave": "Save changes",
-    "billPaid": "Paid"
+    "billPaid": "Paid",
+    "periodMonth": "Month",
+    "periodQuarter": "Quarter",
+    "periodYear": "Year",
+    "periodLabelMonth": "{{mm}}/{{yyyy}}",
+    "periodLabelQuarter": "Q{{q}} {{yyyy}}",
+    "periodLabelYear": "{{yyyy}}"
   },
   "tasks": {
     "fabTitle": "Add new task",

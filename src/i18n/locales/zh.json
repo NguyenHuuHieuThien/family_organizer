@@ -255,7 +255,13 @@
     "editBillHint": "更改不会影响之前已支付的周期。",
     "editBillCancel": "取消",
     "editBillSave": "保存更改",
-    "billPaid": "已缴纳"
+    "billPaid": "已缴纳",
+    "periodMonth": "月",
+    "periodQuarter": "季",
+    "periodYear": "年",
+    "periodLabelMonth": "{{yyyy}}年{{mm}}月",
+    "periodLabelQuarter": "{{yyyy}}年第{{q}}季",
+    "periodLabelYear": "{{yyyy}}年"
   },
   "tasks": {
     "fabTitle": "添加新任务",

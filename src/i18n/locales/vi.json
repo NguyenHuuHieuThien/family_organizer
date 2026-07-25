@@ -227,7 +227,13 @@
     "editBillHint": "Thay đổi không ảnh hưởng đến các kỳ đã thanh toán trước đó.",
     "editBillCancel": "Hủy",
     "editBillSave": "Lưu thay đổi",
-    "billPaid": "Đã thanh toán"
+    "billPaid": "Đã thanh toán",
+    "periodMonth": "Tháng",
+    "periodQuarter": "Quý",
+    "periodYear": "Năm",
+    "periodLabelMonth": "Tháng {{mm}}/{{yyyy}}",
+    "periodLabelQuarter": "Quý {{q}}/{{yyyy}}",
+    "periodLabelYear": "Năm {{yyyy}}"
   },
   "medication": {
     "title": "Nhắc thuốc gia đình",

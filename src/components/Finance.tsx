@@ -52,7 +52,7 @@ import { FancySelect } from "./FancySelect.js";
 import { optimizeAndUpload } from "../utils/uploadImage.js";
 import { useModalA11y } from "../hooks/useModalA11y.js";
 import {
-  PeriodMode, PERIOD_LABELS, periodBounds, toDateStr, stepAnchor, periodLabel,
+  PeriodMode, periodBounds, toDateStr, stepAnchor,
   periodMonths, pctDelta, calcTotals as calcTotalsUtil, accountBalances as accountBalancesUtil,
   monthlySeries, MonthlyPoint
 } from "../utils/financePeriod.js";
@@ -386,6 +386,18 @@ export function Finance({
 }: FinanceProps) {
   const { t, i18n: i18nHook } = useTranslation();
 
+  const tPeriodMode = (m: PeriodMode): string =>
+    m === "month" ? t("finance.periodMonth")
+    : m === "quarter" ? t("finance.periodQuarter")
+    : t("finance.periodYear");
+
+  const tPeriodLabel = (mode: PeriodMode, a: Date): string => {
+    const yyyy = a.getFullYear();
+    if (mode === "year") return t("finance.periodLabelYear", { yyyy });
+    if (mode === "quarter") return t("finance.periodLabelQuarter", { q: Math.floor(a.getMonth() / 3) + 1, yyyy });
+    return t("finance.periodLabelMonth", { mm: String(a.getMonth() + 1).padStart(2, "0"), yyyy });
+  };
+
   const expenseCategoryOptions = useMemo(() => [
     { value: "food",          label: t("categories.food") + " 🍲" },
     { value: "education2",    label: t("categories.education2") + " 📚" },
@@ -625,7 +637,7 @@ export function Finance({
     try {
       const { exportFinanceReportPdf } = await import("../utils/pdfExport.js");
       await exportFinanceReportPdf({
-        periodLabel: periodLabel(periodMode, anchor),
+        periodLabel: tPeriodLabel(periodMode, anchor),
         totals: metrics,
         byCategory: Object.entries(curCatMap)
           .sort((a, b) => b[1] - a[1])
@@ -994,7 +1006,7 @@ export function Finance({
                 onClick={() => setPeriodMode(m)}
                 className={`py-1.5 rounded-lg transition-[box-shadow,color] duration-200 cursor-pointer ${periodMode === m ? "bg-slate-900 neu-raised-sm text-sky-400" : "text-slate-400 hover:text-slate-200"}`}
               >
-                {PERIOD_LABELS[m]}
+                {tPeriodMode(m)}
               </button>
             ))}
           </div>
@@ -1019,7 +1031,7 @@ export function Finance({
           </button>
 
           <div className="text-center min-w-0">
-            <p className="text-lg md:text-xl font-extrabold text-slate-100 truncate tracking-tight">{periodLabel(periodMode, anchor)}</p>
+            <p className="text-lg md:text-xl font-extrabold text-slate-100 truncate tracking-tight">{tPeriodLabel(periodMode, anchor)}</p>
             {!isCurrentPeriod ? (
               <button
                 type="button"
@@ -1147,7 +1159,7 @@ export function Finance({
           <div className="bg-slate-900 neu-raised rounded-2xl p-4 space-y-2" id="finance-compare">
           <h3 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
             <BarChart3 className="w-3.5 h-3.5 text-violet-400" />
-            {t("finance.compare")}: {periodLabel(periodMode, anchor)} ↔ {periodLabel(periodMode, prevAnchor)}
+            {t("finance.compare")}: {tPeriodLabel(periodMode, anchor)} ↔ {tPeriodLabel(periodMode, prevAnchor)}
           </h3>
           {/* Chiều cao cố định vừa phải — nội dung dài thì cuộn bên trong, không kéo
               giãn cả hàng làm thẻ Xu hướng 12 tháng bên cạnh trống trải */}
@@ -1156,8 +1168,8 @@ export function Finance({
               <thead className="sticky top-0 bg-slate-900 z-10">
                 <tr className="text-slate-500 text-[10px] uppercase tracking-wider border-b border-slate-800">
                   <th className="text-left font-semibold py-2 pr-2">{t("finance.compareColCat")}</th>
-                  <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">{periodLabel(periodMode, anchor)}</th>
-                  <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">{periodLabel(periodMode, prevAnchor)}</th>
+                  <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">{tPeriodLabel(periodMode, anchor)}</th>
+                  <th className="text-right font-semibold py-2 px-2 whitespace-nowrap">{tPeriodLabel(periodMode, prevAnchor)}</th>
                   <th className="text-right font-semibold py-2 pl-2">{t("finance.compareColDiff")}</th>
                 </tr>
               </thead>
@@ -1212,7 +1224,7 @@ export function Finance({
         <Reveal delay={0.1} className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-5 space-y-4">
           <ShimmerLine accent="sky" />
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-200">{t("finance.budgetTitle")} {periodLabel(periodMode, anchor)}</h3>
+            <h3 className="text-sm font-bold text-slate-200">{t("finance.budgetTitle")} {tPeriodLabel(periodMode, anchor)}</h3>
             <span className="text-[10px] text-slate-500 font-mono">
               {t("finance.budgetHintLimitCount", { n: periodMode === "month" ? monthBudgets.length : aggregatedBudgets.length })}
             </span>
@@ -1606,14 +1618,14 @@ export function Finance({
       {filteredTransactions.length === 0 ? (
         <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl py-12 text-center" id="empty-transactions">
           <p className="text-sm text-slate-500">
-            {t("finance.txListEmpty", { period: periodLabel(periodMode, anchor) })}
+            {t("finance.txListEmpty", { period: tPeriodLabel(periodMode, anchor) })}
           </p>
         </div>
       ) : (
         <div className="relative bg-slate-900 neu-raised rounded-2xl overflow-hidden" id="transactions-table">
           <ShimmerLine accent="sky" />
           <div className="bg-slate-950 p-4 border-b border-slate-800 text-xs text-slate-400 font-semibold uppercase tracking-wider flex justify-between items-center gap-2">
-            <span>{t("finance.txListHeader", { period: periodLabel(periodMode, anchor), count: filteredTransactions.length })}</span>
+            <span>{t("finance.txListHeader", { period: tPeriodLabel(periodMode, anchor), count: filteredTransactions.length })}</span>
             <div className="flex items-center gap-1.5">
               <button
                 type="button"
