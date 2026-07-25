@@ -1004,7 +1004,7 @@ export function Finance({
                 key={m}
                 type="button"
                 onClick={() => setPeriodMode(m)}
-                className={`py-1.5 rounded-lg transition-[box-shadow,color] duration-200 cursor-pointer ${periodMode === m ? "bg-slate-900 neu-raised-sm text-sky-400" : "text-slate-400 hover:text-slate-200"}`}
+                className={`py-2 rounded-lg transition-all duration-200 cursor-pointer ${periodMode === m ? "bg-sky-500 text-slate-950 shadow-sm shadow-sky-500/30" : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200"}`}
               >
                 {tPeriodMode(m)}
               </button>
