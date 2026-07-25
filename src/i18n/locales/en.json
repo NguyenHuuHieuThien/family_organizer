@@ -1159,5 +1159,26 @@
     "errDueDateRequired": "Select a due date.",
     "errDueDateOrder": "Due date must be on or after the borrow date.",
     "errSaveFailed": "Could not save debt."
+  },
+  "pushNotifications": {
+    "title": "Push Notifications",
+    "activeBadge": "Active",
+    "description": "Receive notifications (new tasks, events, birthdays, reminders…) on your lock screen with a badge count — even when the app is closed.",
+    "notSupported": "This device/browser doesn't support push notifications. On iPhone: open the app from a Home Screen icon (requires iOS 16.4+).",
+    "enableBtn": "Enable notifications",
+    "sendTestBtn": "Send test",
+    "disableBtn": "Disable",
+    "permBlocked": "Notification permission is blocked. Go to Device Settings → find this app → re-enable Notifications.",
+    "iphoneNote": "iPhone: open from installed icon (not a Safari tab) and grant permission once. Each device subscribes separately.",
+    "errPermDenied": "You haven't allowed notifications. Please enable Notification permission for this app in Device Settings.",
+    "errVapidMissing": "Push notifications are not configured on the server (VAPID). Contact an admin to enable them.",
+    "errSaveSubscription": "Failed to save subscription on the server.",
+    "okEnabled": "Push notifications enabled on this device! 🎉",
+    "errEnable": "Failed to enable notifications.",
+    "okDisabled": "Push notifications disabled on this device.",
+    "errDisable": "Failed to disable notifications.",
+    "errSendTest": "Failed to send test notification.",
+    "infoTestNoDevice": "No devices received the test. Try disabling and re-enabling notifications.",
+    "okTestSent": "Sent to {{n}} device(s). Check your lock screen!"
   }
 }

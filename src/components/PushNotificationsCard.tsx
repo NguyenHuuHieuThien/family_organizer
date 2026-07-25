@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from "react";
 import { BellRing, BellOff, Send, Loader2, AlertCircle, CheckCircle2, Smartphone } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("family_token");
@@ -30,6 +31,7 @@ const SUPPORTED =
 type Msg = { kind: "ok" | "err" | "info"; text: string };
 
 export function PushNotificationsCard() {
+  const { t } = useTranslation();
   const [perm, setPerm] = useState<NotificationPermission>(SUPPORTED ? Notification.permission : "denied");
   const [subscribed, setSubscribed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -53,14 +55,14 @@ export function PushNotificationsCard() {
       const p = await Notification.requestPermission();
       setPerm(p);
       if (p !== "granted") {
-        setMsg({ kind: "err", text: "Bạn chưa cho phép thông báo. Hãy bật quyền Thông báo cho app trong Cài đặt máy." });
+        setMsg({ kind: "err", text: t("pushNotifications.errPermDenied") });
         return;
       }
       const reg = await navigator.serviceWorker.ready;
       const keyRes = await fetch("/api/push/vapid-public-key");
       const keyData = await keyRes.json().catch(() => ({}));
       if (!keyData.publicKey) {
-        setMsg({ kind: "err", text: "Máy chủ chưa cấu hình thông báo đẩy (VAPID). Liên hệ quản trị để bật." });
+        setMsg({ kind: "err", text: t("pushNotifications.errVapidMissing") });
         return;
       }
       let sub = await reg.pushManager.getSubscription();
@@ -75,11 +77,11 @@ export function PushNotificationsCard() {
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ subscription: sub }),
       });
-      if (!res.ok) throw new Error("Lưu đăng ký lên máy chủ thất bại.");
+      if (!res.ok) throw new Error(t("pushNotifications.errSaveSubscription"));
       setSubscribed(true);
-      setMsg({ kind: "ok", text: "Đã bật thông báo trên thiết bị này! 🎉" });
+      setMsg({ kind: "ok", text: t("pushNotifications.okEnabled") });
     } catch (e: any) {
-      setMsg({ kind: "err", text: e?.message || "Bật thông báo thất bại." });
+      setMsg({ kind: "err", text: e?.message || t("pushNotifications.errEnable") });
     } finally {
       setBusy(false);
     }
@@ -100,9 +102,9 @@ export function PushNotificationsCard() {
       }
       setSubscribed(false);
       try { (navigator as any).clearAppBadge?.(); } catch { /* ignore */ }
-      setMsg({ kind: "info", text: "Đã tắt thông báo trên thiết bị này." });
+      setMsg({ kind: "info", text: t("pushNotifications.okDisabled") });
     } catch (e: any) {
-      setMsg({ kind: "err", text: e?.message || "Tắt thông báo thất bại." });
+      setMsg({ kind: "err", text: e?.message || t("pushNotifications.errDisable") });
     } finally {
       setBusy(false);
     }
@@ -113,14 +115,14 @@ export function PushNotificationsCard() {
     try {
       const res = await fetch("/api/push/test", { method: "POST", headers: authHeaders() });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Gửi thông báo thử thất bại.");
+      if (!res.ok) throw new Error(data.error || t("pushNotifications.errSendTest"));
       if (!data.sent) {
-        setMsg({ kind: "info", text: "Chưa gửi được tới thiết bị nào. Thử tắt rồi bật lại thông báo." });
+        setMsg({ kind: "info", text: t("pushNotifications.infoTestNoDevice") });
       } else {
-        setMsg({ kind: "ok", text: `Đã gửi tới ${data.sent} thiết bị. Kiểm tra màn hình khoá nhé!` });
+        setMsg({ kind: "ok", text: t("pushNotifications.okTestSent", { n: data.sent }) });
       }
     } catch (e: any) {
-      setMsg({ kind: "err", text: e?.message || "Gửi thông báo thử thất bại." });
+      setMsg({ kind: "err", text: e?.message || t("pushNotifications.errSendTest") });
     } finally {
       setBusy(false);
     }
@@ -130,23 +132,23 @@ export function PushNotificationsCard() {
     <div className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-4">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-          <BellRing className="w-4.5 h-4.5 text-indigo-400" /> Thông báo đẩy
+          <BellRing className="w-4.5 h-4.5 text-indigo-400" /> {t("pushNotifications.title")}
         </h3>
         {subscribed && (
           <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
-            Đang bật
+            {t("pushNotifications.activeBadge")}
           </span>
         )}
       </div>
 
       <p className="text-xs text-slate-400 leading-relaxed">
-        Nhận thông báo (việc mới, sự kiện, sinh nhật, nhắc nhở…) ngay trên màn hình khoá kèm số badge trên icon app — kể cả khi không mở app.
+        {t("pushNotifications.description")}
       </p>
 
       {!SUPPORTED ? (
         <div className="flex items-start gap-2 text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-          <span>Thiết bị/trình duyệt này chưa hỗ trợ thông báo đẩy. Trên iPhone: mở app từ icon đã “Thêm vào MH chính” (cần iOS 16.4 trở lên).</span>
+          <span>{t("pushNotifications.notSupported")}</span>
         </div>
       ) : (
         <>
@@ -158,7 +160,7 @@ export function PushNotificationsCard() {
                 disabled={busy}
                 className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 rounded-xl text-xs font-bold cursor-pointer transition-all"
               >
-                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />} Bật thông báo
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />} {t("pushNotifications.enableBtn")}
               </button>
             ) : (
               <>
@@ -168,7 +170,7 @@ export function PushNotificationsCard() {
                   disabled={busy}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 rounded-xl text-xs font-semibold cursor-pointer transition-all disabled:opacity-60"
                 >
-                  {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Gửi thử
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {t("pushNotifications.sendTestBtn")}
                 </button>
                 <button
                   type="button"
@@ -176,7 +178,7 @@ export function PushNotificationsCard() {
                   disabled={busy}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 neu-btn rounded-xl text-xs font-semibold cursor-pointer transition-all disabled:opacity-60"
                 >
-                  <BellOff className="w-4 h-4" /> Tắt
+                  <BellOff className="w-4 h-4" /> {t("pushNotifications.disableBtn")}
                 </button>
               </>
             )}
@@ -185,13 +187,13 @@ export function PushNotificationsCard() {
           {perm === "denied" && (
             <div className="flex items-start gap-2 text-[11px] text-amber-400 bg-amber-500/10 border border-amber-500/20 rounded-lg p-2.5">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>Quyền thông báo đang bị chặn. Vào Cài đặt máy → tìm app này → bật lại Thông báo.</span>
+              <span>{t("pushNotifications.permBlocked")}</span>
             </div>
           )}
 
           <p className="flex items-start gap-1.5 text-[10px] text-slate-500 leading-relaxed">
             <Smartphone className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            iPhone: mở từ icon đã cài (không phải tab Safari) và bật quyền một lần. Mỗi thiết bị bật riêng.
+            {t("pushNotifications.iphoneNote")}
           </p>
         </>
       )}

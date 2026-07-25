@@ -1159,5 +1159,26 @@
     "errDueDateRequired": "Chọn ngày hẹn trả.",
     "errDueDateOrder": "Ngày hẹn trả phải sau hoặc bằng ngày mượn.",
     "errSaveFailed": "Không lưu được khoản nợ."
+  },
+  "pushNotifications": {
+    "title": "Thông báo đẩy",
+    "activeBadge": "Đang bật",
+    "description": "Nhận thông báo (việc mới, sự kiện, sinh nhật, nhắc nhở…) ngay trên màn hình khoá kèm số badge trên icon app — kể cả khi không mở app.",
+    "notSupported": "Thiết bị/trình duyệt này chưa hỗ trợ thông báo đẩy. Trên iPhone: mở app từ icon đã \"Thêm vào MH chính\" (cần iOS 16.4 trở lên).",
+    "enableBtn": "Bật thông báo",
+    "sendTestBtn": "Gửi thử",
+    "disableBtn": "Tắt",
+    "permBlocked": "Quyền thông báo đang bị chặn. Vào Cài đặt máy → tìm app này → bật lại Thông báo.",
+    "iphoneNote": "iPhone: mở từ icon đã cài (không phải tab Safari) và bật quyền một lần. Mỗi thiết bị bật riêng.",
+    "errPermDenied": "Bạn chưa cho phép thông báo. Hãy bật quyền Thông báo cho app trong Cài đặt máy.",
+    "errVapidMissing": "Máy chủ chưa cấu hình thông báo đẩy (VAPID). Liên hệ quản trị để bật.",
+    "errSaveSubscription": "Lưu đăng ký lên máy chủ thất bại.",
+    "okEnabled": "Đã bật thông báo trên thiết bị này! 🎉",
+    "errEnable": "Bật thông báo thất bại.",
+    "okDisabled": "Đã tắt thông báo trên thiết bị này.",
+    "errDisable": "Tắt thông báo thất bại.",
+    "errSendTest": "Gửi thông báo thử thất bại.",
+    "infoTestNoDevice": "Chưa gửi được tới thiết bị nào. Thử tắt rồi bật lại thông báo.",
+    "okTestSent": "Đã gửi tới {{n}} thiết bị. Kiểm tra màn hình khoá nhé!"
   }
 }

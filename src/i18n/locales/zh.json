@@ -1159,5 +1159,26 @@
     "errDueDateRequired": "请选择还款日期。",
     "errDueDateOrder": "还款日期必须在借款日期之后或相同。",
     "errSaveFailed": "无法保存债务记录。"
+  },
+  "pushNotifications": {
+    "title": "推送通知",
+    "activeBadge": "已开启",
+    "description": "在锁屏上接收通知（新任务、事件、生日、提醒…）并在应用图标显示角标 — 即使应用已关闭。",
+    "notSupported": "此设备/浏览器不支持推送通知。iPhone用户：请从主屏幕图标打开应用（需要iOS 16.4+）。",
+    "enableBtn": "开启通知",
+    "sendTestBtn": "发送测试",
+    "disableBtn": "关闭",
+    "permBlocked": "通知权限已被禁止。请进入设备设置 → 找到此应用 → 重新开启通知。",
+    "iphoneNote": "iPhone：请从已安装的图标打开（非Safari标签），授权一次即可。每台设备需单独订阅。",
+    "errPermDenied": "您尚未允许通知权限。请在设备设置中为此应用开启通知权限。",
+    "errVapidMissing": "服务器尚未配置推送通知（VAPID）。请联系管理员开启。",
+    "errSaveSubscription": "保存订阅到服务器失败。",
+    "okEnabled": "此设备推送通知已开启！🎉",
+    "errEnable": "开启通知失败。",
+    "okDisabled": "此设备推送通知已关闭。",
+    "errDisable": "关闭通知失败。",
+    "errSendTest": "发送测试通知失败。",
+    "infoTestNoDevice": "未能发送到任何设备。请尝试关闭后重新开启通知。",
+    "okTestSent": "已发送至 {{n}} 台设备，请查看锁屏！"
   }
 }
