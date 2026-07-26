@@ -108,7 +108,7 @@ export function Shopping({
   };
   // Tự suy khẩu phần từ thành viên (bỏ qua khách); người dùng vẫn chỉnh được.
   const householdDefaults = useMemo(() => {
-    const members = users.filter(u => u.role !== UserRole.GUEST && u.familyRelation !== "khach");
+    const members = users.filter(u => !u.isDeleted && u.role !== UserRole.GUEST && u.familyRelation !== "khach");
     const children = members.filter(isChildUser).length;
     const adults = members.length - children;
     return { adults: Math.max(1, adults), children };

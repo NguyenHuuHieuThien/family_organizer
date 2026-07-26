@@ -203,7 +203,7 @@ export function Tasks({
     return tasks.find(t => t.id === selectedTask.id) || null;
   }, [tasks, selectedTask]);
 
-  const childUsers = useMemo(() => users.filter(u => u.role === UserRole.CHILD), [users]);
+  const childUsers = useMemo(() => users.filter(u => !u.isDeleted && u.role === UserRole.CHILD), [users]);
 
   // Adults manage any task; a Child may edit only tasks they created or are assigned to. Only adults can delete.
   const canEditTask = (task: Task) =>
@@ -773,7 +773,7 @@ export function Tasks({
               options={[
                 { value: "all", label: t("tasks.filterAssigneeAll") },
                 { value: "unassigned", label: t("tasks.filterAssigneeNone") },
-                ...users.map(u => ({ value: u.id, label: u.fullName }))
+                ...users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))
               ]}
             />
           </div>
@@ -1594,7 +1594,7 @@ export function Tasks({
                     ariaLabel={t("tasks.formAssigneeLabel")}
                     options={[
                       { value: "unassigned", label: t("tasks.formAssigneeShared") },
-                      ...users.map(u => ({ value: u.id, label: u.fullName }))
+                      ...users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))
                     ]}
                   />
                 </div>
@@ -1654,7 +1654,7 @@ export function Tasks({
                     <label className="text-slate-400 block font-semibold">{t("tasks.formRotationLabel")}</label>
                     <p className="text-[10px] text-slate-500">{t("tasks.formRotationHint")}</p>
                     <div className="flex flex-wrap gap-1.5">
-                      {users.map(u => {
+                      {users.filter(u => !u.isDeleted).map(u => {
                         const active = newRotationMemberIds.includes(u.id);
                         return (
                           <button

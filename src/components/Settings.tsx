@@ -1082,7 +1082,7 @@ export function Settings({
               </h3>
               
               <div className="divide-y divide-slate-800/60 space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                {users.map(u => (
+                {users.filter(u => !u.isDeleted).map(u => (
                   <div key={u.id} className="pt-3 flex items-center justify-between text-xs">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar user={u} className="w-8.5 h-8.5 rounded-xl text-sm" extraClass="shrink-0" />

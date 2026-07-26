@@ -236,7 +236,7 @@ const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => 
   const users = FamilyDB.getUsers();
   const matchedUser = users.find(u => u.id === userId);
 
-  if (matchedUser) {
+  if (matchedUser && !matchedUser.isDeleted) {
     req.userSession = {
       userId: matchedUser.id,
       username: matchedUser.username,
@@ -785,7 +785,7 @@ app.post("/api/auth/login", (req: Request, res: Response) => {
   const users = FamilyDB.getUsers();
   const user = users.find(u => u.username === username.toLowerCase().trim());
 
-  if (!user || !verifyPassword(password, user.passwordHash)) {
+  if (!user || user.isDeleted || !verifyPassword(password, user.passwordHash)) {
     recordLoginFailure(ip);
     res.status(401).json({ error: "Tài khoản hoặc mật khẩu không chính xác!" });
     return;

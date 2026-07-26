@@ -338,7 +338,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
               placeholder={t("documents.ownerPlaceholder")}
               options={[
                 { value: "", label: t("documents.ownerPlaceholder") },
-                ...users.map(u => ({ value: u.id, label: u.fullName }))
+                ...users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))
               ]}
             />
           </div>

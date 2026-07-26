@@ -64,6 +64,7 @@ export interface User {
   gender?: "male" | "female"; // dùng cho đánh giá BMI theo tuổi/giới (trẻ em)
   phone?: string; // Optional contact phone number
   createdAt: string;
+  isDeleted?: boolean; // Soft-delete: giữ lại để resolve tên/avatar trong lịch sử
 }
 
 // Session info

@@ -21,7 +21,7 @@ interface QuickNudgeProps {
 
 export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
   const { t } = useTranslation();
-  const recipients = users.filter(u => u.id !== currentUser.id);
+  const recipients = users.filter(u => u.id !== currentUser.id && !u.isDeleted);
   const [recipient, setRecipient] = useState<string | null>(null);
   const [custom, setCustom] = useState("");
   const [busy, setBusy] = useState(false);

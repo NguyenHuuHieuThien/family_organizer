@@ -678,9 +678,15 @@ export class FamilyDB {
       }
     }
 
-    db.users = db.users.filter(u => u.id !== userId);
+    // Soft delete: keep the record so historical name/avatar lookups still work.
+    // Clear password so the account cannot be used to log in.
+    const idx = db.users.findIndex(u => u.id === userId);
+    const avatarToDelete = db.users[idx].avatarImage;
+    db.users[idx].isDeleted = true;
+    db.users[idx].passwordHash = "";
+    db.users[idx].avatarImage = undefined;
     this.writeRaw(db);
-    deleteMediaByUrl(target.avatarImage); // clean up their uploaded avatar file
+    if (avatarToDelete) deleteMediaByUrl(avatarToDelete);
     this.logActivity(adminId, adminUser, "Xóa thành viên", `Đã xóa tài khoản ${target.fullName} (@${target.username}).`);
   }
 
