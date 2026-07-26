@@ -907,25 +907,27 @@ export function Dashboard({
             </div>
           </div>
 
-          {/* Card 1: My Remaining Tasks */}
+          {/* Card 1: Cash balance this month */}
           <motion.div
             {...fadeUp(0.18)}
             whileHover={reduceMotion ? undefined : { y: -4 }}
-            onClick={() => onNavigate("tasks")}
+            onClick={() => onNavigate("finance")}
             className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
-            id="stat-my-tasks"
+            id="stat-monthly-balance"
           >
-            <ShimmerLine via="via-sky-500/50" />
-            <div aria-hidden className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.sky.500/0.18),transparent_65%)] pointer-events-none" />
+            <ShimmerLine via={balancePositive ? "via-emerald-500/50" : "via-rose-500/50"} />
+            <div aria-hidden className={`absolute inset-0 rounded-2xl pointer-events-none ${balancePositive ? "bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.emerald.500/0.18),transparent_65%)]" : "bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.rose.500/0.18),transparent_65%)]"}`} />
             <div className="relative flex items-center justify-between">
-              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.myTasks")}</span>
-              <div className="bg-gradient-to-br from-sky-500/25 to-sky-500/5 ring-1 ring-sky-500/20 p-2 rounded-xl text-sky-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                <CheckSquare className="w-5 h-5" />
+              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.balance")}</span>
+              <div className={`p-2 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ${balancePositive ? "bg-gradient-to-br from-emerald-500/25 to-emerald-500/5 ring-1 ring-emerald-500/20 text-emerald-400" : "bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 text-rose-400"}`}>
+                <Wallet className="w-5 h-5" />
               </div>
             </div>
             <div className="relative mt-3">
-              <span className="text-4xl font-bold text-slate-100 tabular-nums leading-none">{myRemainingTasks.length}</span>
-              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.myTasksSub")}</p>
+              <span className={`text-xl md:text-2xl font-bold tabular-nums leading-tight ${balancePositive ? "text-emerald-400" : "text-rose-400"}`}>
+                {financialSummary.balance.toLocaleString()}đ
+              </span>
+              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.balanceSub")}</p>
             </div>
           </motion.div>
 
@@ -951,27 +953,25 @@ export function Dashboard({
             </div>
           </motion.div>
 
-          {/* Card 3: Cash balance this month */}
+          {/* Card 3: My Remaining Tasks */}
           <motion.div
             {...fadeUp(0.28)}
             whileHover={reduceMotion ? undefined : { y: -4 }}
-            onClick={() => onNavigate("finance")}
+            onClick={() => onNavigate("tasks")}
             className="group relative overflow-hidden bg-slate-900 neu-raised p-4 rounded-2xl transition-[box-shadow] duration-300 cursor-pointer flex flex-col justify-between"
-            id="stat-monthly-balance"
+            id="stat-my-tasks"
           >
-            <ShimmerLine via={balancePositive ? "via-emerald-500/50" : "via-rose-500/50"} />
-            <div aria-hidden className={`absolute inset-0 rounded-2xl pointer-events-none ${balancePositive ? "bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.emerald.500/0.18),transparent_65%)]" : "bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.rose.500/0.18),transparent_65%)]"}`} />
+            <ShimmerLine via="via-sky-500/50" />
+            <div aria-hidden className="absolute inset-0 rounded-2xl bg-[radial-gradient(ellipse_at_100%_0%,theme(colors.sky.500/0.18),transparent_65%)] pointer-events-none" />
             <div className="relative flex items-center justify-between">
-              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.balance")}</span>
-              <div className={`p-2 rounded-xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 ${balancePositive ? "bg-gradient-to-br from-emerald-500/25 to-emerald-500/5 ring-1 ring-emerald-500/20 text-emerald-400" : "bg-gradient-to-br from-rose-500/25 to-rose-500/5 ring-1 ring-rose-500/20 text-rose-400"}`}>
-                <Wallet className="w-5 h-5" />
+              <span className="text-slate-400 text-xs font-medium">{t("dashboard.stats.myTasks")}</span>
+              <div className="bg-gradient-to-br from-sky-500/25 to-sky-500/5 ring-1 ring-sky-500/20 p-2 rounded-xl text-sky-400 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                <CheckSquare className="w-5 h-5" />
               </div>
             </div>
             <div className="relative mt-3">
-              <span className={`text-xl md:text-2xl font-bold tabular-nums leading-tight ${balancePositive ? "text-emerald-400" : "text-rose-400"}`}>
-                {financialSummary.balance.toLocaleString()}đ
-              </span>
-              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.balanceSub")}</p>
+              <span className="text-4xl font-bold text-slate-100 tabular-nums leading-none">{myRemainingTasks.length}</span>
+              <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.myTasksSub")}</p>
             </div>
           </motion.div>
 
