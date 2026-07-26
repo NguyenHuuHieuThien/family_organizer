@@ -807,8 +807,8 @@ export function Dashboard({
               <div className="min-w-0">
                 {widgets?.crypto?.bitcoin ? (
                   <>
-                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.crypto.bitcoin.usd} format={fmtUsd} /></p>
-                    <p className="text-[10px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.bitcoin.vnd} format={fmtVnd} /></p>
+                    <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.crypto.bitcoin.usd} format={fmtUsd} /></p>
+                    <p className="text-[11px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.bitcoin.vnd} format={fmtVnd} /></p>
                   </>
                 ) : (
                   <>
@@ -832,8 +832,8 @@ export function Dashboard({
               <div className="min-w-0">
                 {widgets?.crypto?.ethereum ? (
                   <>
-                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.crypto.ethereum.usd} format={fmtUsd} /></p>
-                    <p className="text-[10px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.ethereum.vnd} format={fmtVnd} /></p>
+                    <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.crypto.ethereum.usd} format={fmtUsd} /></p>
+                    <p className="text-[11px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.ethereum.vnd} format={fmtVnd} /></p>
                   </>
                 ) : (
                   <>
@@ -858,18 +858,18 @@ export function Dashboard({
                 {widgets?.gold && (widgets.gold.sell || widgets.gold.vndPerTael || widgets.gold.usdPerOz) ? (
                   widgets.gold.sell ? (
                     <>
-                      <p className="text-sm font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.sell} format={fmtVnd} /></p>
-                      <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.goldSell")}{widgets.gold.buy ? ` • ${t("dashboard.market.goldBuy")} ${fmtVnd(widgets.gold.buy)}` : ""}</p>
+                      <p className="text-lg font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.gold.sell} format={fmtVnd} /></p>
+                      <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.goldSell")}{widgets.gold.buy ? ` • ${t("dashboard.market.goldBuy")} ${fmtVnd(widgets.gold.buy)}` : ""}</p>
                     </>
                   ) : widgets.gold.vndPerTael ? (
                     <>
-                      <p className="text-sm font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.vndPerTael} format={fmtVnd} /></p>
-                      <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.goldTael")}</p>
+                      <p className="text-lg font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.gold.vndPerTael} format={fmtVnd} /></p>
+                      <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.goldTael")}</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.gold.usdPerOz} format={fmtUsd} /><span className="text-[10px] text-slate-500"> /oz</span></p>
-                      <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.goldWorld")}</p>
+                      <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.gold.usdPerOz} format={fmtUsd} /><span className="text-[11px] text-slate-500"> /oz</span></p>
+                      <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.goldWorld")}</p>
                     </>
                   )
                 ) : (
@@ -893,8 +893,8 @@ export function Dashboard({
               <div className="min-w-0">
                 {widgets?.fx?.usdVnd ? (
                   <>
-                    <p className="text-base font-extrabold text-slate-100"><AnimatedNumber value={widgets.fx.usdVnd} format={fmtVnd} /></p>
-                    <p className="text-[10px] text-slate-500 truncate">{t("dashboard.market.usdRate")}</p>
+                    <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.fx.usdVnd} format={fmtVnd} /></p>
+                    <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.usdRate")}</p>
                   </>
                 ) : (
                   <>
@@ -924,7 +924,7 @@ export function Dashboard({
               </div>
             </div>
             <div className="relative mt-3">
-              <span className="text-2xl font-bold text-slate-100 tabular-nums">{myRemainingTasks.length}</span>
+              <span className="text-4xl font-bold text-slate-100 tabular-nums leading-none">{myRemainingTasks.length}</span>
               <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.myTasksSub")}</p>
             </div>
           </motion.div>
@@ -946,7 +946,7 @@ export function Dashboard({
               </div>
             </div>
             <div className="relative mt-3">
-              <span className="text-2xl font-bold text-rose-400 tabular-nums">{urgentTasksCount}</span>
+              <span className="text-4xl font-bold text-rose-400 tabular-nums leading-none">{urgentTasksCount}</span>
               <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.urgentSub")}</p>
             </div>
           </motion.div>
@@ -968,7 +968,7 @@ export function Dashboard({
               </div>
             </div>
             <div className="relative mt-3">
-              <span className={`text-lg md:text-xl font-bold tabular-nums ${balancePositive ? "text-emerald-400" : "text-rose-400"}`}>
+              <span className={`text-xl md:text-2xl font-bold tabular-nums leading-tight ${balancePositive ? "text-emerald-400" : "text-rose-400"}`}>
                 {financialSummary.balance.toLocaleString()}đ
               </span>
               <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.balanceSub")}</p>
@@ -992,7 +992,7 @@ export function Dashboard({
               </div>
             </div>
             <div className="relative mt-3">
-              <span className="text-2xl font-bold text-slate-100 tabular-nums">{upcomingPlans.length}</span>
+              <span className="text-4xl font-bold text-slate-100 tabular-nums leading-none">{upcomingPlans.length}</span>
               <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.scheduleSub")}</p>
             </div>
           </motion.div>
