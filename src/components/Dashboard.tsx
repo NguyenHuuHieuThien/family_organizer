@@ -947,8 +947,16 @@ export function Dashboard({
                 <AlertCircle className={`w-5 h-5 ${urgentTasksCount > 0 && !reduceMotion ? "animate-bounce" : ""}`} />
               </div>
             </div>
-            <div className="relative mt-3">
-              <span className="text-4xl font-bold text-rose-400 tabular-nums leading-none">{urgentTasksCount}</span>
+            <div className="relative mt-2">
+              <motion.span
+                key={urgentTasksCount}
+                initial={reduceMotion ? false : { scale: 0.6, opacity: 0, y: 8 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 380, damping: 18 }}
+                className="text-6xl font-black tabular-nums leading-none bg-gradient-to-br from-rose-300 via-rose-400 to-rose-600 bg-clip-text text-transparent inline-block"
+              >
+                <AnimatedNumber value={urgentTasksCount} format={(n) => String(Math.round(n))} />
+              </motion.span>
               <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.urgentSub")}</p>
             </div>
           </motion.div>
@@ -969,8 +977,16 @@ export function Dashboard({
                 <CheckSquare className="w-5 h-5" />
               </div>
             </div>
-            <div className="relative mt-3">
-              <span className="text-4xl font-bold text-slate-100 tabular-nums leading-none">{myRemainingTasks.length}</span>
+            <div className="relative mt-2">
+              <motion.span
+                key={myRemainingTasks.length}
+                initial={reduceMotion ? false : { scale: 0.6, opacity: 0, y: 8 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 380, damping: 18 }}
+                className="text-6xl font-black tabular-nums leading-none bg-gradient-to-br from-sky-200 via-sky-400 to-sky-600 bg-clip-text text-transparent inline-block"
+              >
+                <AnimatedNumber value={myRemainingTasks.length} format={(n) => String(Math.round(n))} />
+              </motion.span>
               <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.myTasksSub")}</p>
             </div>
           </motion.div>
@@ -991,8 +1007,16 @@ export function Dashboard({
                 <Calendar className="w-5 h-5" />
               </div>
             </div>
-            <div className="relative mt-3">
-              <span className="text-4xl font-bold text-slate-100 tabular-nums leading-none">{upcomingPlans.length}</span>
+            <div className="relative mt-2">
+              <motion.span
+                key={upcomingPlans.length}
+                initial={reduceMotion ? false : { scale: 0.6, opacity: 0, y: 8 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                transition={{ type: "spring", stiffness: 380, damping: 18 }}
+                className="text-6xl font-black tabular-nums leading-none bg-gradient-to-br from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent inline-block"
+              >
+                <AnimatedNumber value={upcomingPlans.length} format={(n) => String(Math.round(n))} />
+              </motion.span>
               <p className="text-slate-500 text-xs mt-1">{t("dashboard.stats.scheduleSub")}</p>
             </div>
           </motion.div>
