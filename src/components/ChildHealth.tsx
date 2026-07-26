@@ -159,7 +159,7 @@ export function ChildHealth({
 
   // Ưu tiên hiển thị trẻ em trước; nếu không có thì cho chọn bất kỳ thành viên.
   const sortedMembers = useMemo(() => {
-    return [...users].sort((a, b) => (a.familyRelation === "con" ? -1 : 0) - (b.familyRelation === "con" ? -1 : 0));
+    return [...users].filter(u => !u.isDeleted).sort((a, b) => (a.familyRelation === "con" ? -1 : 0) - (b.familyRelation === "con" ? -1 : 0));
   }, [users]);
 
   // Sub-tab đang xem — Thẻ khẩn cấp đứng đầu (thông tin sống còn cần thấy ngay)
@@ -663,7 +663,7 @@ export function ChildHealth({
         <div className="space-y-4">
           <p className="text-[11px] text-slate-500 px-1">{t("childHealth.emergencyIntro")}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 xl:gap-6 justify-items-center sm:justify-items-stretch">
-            {users.map((member, mi) => {
+            {users.filter(u => !u.isDeleted).map((member, mi) => {
               const p = profileByUser.get(member.id);
               const isEditing = epEditingId === member.id;
               const relationLabel = member.familyRelation ? FAMILY_RELATION_LABELS[member.familyRelation] : "";

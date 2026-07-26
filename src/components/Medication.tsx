@@ -192,7 +192,7 @@ export function Medication({
                 value={patientId}
                 onChange={setPatientId}
                 ariaLabel={t("medication.patientAriaLabel")}
-                options={users.map(u => ({ value: u.id, label: u.fullName }))}
+                options={users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))}
               />
             </div>
 
