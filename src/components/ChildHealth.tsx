@@ -756,16 +756,47 @@ export function ChildHealth({
                               </div>
                             </div>
 
-                            {(measure.height != null || measure.weight != null) && (
-                              <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-950 neu-pressed-sm px-3 py-2">
-                                <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1.5 shrink-0">
-                                  <Ruler className="w-3 h-3 text-sky-500 dark:text-sky-400" /> {t("childHealth.heightWeightLabel")}
-                                </span>
-                                <span className="text-[11px] font-bold text-slate-200 font-mono text-right whitespace-nowrap">
-                                  {measure.height != null ? `${measure.height} cm` : "—"} · {measure.weight != null ? `${measure.weight} kg` : "—"}
-                                </span>
-                              </div>
-                            )}
+                            {(measure.height != null || measure.weight != null) && (() => {
+                              const bmi = (measure.height != null && measure.weight != null)
+                                ? assessBmi(measure.height, measure.weight, member.dateOfBirth, member.gender)
+                                : null;
+                              const bmiColor = bmi?.color === "emerald"
+                                ? "text-emerald-400"
+                                : bmi?.color === "amber" ? "text-amber-400" : "text-rose-400";
+                              return (
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div className="rounded-xl bg-slate-950 neu-pressed-sm px-2.5 py-2 flex flex-col gap-0.5">
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-1">
+                                      <Ruler className="w-3 h-3 text-sky-500 dark:text-sky-400" /> cm
+                                    </span>
+                                    <span className="text-[13px] font-black text-slate-200 font-mono leading-tight">
+                                      {measure.height != null ? measure.height : "—"}
+                                    </span>
+                                  </div>
+                                  <div className="rounded-xl bg-slate-950 neu-pressed-sm px-2.5 py-2 flex flex-col gap-0.5">
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">kg</span>
+                                    <span className="text-[13px] font-black text-slate-200 font-mono leading-tight">
+                                      {measure.weight != null ? measure.weight : "—"}
+                                    </span>
+                                  </div>
+                                  <div className="rounded-xl bg-slate-950 neu-pressed-sm px-2.5 py-2 flex flex-col gap-0.5">
+                                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-500">BMI</span>
+                                    {bmi ? (
+                                      <>
+                                        <span className={`text-[13px] font-black font-mono leading-tight ${bmiColor}`}>
+                                          {bmi.bmi.toFixed(1)}
+                                        </span>
+                                        <span className={`text-[9px] font-semibold leading-tight ${bmiColor}`}>
+                                          {bmi.label}
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="text-[13px] font-black text-slate-600 font-mono leading-tight">—</span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })()}
 
                             <div className="rounded-xl bg-slate-950 neu-pressed-sm divide-y divide-slate-850/60 flex-1">
                               {abilities.length === 0 ? (

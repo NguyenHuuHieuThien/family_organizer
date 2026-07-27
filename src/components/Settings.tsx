@@ -1362,7 +1362,7 @@ export function Settings({
                   Hệ thống chưa ghi nhận điểm lưu trữ thủ công nào. (Mặc định hệ thống tự động backup mỗi 24H).
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="max-h-72 overflow-y-auto overscroll-contain rounded-xl grid grid-cols-1 md:grid-cols-2 gap-4 pr-1">
                   {backups.map(b => (
                     <div
                       key={b.id}
