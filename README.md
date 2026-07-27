@@ -343,6 +343,66 @@ Khi khởi động lần đầu hoặc sau khi xóa `data/family.db`, hệ thố
 
 ---
 
+## 🌐 Đa Ngôn Ngữ (i18n)
+
+Family Organizer hỗ trợ nhiều ngôn ngữ nhờ **react-i18next**. Khi đăng nhập lần đầu, ứng dụng tự phát hiện ngôn ngữ trình duyệt; người dùng có thể đổi bất cứ lúc nào.
+
+### Ngôn ngữ hiện hỗ trợ
+
+| Cờ | Ngôn ngữ | Mã | Trạng thái |
+| :---: | :--- | :---: | :--- |
+| 🇻🇳 | Tiếng Việt | `vi` | ✅ Bản gốc |
+| 🇬🇧 | English | `en` | ✅ Đầy đủ |
+| 🇨🇳 | 中文 (giản thể) | `zh` | ✅ Đầy đủ |
+
+### Cách thay đổi ngôn ngữ
+
+1. Mở **Thiết lập** (icon bánh răng góc trái dưới)
+2. Chọn tab **Hệ thống**
+3. Tìm mục **Ngôn ngữ giao diện** → chọn ngôn ngữ mong muốn
+4. Giao diện chuyển ngay lập tức — không cần tải lại trang
+
+Lựa chọn được lưu vào `localStorage` (`family_lang`), áp dụng riêng cho từng thiết bị.
+
+### Đóng góp bản dịch
+
+Thêm ngôn ngữ mới chỉ cần **3 bước** — không đụng tới code UI:
+
+#### Bước 1 — Tạo file locale
+
+```bash
+cp src/i18n/locales/vi.json src/i18n/locales/<mã-ngôn-ngữ>.json
+# Ví dụ: ja.json, ko.json, fr.json...
+```
+
+Dịch toàn bộ phần **value** (giữ nguyên key). `vi.json` là bản gốc/nguồn sự thật — mọi key mới đều vào đây trước.
+
+#### Bước 2 — Đăng ký vào `src/i18n/index.ts`
+
+```ts
+import ja from "./locales/ja.json";          // thêm import
+
+export const SUPPORTED_LANGUAGES = [
+  { code: "vi", label: "Tiếng Việt", flag: "🇻🇳" },
+  { code: "en", label: "English",    flag: "🇬🇧" },
+  { code: "zh", label: "中文",        flag: "🇨🇳" },
+  { code: "ja", label: "日本語",      flag: "🇯🇵" },  // ← thêm
+] as const;
+
+const resources = {
+  vi: { translation: vi },
+  en: { translation: en },
+  zh: { translation: zh },
+  ja: { translation: ja },                   // ← thêm
+};
+```
+
+#### Bước 3 — Gửi Pull Request
+
+Bộ chọn ngôn ngữ trong Settings sẽ tự hiện lựa chọn mới — không cần thay đổi thêm gì. Xem hướng dẫn chi tiết và quy ước key tại [`src/i18n/MIGRATION_GUIDE.md`](src/i18n/MIGRATION_GUIDE.md).
+
+---
+
 ## 🔧 Biến Môi Trường
 
 Các biến đặt trong file `.env` ở thư mục gốc (được `docker-compose.yml` đọc tự động).

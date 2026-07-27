@@ -206,6 +206,7 @@
           <span class="pill">💸 Không phí thuê bao</span>
           <span class="pill">🍓 Chạy trên Raspberry Pi</span>
           <span class="pill">📱 Cài như app điện thoại</span>
+          <span class="pill">🌐 3 ngôn ngữ</span>
         </div>
         <h1>Cả gia đình gọn trong <span class="grad">một app</span> —<br />chạy ngay tại nhà bạn</h1>
         <p class="lead">
@@ -296,6 +297,77 @@
           <div class="feat neu"><span class="ico">📄</span><div><h4>Giấy tờ</h4><p>CCCD, hộ chiếu, bảo hiểm, đăng kiểm… tự cảnh báo trước khi hết hạn.</p></div></div>
           <div class="feat neu"><span class="ico">🛒</span><div><h4>Đi chợ &amp; thực đơn</h4><p>Danh sách chung realtime, AI gợi ý thực đơn tuần và gộp nguyên liệu; thêm bằng giọng nói.</p></div></div>
           <div class="feat neu"><span class="ico">🤖</span><div><h4>Trợ lý AI (Gemini)</h4><p>Viết nháp ghi chú, gợi ý thực đơn, gửi bản tin gia đình mỗi tuần qua Telegram.</p></div></div>
+        </div>
+      </section>
+
+      <!-- I18N -->
+      <section id="ngon-ngu">
+        <h2 class="section-title">🌐 Đa Ngôn Ngữ</h2>
+        <p class="section-sub">Giao diện hỗ trợ 3 ngôn ngữ. Chuyển đổi ngay lập tức — không cần tải lại trang.</p>
+
+        <div class="grid cols-3" style="margin-bottom:32px">
+          <div class="card neu" style="text-align:center">
+            <span class="emoji">🇻🇳</span>
+            <h3>Tiếng Việt</h3>
+            <p>Bản gốc — đầy đủ 100% chuỗi giao diện.</p>
+          </div>
+          <div class="card neu" style="text-align:center">
+            <span class="emoji">🇬🇧</span>
+            <h3>English</h3>
+            <p>Full translation — all UI strings covered.</p>
+          </div>
+          <div class="card neu" style="text-align:center">
+            <span class="emoji">🇨🇳</span>
+            <h3>中文（简体）</h3>
+            <p>完整中文界面翻译。</p>
+          </div>
+        </div>
+
+        <div class="grid cols-2">
+          <div class="neu" style="padding:28px">
+            <h3 style="margin:0 0 16px;font-size:18px">⚙️ Cách thay đổi ngôn ngữ</h3>
+            <div class="steps" style="counter-reset:step">
+              <div class="step neu" style="padding:14px 18px">
+                <div><strong>Mở Thiết lập</strong><br /><span style="color:var(--muted);font-size:14px">Icon bánh răng ở góc trái dưới thanh điều hướng.</span></div>
+              </div>
+              <div class="step neu" style="padding:14px 18px">
+                <div><strong>Chọn tab Hệ thống</strong><br /><span style="color:var(--muted);font-size:14px">Cuộn xuống mục <em>Ngôn ngữ giao diện</em>.</span></div>
+              </div>
+              <div class="step neu" style="padding:14px 18px">
+                <div><strong>Chọn ngôn ngữ</strong><br /><span style="color:var(--muted);font-size:14px">Giao diện chuyển ngay — lưu vào thiết bị, không ảnh hưởng thành viên khác.</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="neu" style="padding:28px">
+            <h3 style="margin:0 0 16px;font-size:18px">🤝 Đóng góp bản dịch</h3>
+            <p style="color:var(--muted);font-size:14px;margin:0 0 16px">Muốn thêm tiếng Nhật, Hàn, Pháp…? Chỉ cần 3 bước — không đụng tới code UI:</p>
+            <div class="steps" style="counter-reset:step">
+              <div class="step neu" style="padding:14px 18px">
+                <div>
+                  <strong>Copy file locale gốc</strong><br />
+                  <code>cp src/i18n/locales/vi.json src/i18n/locales/ja.json</code><br />
+                  <span style="color:var(--muted);font-size:13px">Dịch phần <em>value</em>, giữ nguyên key.</span>
+                </div>
+              </div>
+              <div class="step neu" style="padding:14px 18px">
+                <div>
+                  <strong>Đăng ký vào <code>src/i18n/index.ts</code></strong><br />
+                  <span style="color:var(--muted);font-size:13px">Import file JSON + thêm vào <code>SUPPORTED_LANGUAGES</code> và <code>resources</code>.</span>
+                </div>
+              </div>
+              <div class="step neu" style="padding:14px 18px">
+                <div>
+                  <strong>Gửi Pull Request</strong><br />
+                  <span style="color:var(--muted);font-size:13px">Bộ chọn ngôn ngữ trong Settings tự hiện tùy chọn mới — xong!</span>
+                </div>
+              </div>
+            </div>
+            <p style="margin:16px 0 0;font-size:13px;color:var(--muted)">
+              Xem quy ước key chi tiết tại
+              <a href="https://github.com/happysmartlight/Family-Organizer/blob/main/src/i18n/MIGRATION_GUIDE.md" target="_blank" rel="noopener">MIGRATION_GUIDE.md ↗</a>
+            </p>
+          </div>
         </div>
       </section>
 
