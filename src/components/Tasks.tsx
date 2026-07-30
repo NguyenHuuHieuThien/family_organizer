@@ -3,18 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input, Textarea } from "./ui";
 import React, { useState, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  Plus, 
-  Trash2, 
-  CheckCircle, 
-  Clock, 
-  MessageSquare, 
-  User as UserIcon, 
-  Search, 
-  Filter, 
-  Tag as TagIcon, 
+import {
+  Plus,
+  Trash2,
+  CheckCircle,
+  Clock,
+  MessageSquare,
+  User as UserIcon,
+  Search,
+  Filter,
+  Tag as TagIcon,
   Calendar,
   Layers,
   AlertCircle,
@@ -160,8 +161,8 @@ export function Tasks({
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => {
       // 1. Text Search title & description & tags
-      const matchText = 
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      const matchText =
+        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
         task.tags.some(t => t.toLowerCase().includes(searchTerm.toLowerCase()));
       if (!matchText) return false;
@@ -727,7 +728,7 @@ export function Tasks({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-500" />
-            <input
+            <Input
               type="text"
               placeholder={t("tasks.searchPlaceholder")}
               value={searchTerm}
@@ -735,13 +736,13 @@ export function Tasks({
               className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-sm focus:outline-none transition-all"
             />
           </div>
-          <button
+          <Button
             disabled={currentUser.role === UserRole.GUEST}
             onClick={handleOpenCreate}
             className="bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all self-start md:self-auto shrink-0 shadow-md shadow-sky-500/5 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> {t("tasks.addBtn")}
-          </button>
+          </Button>
         </div>
 
         {/* Advanced Filters Grid */}
@@ -811,7 +812,7 @@ export function Tasks({
 
           {/* Clear Filters Button */}
           <div className="col-span-2 md:col-span-1 flex items-end">
-            <button
+            <Button
               onClick={() => {
                 setSearchTerm("");
                 setStatusFilter("all");
@@ -823,7 +824,7 @@ export function Tasks({
               className="w-full bg-slate-950 neu-btn hover:bg-slate-800 hover:text-slate-100 p-2 text-slate-400 font-semibold rounded-lg text-center transition-all cursor-pointer"
             >
               {t("tasks.resetFilters")}
-            </button>
+            </Button>
           </div>
         </div>
       </Reveal>
@@ -899,9 +900,9 @@ export function Tasks({
                     ...childUsers.map(u => ({ value: u.id, label: u.fullName }))
                   ]}
                 />
-                <input type="number" value={manualRewardPoints || ""} onChange={(e) => setManualRewardPoints(Number(e.target.value))} placeholder={t("tasks.rewardPointsPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-                <input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder={t("tasks.rewardReasonPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-                <button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl px-4 py-2 font-bold cursor-pointer">{t("tasks.rewardUpdateBtn")}</button>
+                <Input type="number" value={manualRewardPoints || ""} onChange={(e) => setManualRewardPoints(Number(e.target.value))} placeholder={t("tasks.rewardPointsPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+                <Input value={manualRewardReason} onChange={(e) => setManualRewardReason(e.target.value)} placeholder={t("tasks.rewardReasonPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+                <Button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl px-4 py-2 font-bold cursor-pointer">{t("tasks.rewardUpdateBtn")}</Button>
               </form>
             </div>
           )}
@@ -928,13 +929,13 @@ export function Tasks({
                 </div>
               )}
                 {isAdultRole(currentUser.role) && (
-                  <button
+                  <Button
                     type="button"
                     onClick={() => { cancelGiftForm(); setShowGiftForm(v => !v); }}
                     className="flex items-center gap-1 bg-slate-950 neu-btn hover:bg-slate-800 text-pink-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" /> {t("tasks.storeAddGift")}
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -944,15 +945,15 @@ export function Tasks({
               <form onSubmit={handleAddGift} className="space-y-2">
                 <p className="text-[11px] font-bold text-slate-400">{editingGift ? t("tasks.storeGiftFormEdit", { name: editingGift.name }) : t("tasks.storeGiftFormNew")}</p>
                 <div className="grid grid-cols-[64px_1fr_100px_auto_auto] gap-2 text-xs">
-                  <input value={giftEmoji} onChange={e => setGiftEmoji(e.target.value)} placeholder="🎁" maxLength={4} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 text-center" />
-                  <input value={giftName} onChange={e => setGiftName(e.target.value)} placeholder={t("tasks.storeGiftNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 min-w-0" />
-                  <input type="number" min={1} value={giftCost || ""} onChange={e => setGiftCost(Number(e.target.value))} placeholder={t("tasks.storeGiftCostPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500" />
-                  <button type="submit" disabled={giftSaving || !giftName.trim() || giftCost <= 0} className="bg-pink-500 hover:bg-pink-400 text-slate-950 rounded-xl px-3 py-2 font-bold cursor-pointer disabled:opacity-60">
+                  <Input value={giftEmoji} onChange={e => setGiftEmoji(e.target.value)} placeholder="🎁" maxLength={4} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 text-center" />
+                  <Input value={giftName} onChange={e => setGiftName(e.target.value)} placeholder={t("tasks.storeGiftNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500 min-w-0" />
+                  <Input type="number" min={1} value={giftCost || ""} onChange={e => setGiftCost(Number(e.target.value))} placeholder={t("tasks.storeGiftCostPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-indigo-500" />
+                  <Button type="submit" disabled={giftSaving || !giftName.trim() || giftCost <= 0} className="bg-pink-500 hover:bg-pink-400 text-slate-950 rounded-xl px-3 py-2 font-bold cursor-pointer disabled:opacity-60">
                     {giftSaving ? "..." : editingGift ? t("tasks.storeGiftSave") : t("tasks.storeGiftAdd")}
-                  </button>
-                  <button type="button" onClick={cancelGiftForm} className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-500 hover:text-slate-300 cursor-pointer">
+                  </Button>
+                  <Button type="button" onClick={cancelGiftForm} className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-500 hover:text-slate-300 cursor-pointer">
                     <X className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </form>
             )}
@@ -967,10 +968,10 @@ export function Tasks({
                   {t("tasks.storeEmpty")}{isAdultRole(currentUser.role) ? t("tasks.storeEmptyAdultSuffix") : ""}
                 </p>
                 {isAdultRole(currentUser.role) && (
-                  <button type="button" onClick={handleSeedDefaults}
+                  <Button type="button" onClick={handleSeedDefaults}
                     className="mx-auto flex items-center gap-1.5 bg-pink-500/10 border border-pink-500/20 text-pink-400 text-[11px] font-bold px-4 py-2 rounded-xl hover:bg-pink-500/20 cursor-pointer transition-all">
                     <Gift className="w-3.5 h-3.5" /> {t("tasks.storeSeedBtn")}
-                  </button>
+                  </Button>
                 )}
               </div>
             ) : (
@@ -984,17 +985,17 @@ export function Tasks({
                         <span className="text-2xl leading-none">{item.emoji || "🎁"}</span>
                         {isAdultRole(currentUser.role) && (
                           <div className="flex gap-1">
-                            <button type="button" onClick={() => startEditGift(item)} title={t("tasks.storeGiftEditTooltip")} aria-label={t("tasks.storeGiftEditAriaLabel", { name: item.name })} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
+                            <Button type="button" onClick={() => startEditGift(item)} title={t("tasks.storeGiftEditTooltip")} aria-label={t("tasks.storeGiftEditAriaLabel", { name: item.name })} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
                               <Pencil className="w-3 h-3" />
-                            </button>
-                            <button type="button" onClick={() => handleDeleteGift(item)} title={t("tasks.storeGiftDeleteTooltip")} aria-label={t("tasks.storeGiftDeleteAriaLabel", { name: item.name })} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
+                            </Button>
+                            <Button type="button" onClick={() => handleDeleteGift(item)} title={t("tasks.storeGiftDeleteTooltip")} aria-label={t("tasks.storeGiftDeleteAriaLabel", { name: item.name })} className="p-1 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
                               <Trash2 className="w-3 h-3" />
-                            </button>
+                            </Button>
                           </div>
                         )}
                       </div>
                       <p className="text-[11px] font-bold text-slate-200 leading-snug flex-1">{item.name}</p>
-                      <button
+                      <Button
                         type="button"
                         onClick={() => handleRedeemGift(item)}
                         disabled={!shopTargetId || !affordable || redeemBusyId !== null}
@@ -1002,7 +1003,7 @@ export function Tasks({
                         className={`w-full rounded-lg px-2 py-1.5 text-[11px] font-bold cursor-pointer disabled:cursor-default ${affordable ? "bg-amber-500 hover:bg-amber-400 text-slate-950" : "bg-slate-800 text-slate-500"} disabled:opacity-70`}
                       >
                         {redeemBusyId === item.id ? t("tasks.storeRedeemBusy") : t("tasks.storeCostLabel", { cost: item.cost })}
-                      </button>
+                      </Button>
                     </div>
                   );
                 })}
@@ -1029,7 +1030,7 @@ export function Tasks({
                           <span className="block text-[10px] font-normal text-slate-450 mt-0.5">{t("tasks.mysteryDiscount")}</span>
                         </p>
                       )}
-                      <button
+                      <Button
                         type="button"
                         onClick={handleMysteryRedeem}
                         disabled={!shopTargetId || !affordable || mysteryBusy || redeemBusyId !== null}
@@ -1037,7 +1038,7 @@ export function Tasks({
                         className={`w-full rounded-lg px-2 py-1.5 text-[11px] font-bold cursor-pointer disabled:cursor-default transition-all ${affordable ? "bg-violet-500 hover:bg-violet-400 text-white" : "bg-slate-800 text-slate-500"} disabled:opacity-70`}
                       >
                         {mysteryBusy ? t("tasks.mysteryBusy") : t("tasks.mysteryCostLabel", { cost: mysteryCost })}
-                      </button>
+                      </Button>
                     </div>
                   );
                 })()}
@@ -1161,7 +1162,7 @@ export function Tasks({
                                     {priorityLabel(task.priority)}
                                   </span>
                                   <div className="flex items-center gap-1 shrink-0">
-                                    <button
+                                    <Button
                                       type="button"
                                       onClick={() => setSelectedTask(task)}
                                       className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-sky-400 flex items-center justify-center cursor-pointer"
@@ -1169,9 +1170,9 @@ export function Tasks({
                                       aria-label={t("tasks.detailAriaLabel", { title: task.title })}
                                     >
                                       <MessageSquare className="size-3.5" />
-                                    </button>
+                                    </Button>
                                     {canEditTask(task) && (
-                                      <button
+                                      <Button
                                         type="button"
                                         onClick={() => handleOpenEditTask(task)}
                                         className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-amber-400 flex items-center justify-center cursor-pointer"
@@ -1179,10 +1180,10 @@ export function Tasks({
                                         aria-label={t("tasks.editAriaLabel", { title: task.title })}
                                       >
                                         <Pencil className="size-3.5" />
-                                      </button>
+                                      </Button>
                                     )}
                                     {canDeleteTask(task) && (
-                                      <button
+                                      <Button
                                         type="button"
                                         onClick={() => handleDeleteClick(task.id)}
                                         className="size-7 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg text-slate-400 hover:text-rose-400 flex items-center justify-center cursor-pointer"
@@ -1190,12 +1191,12 @@ export function Tasks({
                                         aria-label={t("tasks.deleteAriaLabel", { title: task.title })}
                                       >
                                         <Trash2 className="size-3.5" />
-                                      </button>
+                                      </Button>
                                     )}
                                   </div>
                                 </div>
 
-                                <button
+                                <Button
                                   type="button"
                                   onClick={() => setSelectedTask(task)}
                                   className="block w-full text-left cursor-pointer"
@@ -1206,7 +1207,7 @@ export function Tasks({
                                   <p className="mt-1 text-[11px] text-slate-500 line-clamp-2 leading-relaxed text-pretty">
                                     {task.description || t("tasks.noDesc")}
                                   </p>
-                                </button>
+                                </Button>
 
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between gap-2 text-[11px]">
@@ -1303,21 +1304,21 @@ export function Tasks({
                                   {task.pendingApproval ? (
                                     canApproveTasks ? (
                                       <div className="shrink-0 flex items-center gap-1.5">
-                                        <button
+                                        <Button
                                           type="button"
                                           onClick={() => handleApprove(task)}
                                           disabled={approvingId === task.id}
                                           className="bg-slate-900 hover:bg-slate-800 neu-btn text-emerald-700 dark:text-emerald-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-60 inline-flex items-center gap-1"
                                         >
                                           <Check className="w-3.5 h-3.5" /> {approvingId === task.id ? "..." : t("tasks.approveBtn")}
-                                        </button>
-                                        <button
+                                        </Button>
+                                        <Button
                                           type="button"
                                           onClick={() => { setRejectTaskTarget(task); setRejectReason(""); }}
                                           className="bg-slate-900 hover:bg-slate-800 neu-btn text-rose-700 dark:text-rose-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
                                         >
                                           <X className="w-3.5 h-3.5" /> {t("tasks.rejectBtnShort")}
-                                        </button>
+                                        </Button>
                                       </div>
                                     ) : (
                                       <span className="shrink-0 text-[11px] font-bold text-amber-700 dark:text-amber-400 inline-flex items-center gap-1">
@@ -1325,21 +1326,21 @@ export function Tasks({
                                       </span>
                                     )
                                   ) : (childNeedsApproval(task) && next.status === TaskStatus.COMPLETED) ? (
-                                    <button
+                                    <Button
                                       type="button"
                                       onClick={() => openSubmitModal(task)}
                                       className="shrink-0 bg-slate-900 hover:bg-slate-800 neu-btn text-emerald-700 dark:text-emerald-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer inline-flex items-center gap-1"
                                     >
                                       <Check className="w-3.5 h-3.5" /> {t("tasks.childDoneBtn")}
-                                    </button>
+                                    </Button>
                                   ) : (
-                                    <button
+                                    <Button
                                       type="button"
                                       onClick={() => handleUpdateStatus(task, next.status)}
                                       className="shrink-0 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-300 hover:text-slate-100 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
                                     >
                                       {next.label}
-                                    </button>
+                                    </Button>
                                   )}
                                 </div>
                               </motion.article>
@@ -1380,20 +1381,20 @@ export function Tasks({
               </div>
               <div className="flex items-center gap-2">
                 {canEditTask(activeTaskDetails) && (
-                  <button
+                  <Button
                     onClick={() => handleOpenEditTask(activeTaskDetails)}
                     className="flex items-center gap-1.5 text-xs font-bold text-amber-400 hover:text-amber-300 bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-lg cursor-pointer"
                     title={t("tasks.editTitleTooltip")}
                   >
                     <Pencil className="w-3.5 h-3.5" /> {t("tasks.detailEditBtn")}
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
                   onClick={() => setSelectedTask(null)}
                   className="text-slate-400 hover:text-slate-200 bg-slate-800 p-2 rounded-lg"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -1468,20 +1469,20 @@ export function Tasks({
 
                 {/* Send Comment Field */}
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <Input
+                    type="text"
                     placeholder={t("tasks.commentPlaceholder")}
                     value={commentInput}
                     onChange={(e) => setCommentInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handlePostComment()}
                     className="flex-1 px-3 py-2 bg-slate-950 neu-pressed-sm rounded-xl focus:border-sky-500 text-xs text-slate-200 outline-none"
                   />
-                  <button 
+                  <Button
                     onClick={handlePostComment}
                     className="bg-sky-500 hover:bg-sky-400 text-slate-950 px-3 py-2 rounded-xl text-xs font-bold shrink-0 cursor-pointer"
                   >
                     {t("tasks.commentSend")}
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -1528,12 +1529,12 @@ export function Tasks({
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
                 <CheckCircle className="w-5 h-5 text-sky-400" /> {editingTaskId ? t("tasks.formTitleEdit") : t("tasks.formTitleNew")}
               </h3>
-              <button
+              <Button
                 onClick={handleCloseTaskForm}
                 className="text-slate-400 hover:text-slate-200 bg-slate-800 p-1.5 rounded-lg"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleCreateTask} className="flex flex-col min-h-0 flex-1 overflow-hidden text-xs">
@@ -1546,7 +1547,7 @@ export function Tasks({
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("tasks.formNameLabel")} <span className="text-rose-400">*</span></label>
-                <input
+                <Input
                   type="text"
                   placeholder={t("tasks.formNamePlaceholder")}
                   value={newTitle}
@@ -1557,7 +1558,7 @@ export function Tasks({
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("tasks.formDescLabel")}</label>
-                <textarea
+                <Textarea
                   rows={3}
                   placeholder={t("tasks.formDescPlaceholder")}
                   value={newDesc}
@@ -1616,7 +1617,7 @@ export function Tasks({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/80">
                 <div className="space-y-1">
                   <label className="text-slate-400 block font-semibold">{t("tasks.formPointsLabel")}</label>
-                  <input
+                  <Input
                     type="number"
                     min="0"
                     value={newRewardPoints || ""}
@@ -1657,14 +1658,14 @@ export function Tasks({
                       {users.filter(u => !u.isDeleted).map(u => {
                         const active = newRotationMemberIds.includes(u.id);
                         return (
-                          <button
+                          <Button
                             type="button"
                             key={u.id}
                             onClick={() => setNewRotationMemberIds(prev => active ? prev.filter(id => id !== u.id) : [...prev, u.id])}
                             className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${active ? "bg-indigo-500 text-white border-indigo-400" : "bg-slate-950 text-slate-400 border-slate-800 hover:border-indigo-500/50"}`}
                           >
                             {active && newRotationMemberIds.indexOf(u.id) >= 0 ? `${newRotationMemberIds.indexOf(u.id) + 1}. ` : ""}{u.fullName}
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -1677,7 +1678,7 @@ export function Tasks({
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("tasks.formTagsLabel")}</label>
-                <input
+                <Input
                   type="text"
                   placeholder={t("tasks.formTagsPlaceholder")}
                   value={newTagsStr}
@@ -1689,19 +1690,19 @@ export function Tasks({
               </div>
 
               <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
-                <button
+                <Button
                   type="button"
                   onClick={handleCloseTaskForm}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
                   {t("tasks.formClose")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer"
                 >
                   {editingTaskId ? t("tasks.formSave") : t("tasks.formCreate")}
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>
@@ -1730,19 +1731,19 @@ export function Tasks({
                 {submitProofImage ? (
                   <div className="relative">
                     <img src={submitProofImage} alt={t("tasks.proofAlt")} className="w-full max-h-52 object-cover rounded-xl" />
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setSubmitProofImage("")}
                       className="absolute top-2 right-2 bg-slate-950/80 text-slate-200 rounded-lg p-1.5 cursor-pointer"
                     >
                       <X className="w-4 h-4" />
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <label className="flex items-center justify-center gap-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-3 text-slate-400 cursor-pointer hover:text-slate-200">
                     <Camera className="w-4 h-4" />
                     {submitProofBusy ? t("tasks.submitProofProcessing") : t("tasks.submitProofPick")}
-                    <input
+                    <Input
                       type="file"
                       accept="image/*"
                       className="hidden"
@@ -1756,7 +1757,7 @@ export function Tasks({
 
               <div className="space-y-1.5">
                 <label className="text-slate-400 font-semibold block">{t("tasks.submitNoteLabel")}</label>
-                <textarea
+                <Textarea
                   rows={2}
                   value={submitProofNote}
                   onChange={(e) => setSubmitProofNote(e.target.value)}
@@ -1766,21 +1767,21 @@ export function Tasks({
               </div>
             </div>
             <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800">
-              <button
+              <Button
                 type="button"
                 onClick={() => setSubmitTaskTarget(null)}
                 className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
               >
                 {t("tasks.submitClose")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={confirmSubmit}
                 disabled={submitBusy || submitProofBusy}
                 className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50 text-xs"
               >
                 {submitBusy ? t("tasks.submitSending") : t("tasks.submitBtn")}
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>
@@ -1802,7 +1803,7 @@ export function Tasks({
               <p className="text-slate-400 leading-relaxed">
                 {t("tasks.rejectMsg", { taskTitle: rejectTaskTarget.title })}
               </p>
-              <textarea
+              <Textarea
                 rows={3}
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
@@ -1811,21 +1812,21 @@ export function Tasks({
               />
             </div>
             <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800">
-              <button
+              <Button
                 type="button"
                 onClick={() => { setRejectTaskTarget(null); setRejectReason(""); }}
                 className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold text-xs"
               >
                 {t("tasks.rejectClose")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={confirmReject}
                 disabled={rejectBusy}
                 className="px-4 py-2 bg-rose-500 hover:bg-rose-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50 text-xs"
               >
                 {rejectBusy ? t("tasks.rejectSending") : t("tasks.rejectBtn")}
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>

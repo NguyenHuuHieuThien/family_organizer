@@ -3,18 +3,19 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input, Textarea } from "./ui";
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { 
-  Calendar as CalendarIcon, 
-  Plus, 
-  Trash2, 
-  Clock, 
+import {
+  Calendar as CalendarIcon,
+  Plus,
+  Trash2,
+  Clock,
   Pencil,
-  Repeat, 
-  Lock, 
-  Eye, 
-  Tag, 
+  Repeat,
+  Lock,
+  Eye,
+  Tag,
   LayoutList,
   LayoutGrid,
   CalendarPlus,
@@ -620,55 +621,55 @@ export function Schedules({
 
   return (
     <div className="space-y-6" id="schedules-module">
-      
+
       {/* Filters and mode change panel */}
       <Reveal className="relative overflow-hidden bg-slate-900 neu-raised p-4.5 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4" id="plans-control-header">
         <ShimmerLine accent="sky" />
-        
+
         {/* Toggle shared scopes buttons */}
         <div className="flex bg-slate-950 p-1.5 rounded-xl neu-pressed-sm self-start md:self-auto gap-1 text-xs">
-          <button
+          <Button
             onClick={() => setFilterSharedOnly("all")}
             className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all whitespace-nowrap ${filterSharedOnly === "all" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <span className="sm:hidden">{t("schedules.filterAllShort")}</span><span className="hidden sm:inline">{t("schedules.filterAll")}</span>
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setFilterSharedOnly("shared")}
             className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all whitespace-nowrap ${filterSharedOnly === "shared" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <span className="sm:hidden">{t("schedules.filterSharedShort")}</span><span className="hidden sm:inline">{t("schedules.filterShared")}</span>
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => setFilterSharedOnly("personal")}
             className={`px-3 py-1.5 rounded-lg font-semibold cursor-pointer transition-all whitespace-nowrap ${filterSharedOnly === "personal" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <span className="sm:hidden">{t("schedules.filterPersonalShort")}</span><span className="hidden sm:inline">{t("schedules.filterPersonal")}</span>
-          </button>
+          </Button>
         </div>
 
         {/* Layout Mode selection & add button */}
         <div className="flex items-center gap-3 self-end md:self-auto shrink-0">
           {/* View toggle */}
           <div className="flex bg-slate-950 p-1.5 rounded-xl neu-pressed-sm gap-1">
-            <button 
+            <Button
               onClick={() => setViewMode("board")}
               className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "board" ? "bg-slate-900 neu-flat text-sky-400" : "text-slate-500 hover:text-slate-300"}`}
               title={t("schedules.viewBoard")}
             >
               <LayoutGrid className="w-4.5 h-4.5" />
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => setViewMode("list")}
               className={`p-1.5 rounded-lg transition-all cursor-pointer ${viewMode === "list" ? "bg-slate-900 neu-flat text-sky-400" : "text-slate-500 hover:text-slate-300"}`}
               title={t("schedules.viewList")}
             >
               <LayoutList className="w-4.5 h-4.5" />
-            </button>
+            </Button>
           </div>
 
           {/* Xuất .ics */}
-          <button
+          <Button
             type="button"
             onClick={exportPlansIcs}
             disabled={filteredPlans.length === 0}
@@ -676,16 +677,16 @@ export function Schedules({
             title={t("schedules.exportIcsTitle")}
           >
             <Download className="w-3.5 h-3.5" /> .ics
-          </button>
+          </Button>
 
           {/* New register event button */}
-          <button
+          <Button
             disabled={currentUser.role === UserRole.GUEST}
             onClick={handleOpenCreatePlan}
             className="bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all shadow-md shadow-sky-500/5 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> {t("schedules.addEventBtn")}
-          </button>
+          </Button>
         </div>
       </Reveal>
 
@@ -694,7 +695,7 @@ export function Schedules({
         /* Monthly style responsive Grid */
         <Reveal delay={0.08} className="relative bg-slate-900 neu-raised rounded-2xl overflow-hidden" id="calendar-monthly-grid-view">
           <ShimmerLine accent="amber" />
-          
+
           <div className="bg-slate-950 p-4 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="text-base font-extrabold text-slate-200 flex items-center gap-2 capitalize">
@@ -707,26 +708,26 @@ export function Schedules({
                 </span>
               )}
               {!isViewingToday && (
-                <button
+                <Button
                   type="button"
                   onClick={goToToday}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 rounded-lg text-[11px] font-bold cursor-pointer transition-colors"
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400" /> {t("schedules.todayBtn")}
-                </button>
+                </Button>
               )}
             </div>
 
             {/* Month / year navigation */}
             <div className="flex items-center gap-1.5">
-              <button
+              <Button
                 type="button"
                 onClick={goToPrevMonth}
                 aria-label={t("schedules.prevMonth")}
                 className="p-1.5 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
-              </button>
+              </Button>
 
               <div className="w-[104px] text-xs">
                 <FancySelect
@@ -748,14 +749,14 @@ export function Schedules({
                 />
               </div>
 
-              <button
+              <Button
                 type="button"
                 onClick={goToNextMonth}
                 aria-label={t("schedules.nextMonth")}
                 className="p-1.5 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -831,7 +832,7 @@ export function Schedules({
                   {/* Holiday, event and birthday badges */}
                   <div className="mt-2 space-y-1.5 overflow-y-auto flex-1 min-h-0 pr-0.5 scrollbar-none">
                     {dayHolidays.map(holiday => (
-                      <button
+                      <Button
                         key={`holiday-${holiday.date}-${holiday.shortTitle}`}
                         type="button"
                         onClick={() => setViewingHoliday({ holiday, day: day.dayNum })}
@@ -841,12 +842,12 @@ export function Schedules({
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-current opacity-75 shrink-0" />
                         <span className="truncate min-w-0 flex-1">{holiday.shortTitle}</span>
-                      </button>
+                      </Button>
                     ))}
                     {dayBirthdays.map(b => {
                       const bUser = users.find(u => u.id === b.id);
                       return (
-                        <button
+                        <Button
                           key={`bd-${b.id}`}
                           type="button"
                           onClick={() => bUser && setViewingBirthday({ user: bUser, day: day.dayNum })}
@@ -855,14 +856,14 @@ export function Schedules({
                         >
                           <span className="shrink-0">🎂</span>
                           <span className="truncate min-w-0 flex-1">{b.name}</span>
-                        </button>
+                        </Button>
                       );
                     })}
                     {dayPlans.map(plan => {
                       const meta = getDayBadgeMeta(plan, day.dayNum);
                       const CellIcon = planTypeMeta(plan.color).icon;
                       return (
-                        <button
+                        <Button
                           key={plan.id}
                           type="button"
                           onClick={() => setViewingPlan(plan)}
@@ -876,7 +877,7 @@ export function Schedules({
                           <span className="truncate min-w-0 flex-1">{plan.title}</span>
                           {meta.endTime && <span className="hidden sm:inline shrink-0 text-[8px] font-mono opacity-80">{meta.endTime}</span>}
                           {meta.contTo && <ChevronRight className="w-2.5 h-2.5 shrink-0 opacity-60" />}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -930,7 +931,7 @@ export function Schedules({
                           <TypeIcon className="w-3 h-3 shrink-0" />
                           {typeMeta.label}
                         </span>
-                        
+
                         <div className="flex items-center gap-1.5 text-slate-500 font-medium">
                           {plan.isShared ? <Eye className="w-3.5 h-3.5 text-sky-400" /> : <Lock className="w-3.5 h-3.5 text-indigo-400" />}
                           <span>{plan.isShared ? t("schedules.visPublic") : t("schedules.visPrivate")}</span>
@@ -960,13 +961,13 @@ export function Schedules({
                     </div>
 
                     {/* Add to phone calendar (.ics — works on iOS & Android) */}
-                    <button
+                    <Button
                       type="button"
                       onClick={() => handleAddToCalendar(plan)}
                       className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 rounded-lg font-semibold text-[11px] transition-all cursor-pointer"
                     >
                       <CalendarPlus className="w-3.5 h-3.5" /> {t("schedules.addToCalendar")}
-                    </button>
+                    </Button>
 
                     {/* Creator mark */}
                     <div className="text-[10px] text-slate-500 pt-1 text-right flex items-center justify-end gap-1 font-sans">
@@ -976,22 +977,22 @@ export function Schedules({
                     {/* Owner/Admin actions */}
                     {canManage && (
                       <div className="absolute right-3.5 top-3.5 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                        <button
+                        <Button
                           type="button"
                           aria-label={`${t("schedules.editBtn")} ${plan.title}`}
                           onClick={() => handleOpenEditPlan(plan)}
                           className="p-1.5 bg-slate-950 hover:bg-slate-800 neu-btn hover:text-amber-400 text-slate-500 rounded-lg cursor-pointer"
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
                           aria-label={`${t("schedules.deleteBtn")} ${plan.title}`}
                           onClick={() => handleDeleteClick(plan.id)}
                           className="p-1.5 bg-slate-950 hover:bg-slate-800 neu-btn hover:text-rose-400 text-slate-500 rounded-lg cursor-pointer"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </Reveal>
@@ -1029,14 +1030,14 @@ export function Schedules({
                   </span>
                   <h3 className="text-md font-bold text-slate-100">{viewingPlan.title}</h3>
                 </div>
-                <button
+                <Button
                   type="button"
                   aria-label={t("schedules.closeEventDetail")}
                   onClick={() => setViewingPlan(null)}
                   className="text-slate-400 hover:text-slate-200 bg-slate-800 p-1.5 rounded-lg shrink-0"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               <p className="text-xs text-slate-400 leading-relaxed font-sans">
@@ -1072,13 +1073,13 @@ export function Schedules({
               </div>
 
               {/* Add to the phone's native calendar (.ics — works on iOS & Android) */}
-              <button
+              <Button
                 type="button"
                 onClick={() => handleAddToCalendar(viewingPlan)}
                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-md shadow-sky-500/10"
               >
                 <CalendarPlus className="w-4 h-4" /> {t("schedules.addToCalendar")}
-              </button>
+              </Button>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 text-[11px] text-slate-500 font-sans">
                 <span className="flex items-center gap-1.5">
@@ -1086,30 +1087,30 @@ export function Schedules({
                   {viewingPlan.isShared ? t("schedules.visPublic") : t("schedules.visPrivateDetail")} • {t("schedules.createdBy", { name: creator ? creator.fullName : t("schedules.unknownMember") })}
                 </span>
                 <div className="flex items-center justify-end gap-2 shrink-0">
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setViewingPlan(null)}
                     className="px-3 py-1.5 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 neu-btn rounded-lg font-semibold cursor-pointer"
                   >
                     {t("schedules.closeDetail")}
-                  </button>
+                  </Button>
                   {canManage && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => handleOpenEditPlan(viewingPlan)}
                       className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg font-semibold cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5" /> {t("schedules.editBtn")}
-                    </button>
+                    </Button>
                   )}
                   {canManage && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => void handleDeleteClick(viewingPlan.id)}
                       className="flex items-center gap-1 px-2.5 py-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 rounded-lg font-semibold cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" /> {t("schedules.deleteBtn")}
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -1146,14 +1147,14 @@ export function Schedules({
                   </span>
                   <h3 className="text-md font-bold text-slate-100">{holiday.title}</h3>
                 </div>
-                <button
+                <Button
                   type="button"
                   aria-label={t("schedules.closeHolidayDetail")}
                   onClick={() => setViewingHoliday(null)}
                   className="text-slate-400 hover:text-slate-200 bg-slate-800 p-1.5 rounded-lg shrink-0"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-2.5 bg-slate-950/40 neu-pressed-sm rounded-xl p-3.5 text-xs">
@@ -1180,13 +1181,13 @@ export function Schedules({
                 </p>
               </div>
 
-              <button
+              <Button
                 type="button"
                 onClick={() => setViewingHoliday(null)}
                 className="w-full px-4 py-2 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-slate-100 neu-btn rounded-xl font-semibold cursor-pointer transition-all"
               >
                 {t("schedules.closeDetail")}
-              </button>
+              </Button>
             </motion.div>
           </div>
         );
@@ -1227,14 +1228,14 @@ export function Schedules({
                     <h3 className="text-md font-bold text-slate-100 truncate">{u.fullName}</h3>
                   </div>
                 </div>
-                <button
+                <Button
                   type="button"
                   aria-label={t("schedules.closeBirthdayDetail")}
                   onClick={() => setViewingBirthday(null)}
                   className="text-slate-400 hover:text-slate-200 bg-slate-800 p-1.5 rounded-lg shrink-0"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-2.5 bg-slate-950/40 neu-pressed-sm rounded-xl p-3.5 text-xs">
@@ -1266,13 +1267,13 @@ export function Schedules({
                 🎉 {t("schedules.bdWishHint", { name: u.fullName })}
               </p>
 
-              <button
+              <Button
                 type="button"
                 onClick={() => setViewingBirthday(null)}
                 className="w-full px-4 py-2 bg-slate-950 text-slate-300 hover:bg-slate-800 hover:text-slate-100 neu-btn rounded-xl font-semibold cursor-pointer transition-all"
               >
                 {t("schedules.closeDetail")}
-              </button>
+              </Button>
             </motion.div>
           </div>
         );
@@ -1297,14 +1298,14 @@ export function Schedules({
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
                 <CalendarIcon className="w-5 h-5 text-sky-400" /> {editingPlan ? t("schedules.formTitleEdit") : t("schedules.formTitleCreate")}
               </h3>
-              <button
+              <Button
                 type="button"
                 aria-label={t("schedules.closeFormAria")}
                 onClick={handleClosePlanForm}
                 className="text-slate-400 hover:text-slate-200 bg-slate-800 p-1.5 rounded-lg"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSavePlan} className="flex flex-col min-h-0 flex-1 overflow-hidden text-xs">
@@ -1317,7 +1318,7 @@ export function Schedules({
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("schedules.formNameLabel")} <span className="text-rose-400">*</span></label>
-                <input
+                <Input
                   type="text"
                   placeholder={t("schedules.formNamePlaceholder")}
                   value={newTitle}
@@ -1328,7 +1329,7 @@ export function Schedules({
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("schedules.formDescLabel")}</label>
-                <textarea
+                <Textarea
                   rows={2}
                   placeholder={t("schedules.formDescPlaceholder")}
                   value={newDesc}
@@ -1387,14 +1388,14 @@ export function Schedules({
                       {WEEKDAY_OPTIONS.map(day => {
                         const active = newRecurrenceWeekdays.includes(day.value);
                         return (
-                          <button
+                          <Button
                             key={day.value}
                             type="button"
                             onClick={() => setNewRecurrenceWeekdays(prev => active ? prev.filter(v => v !== day.value) : [...prev, day.value].sort((a, b) => a - b))}
                             className={`px-2 py-2 rounded-lg text-[11px] font-bold border cursor-pointer transition-colors ${active ? "bg-indigo-500 text-white border-indigo-400" : "bg-slate-950 text-slate-400 border-slate-800 hover:border-indigo-500/50"}`}
                           >
                             {day.label}
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -1453,19 +1454,19 @@ export function Schedules({
               </div>
 
               <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
-                <button
+                <Button
                   type="button"
                   onClick={handleClosePlanForm}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
                   {t("schedules.closeDetail")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer"
                 >
                   {editingPlan ? t("schedules.saveBtnEdit") : t("schedules.saveBtnCreate")}
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>

@@ -8,6 +8,7 @@
 // Ghi chú + Thu chi + Giấy tờ. Bấm kết quả → nhảy sang tab tương ứng.
 // So khớp phía server đã bỏ dấu tiếng Việt ("giay to" khớp "Giấy tờ").
 
+import { Button, Input } from "./ui";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, X, CheckSquare, Calendar, FileText, Wallet, FolderLock, CornerDownLeft } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
@@ -133,14 +134,14 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
   return (
     <>
       {/* Nút kính lúp trên header — style đồng bộ nút đổi theme */}
-      <button
+      <Button
         onClick={() => setOpen(true)}
         className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none cursor-pointer flex items-center justify-center"
         title={t("globalSearch.btnTitle")}
         aria-label={t("globalSearch.btnAria")}
       >
         <Search className="w-4.5 h-4.5" />
-      </button>
+      </Button>
 
       <AnimatePresence>
         {open && (
@@ -163,7 +164,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
               {/* Ô nhập */}
               <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-800">
                 <Search className="w-4.5 h-4.5 text-sky-400 shrink-0" />
-                <input
+                <Input
                   autoFocus
                   value={query}
                   onChange={e => setQuery(e.target.value)}
@@ -173,13 +174,13 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
                 {loading && (
                   <span className="w-4 h-4 border-2 border-slate-800 border-t-sky-500 rounded-full animate-spin shrink-0" aria-label={t("globalSearch.searching")} />
                 )}
-                <button
+                <Button
                   onClick={close}
                   className="p-1.5 bg-slate-950 neu-btn rounded-lg text-slate-500 hover:text-slate-200 cursor-pointer shrink-0"
                   aria-label={t("globalSearch.closeAria")}
                 >
                   <X className="w-3.5 h-3.5" />
-                </button>
+                </Button>
               </div>
 
               {/* Kết quả */}
@@ -204,7 +205,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
                             <span className="text-slate-500">({group.items.length})</span>
                           </div>
                           {group.items.map(item => (
-                            <button
+                            <Button
                               key={`${item.kind}_${item.id}`}
                               onClick={() => pick(item)}
                               className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left hover:bg-slate-800/40 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer group"
@@ -219,7 +220,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
                                 <span className="text-[10px] font-mono text-slate-500 shrink-0">{fmtDate(item.date)}</span>
                               )}
                               <CornerDownLeft className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 shrink-0" />
-                            </button>
+                            </Button>
                           ))}
                         </div>
                       );

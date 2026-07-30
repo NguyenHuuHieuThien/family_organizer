@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button } from "./ui";
 import React, { useMemo, useState, useEffect, useRef, lazy, Suspense } from "react";
 import {
   CheckSquare,
@@ -1037,13 +1038,13 @@ export function Dashboard({
                 <IconChip accent="amber"><Calendar className="w-4 h-4" /></IconChip>
                 {t("dashboard.plans.title")}
               </h3>
-              <button
+              <Button
                 onClick={() => onNavigate("plans")}
                 className="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 group cursor-pointer"
               >
                 {t("dashboard.plans.detail")}
                 <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </button>
+              </Button>
             </div>
 
             {upcomingPlans.length === 0 ? (
@@ -1129,13 +1130,13 @@ export function Dashboard({
                 <IconChip accent="sky"><FileText className="w-4 h-4" /></IconChip>
                 {t("dashboard.notes.title")}
               </h3>
-              <button
+              <Button
                 onClick={() => onNavigate("notes")}
                 className="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 group cursor-pointer"
               >
                 {t("dashboard.notes.all")}
                 <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </button>
+              </Button>
             </div>
 
             {pinnedNotes.length === 0 ? (
@@ -1187,13 +1188,13 @@ export function Dashboard({
                 <IconChip accent="emerald"><Wallet className="w-4 h-4" /></IconChip>
                 {t("dashboard.finance.title", { month: new Date().getMonth() + 1 })}
               </h3>
-              <button
+              <Button
                 onClick={() => onNavigate("finance")}
                 className="text-xs text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 group cursor-pointer"
               >
                 {t("dashboard.finance.fund")}
                 <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </button>
+              </Button>
             </div>
 
             {/* Income-Expense mini comparison graph */}

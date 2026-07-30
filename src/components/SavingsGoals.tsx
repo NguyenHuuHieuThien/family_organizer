@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useMemo, useState } from "react";
 import { PiggyBank, Plus, Trash2, Target, Calendar, ChevronDown, ChevronUp, X } from "lucide-react";
 import { SavingsGoal, User, UserRole } from "../types.js";
@@ -135,9 +136,9 @@ export function SavingsGoals({
           {savingsGoals.length > 0 && (
             <span className="text-[10px] text-slate-500 font-mono">{fmtMoney(totals.saved)} / {fmtMoney(totals.targetSum)} đ</span>
           )}
-          <button onClick={() => setShowForm(v => !v)} className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-2.5 py-1.5 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+          <Button onClick={() => setShowForm(v => !v)} className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-2.5 py-1.5 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
             <Plus className="w-3.5 h-3.5" /> {t("savingsGoals.addBtn")}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -147,16 +148,16 @@ export function SavingsGoals({
             initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
             onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs bg-slate-950/40 neu-pressed-sm rounded-xl p-3 overflow-hidden"
           >
-            <input value={name} onChange={e => setName(e.target.value)} placeholder={t("savingsGoals.namePlaceholder")} className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
-            <input inputMode="numeric" value={target > 0 ? fmtMoney(target) : ""} onChange={e => setTarget(parseMoney(e.target.value))} placeholder={t("savingsGoals.amountPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("savingsGoals.namePlaceholder")} className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+            <Input inputMode="numeric" value={target > 0 ? fmtMoney(target) : ""} onChange={e => setTarget(parseMoney(e.target.value))} placeholder={t("savingsGoals.amountPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
             <DateInputDMY value={deadline} onChange={setDeadline} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
             <FancySelect value={color} onChange={setColor} ariaLabel={t("savingsGoals.colorAriaLabel")} options={colorOptions} />
             <FancySelect value={isShared ? "true" : "false"} onChange={(v) => setIsShared(v === "true")} ariaLabel={t("savingsGoals.scopeAriaLabel")} options={scopeOptions} />
-            <input value={note} onChange={e => setNote(e.target.value)} placeholder={t("savingsGoals.notePlaceholder")} className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+            <Input value={note} onChange={e => setNote(e.target.value)} placeholder={t("savingsGoals.notePlaceholder")} className="sm:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
             {error && <p className="sm:col-span-2 text-[11px] text-rose-400">{error}</p>}
             <div className="sm:col-span-2 flex gap-2">
-              <button type="submit" disabled={saving} className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold cursor-pointer">{t("savingsGoals.saveBtn")}</button>
-              <button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg px-3 py-2 font-bold cursor-pointer">{t("savingsGoals.cancelBtn")}</button>
+              <Button type="submit" disabled={saving} className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold cursor-pointer">{t("savingsGoals.saveBtn")}</Button>
+              <Button type="button" onClick={() => { resetForm(); setShowForm(false); }} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg px-3 py-2 font-bold cursor-pointer">{t("savingsGoals.cancelBtn")}</Button>
             </div>
           </motion.form>
         )}
@@ -185,9 +186,9 @@ export function SavingsGoals({
                     {goal.note && <p className="text-[10px] text-slate-500 mt-0.5 truncate">{goal.note}</p>}
                   </div>
                   {canManage && (
-                    <button onClick={() => onDeleteSavingsGoal(goal.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0" title={t("savingsGoals.deleteTitle")}>
+                    <Button onClick={() => onDeleteSavingsGoal(goal.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0" title={t("savingsGoals.deleteTitle")}>
                       <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   )}
                 </div>
 
@@ -208,22 +209,22 @@ export function SavingsGoals({
                 </div>
 
                 <div className="flex items-center gap-1.5">
-                  <input
+                  <Input
                     inputMode="numeric"
                     value={contribDraft[goal.id] || ""}
                     onChange={e => setContribDraft(prev => ({ ...prev, [goal.id]: e.target.value }))}
                     placeholder={t("savingsGoals.contribPlaceholder")}
                     className="flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-1.5 text-slate-200 outline-none focus:border-emerald-500 text-[11px]"
                   />
-                  <button disabled={busyGoal === goal.id} onClick={() => handleContribute(goal, 1)} className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50" title={t("savingsGoals.contribAddTitle")}>{t("savingsGoals.contribAddBtn")}</button>
-                  <button disabled={busyGoal === goal.id} onClick={() => handleContribute(goal, -1)} className="bg-rose-500/10 text-rose-400 border border-rose-500/25 hover:bg-rose-500/20 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50" title={t("savingsGoals.contribWithdrawTitle")}>{t("savingsGoals.contribWithdrawBtn")}</button>
+                  <Button disabled={busyGoal === goal.id} onClick={() => handleContribute(goal, 1)} className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50" title={t("savingsGoals.contribAddTitle")}>{t("savingsGoals.contribAddBtn")}</Button>
+                  <Button disabled={busyGoal === goal.id} onClick={() => handleContribute(goal, -1)} className="bg-rose-500/10 text-rose-400 border border-rose-500/25 hover:bg-rose-500/20 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer disabled:opacity-50" title={t("savingsGoals.contribWithdrawTitle")}>{t("savingsGoals.contribWithdrawBtn")}</Button>
                 </div>
 
                 {goal.contributions.length > 0 && (
                   <div>
-                    <button onClick={() => setExpanded(prev => ({ ...prev, [goal.id]: !prev[goal.id] }))} className="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer">
+                    <Button onClick={() => setExpanded(prev => ({ ...prev, [goal.id]: !prev[goal.id] }))} className="text-[10px] text-slate-500 hover:text-slate-300 flex items-center gap-1 cursor-pointer">
                       {isOpen ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />} {t("savingsGoals.contribCount", { n: goal.contributions.length })}
-                    </button>
+                    </Button>
                     {isOpen && (
                       <div className="mt-1.5 space-y-1 max-h-32 overflow-y-auto">
                         {goal.contributions.map(c => {
@@ -235,9 +236,9 @@ export function SavingsGoals({
                               <span className={`font-bold ${c.amount >= 0 ? "text-emerald-400" : "text-rose-400"}`}>{c.amount >= 0 ? "+" : ""}{fmtMoney(c.amount)}đ</span>
                               <span className="text-slate-500 truncate max-w-[70px]">{by?.fullName || ""}</span>
                               {canRemove && (
-                                <button onClick={() => onRemoveSavingsContribution(goal.id, c.id)} className="text-slate-600 hover:text-rose-400 cursor-pointer" title={t("savingsGoals.contribRemoveTitle")}>
+                                <Button onClick={() => onRemoveSavingsContribution(goal.id, c.id)} className="text-slate-600 hover:text-rose-400 cursor-pointer" title={t("savingsGoals.contribRemoveTitle")}>
                                   <X className="w-3 h-3" />
-                                </button>
+                                </Button>
                               )}
                             </div>
                           );

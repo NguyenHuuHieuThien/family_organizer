@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button } from "./ui";
 import React, { useState, useEffect } from "react";
 import { BellRing, BellOff, Send, Loader2, AlertCircle, CheckCircle2, Smartphone } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -154,32 +155,32 @@ export function PushNotificationsCard() {
         <>
           <div className="flex flex-wrap items-center gap-2">
             {!subscribed ? (
-              <button
+              <Button
                 type="button"
                 onClick={enable}
                 disabled={busy}
                 className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 rounded-xl text-xs font-bold cursor-pointer transition-all"
               >
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <BellRing className="w-4 h-4" />} {t("pushNotifications.enableBtn")}
-              </button>
+              </Button>
             ) : (
               <>
-                <button
+                <Button
                   type="button"
                   onClick={sendTest}
                   disabled={busy}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 rounded-xl text-xs font-semibold cursor-pointer transition-all disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {t("pushNotifications.sendTestBtn")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={disable}
                   disabled={busy}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-rose-400 neu-btn rounded-xl text-xs font-semibold cursor-pointer transition-all disabled:opacity-60"
                 >
                   <BellOff className="w-4 h-4" /> {t("pushNotifications.disableBtn")}
-                </button>
+                </Button>
               </>
             )}
           </div>

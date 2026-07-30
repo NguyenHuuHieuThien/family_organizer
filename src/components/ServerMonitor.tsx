@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Cpu, Thermometer, MemoryStick, HardDrive, Server, Clock, AlertTriangle, Activity, Network, Globe, Copy, Check, Database, Smartphone, Users as UsersIcon, Wifi, ExternalLink, Plus, Pencil, Trash2, X, Save } from "lucide-react";
 import { ShimmerLine, Reveal, IconChip, Accent } from "./Lively.js";
@@ -96,7 +97,7 @@ function CopyValue({ value, className = "" }: { value: string; className?: strin
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   return (
-    <button
+    <Button
       type="button"
       onClick={async () => {
         if (await copyText(value)) {
@@ -111,7 +112,7 @@ function CopyValue({ value, className = "" }: { value: string; className?: strin
       {copied
         ? <Check className="w-3 h-3 text-emerald-400 shrink-0" />
         : <Copy className="w-3 h-3 text-slate-500 shrink-0" />}
-    </button>
+    </Button>
   );
 }
 
@@ -648,34 +649,34 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
             <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="violet"><Globe className="w-4 h-4" /></IconChip> {t("serverMonitor.homelabTitle")}
             </h4>
-            <button type="button" onClick={() => openLinkForm()}
+            <Button type="button" onClick={() => openLinkForm()}
               className="flex items-center gap-1 bg-slate-950 neu-btn hover:bg-slate-800 text-violet-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer transition-all">
               <Plus className="w-3.5 h-3.5" /> {t("serverMonitor.homelabAdd")}
-            </button>
+            </Button>
           </div>
 
           {linkForm.open && (
             <form ref={linkFormRef} onSubmit={handleLinkSubmit} className="bg-slate-950/60 neu-pressed-sm rounded-xl p-3 space-y-2">
               <p className="text-[11px] font-semibold text-slate-400">{linkForm.editing ? t("serverMonitor.homelabEditTitle") : t("serverMonitor.homelabAddTitle")}</p>
               <div className="grid grid-cols-[56px_1fr_1fr] gap-2 text-xs">
-                <input value={lfEmoji} onChange={e => setLfEmoji(e.target.value)} placeholder="📸" maxLength={4}
+                <Input value={lfEmoji} onChange={e => setLfEmoji(e.target.value)} placeholder="📸" maxLength={4}
                   className="bg-slate-900 neu-pressed-sm rounded-xl px-2 py-2 text-slate-200 outline-none focus:border-violet-500 text-center text-lg" />
-                <input value={lfName} onChange={e => setLfName(e.target.value)} placeholder={t("serverMonitor.homelabNamePlaceholder")} required
+                <Input value={lfName} onChange={e => setLfName(e.target.value)} placeholder={t("serverMonitor.homelabNamePlaceholder")} required
                   className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
-                <input value={lfDesc} onChange={e => setLfDesc(e.target.value)} placeholder={t("serverMonitor.homelabDescPlaceholder")}
+                <Input value={lfDesc} onChange={e => setLfDesc(e.target.value)} placeholder={t("serverMonitor.homelabDescPlaceholder")}
                   className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none focus:border-violet-500" />
               </div>
               <div className="flex gap-2">
-                <input value={lfUrl} onChange={e => setLfUrl(e.target.value)} placeholder={t("serverMonitor.homelabUrlPlaceholder")} required type="url"
+                <Input value={lfUrl} onChange={e => setLfUrl(e.target.value)} placeholder={t("serverMonitor.homelabUrlPlaceholder")} required type="url"
                   className="flex-1 bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs font-mono text-slate-200 outline-none focus:border-violet-500 min-w-0" />
-                <button type="submit" disabled={linkSaving || !lfName.trim() || !lfUrl.trim()}
+                <Button type="submit" disabled={linkSaving || !lfName.trim() || !lfUrl.trim()}
                   className="flex items-center gap-1.5 bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-slate-950 text-xs font-bold px-3.5 py-2 rounded-xl cursor-pointer transition-all shrink-0">
                   <Save className="w-3.5 h-3.5" /> {linkSaving ? t("serverMonitor.homelabSaving") : t("serverMonitor.homelabSave")}
-                </button>
-                <button type="button" onClick={closeLinkForm}
+                </Button>
+                <Button type="button" onClick={closeLinkForm}
                   className="p-2 bg-slate-900 neu-btn rounded-xl text-slate-500 hover:text-slate-300 cursor-pointer">
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </form>
           )}
@@ -689,14 +690,14 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               {links.map(link => (
                 <div key={link.id} className="group relative bg-slate-950/60 neu-pressed-sm hover:border-violet-500/40 rounded-xl p-3 flex flex-col gap-2 transition-colors">
                   <div className="absolute top-2 right-2 hidden group-hover:flex gap-1">
-                    <button type="button" onClick={() => openLinkForm(link)} title={t("serverMonitor.homelabEditBtn")}
+                    <Button type="button" onClick={() => openLinkForm(link)} title={t("serverMonitor.homelabEditBtn")}
                       className="p-1 bg-slate-900 neu-btn rounded-lg text-slate-500 hover:text-sky-400 cursor-pointer">
                       <Pencil className="w-3 h-3" />
-                    </button>
-                    <button type="button" onClick={() => handleLinkDelete(link.id)} title={t("serverMonitor.homelabDeleteBtn")}
+                    </Button>
+                    <Button type="button" onClick={() => handleLinkDelete(link.id)} title={t("serverMonitor.homelabDeleteBtn")}
                       className="p-1 bg-slate-900 neu-btn rounded-lg text-slate-500 hover:text-rose-400 cursor-pointer">
                       <Trash2 className="w-3 h-3" />
-                    </button>
+                    </Button>
                   </div>
 
                   <a href={link.url} target="_blank" rel="noopener noreferrer"
@@ -723,14 +724,14 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
         <p className="text-[11px] text-slate-500">{t("serverMonitor.historyNote")}</p>
         <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 gap-1 text-[11px] font-bold">
           {(["24h", "7d"] as HistoryRange[]).map(r => (
-            <button
+            <Button
               key={r}
               type="button"
               onClick={() => setRange(r)}
               className={`px-3 py-1.5 rounded-lg cursor-pointer transition-all ${range === r ? "bg-sky-500 text-slate-950" : "text-slate-400 hover:text-slate-200"}`}
             >
               {r === "24h" ? t("serverMonitor.historyRange24h") : t("serverMonitor.historyRange7d")}
-            </button>
+            </Button>
           ))}
         </div>
       </Reveal>

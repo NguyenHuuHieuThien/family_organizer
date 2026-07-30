@@ -3,19 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, PageShell } from "./components/ui";
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { flushSync } from "react-dom";
-import { 
-  Home, 
-  CheckSquare, 
-  Calendar, 
-  FileText, 
-  Wallet, 
-  Settings2, 
-  Bell, 
-  LogOut, 
-  Menu, 
-  X, 
+import {
+  Home,
+  CheckSquare,
+  Calendar,
+  FileText,
+  Wallet,
+  Settings2,
+  Bell,
+  LogOut,
+  Menu,
+  X,
   Wifi,
   AlertCircle,
   Clock,
@@ -97,7 +98,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem("family_token"));
   const [sessionInitialized, setSessionInitialized] = useState(false);
-  
+
   // Theme state
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     const saved = localStorage.getItem("family_theme");
@@ -298,7 +299,7 @@ export default function App() {
       reloadOnce();
     }
   };
-  
+
   // Navigation layout state
   const [activeTab, setActiveTab] = useState<string>(() => {
     const fromQuery = new URLSearchParams(window.location.search).get("tab"); // PWA shortcuts deep-link here
@@ -1665,12 +1666,12 @@ export default function App() {
 
       {/* PWA: update available (new SW waiting, or server build is newer than ours) */}
       {(swWaiting || updateReady) && (
-        <button
+        <Button
           onClick={handleApplyUpdate}
           className="fixed left-1/2 -translate-x-1/2 z-[70] bottom-[calc(1rem+env(safe-area-inset-bottom))] bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-1.5 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" /> Đã có bản mới — Bấm để cập nhật
-        </button>
+        </Button>
       )}
 
       {/* Visual glowing particle effects */}
@@ -1697,14 +1698,14 @@ export default function App() {
               const Icon = link.icon;
               const isActive = activeTab === link.id;
               return (
-                <button
+                <Button
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold cursor-pointer transition-all ${isActive ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/5" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"}`}
                 >
                   <Icon className="w-4.5 h-4.5" />
                   <span>{link.label}</span>
-                </button>
+                </Button>
               );
             })}
           </nav>
@@ -1714,14 +1715,14 @@ export default function App() {
         <div className="shrink-0 space-y-4 pt-4 border-t border-slate-850">
           {/* PWA: nút cài app — đặt trên avatar, không còn nổi đè lên nút thêm nhanh */}
           {installPrompt && (
-            <button
+            <Button
               onClick={handleInstallApp}
               className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
             >
               <Home className="w-4 h-4" /> Cài app lên máy
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
             onClick={() => openSettingsTab("profile")}
             className="w-full flex items-center gap-2.5 px-1.5 py-2 rounded-xl text-xs text-left hover:bg-slate-800/40 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition-all cursor-pointer"
@@ -1735,31 +1736,31 @@ export default function App() {
                 {ROLE_LABELS[currentUser.role]}{currentUser.familyRelation ? ` • ${FAMILY_RELATION_LABELS[currentUser.familyRelation]}` : ""}{appVersion ? ` • v${appVersion}` : ""}
               </span>
             </div>
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={handleLogout}
             className="w-full text-slate-400 hover:text-rose-400 flex items-center gap-3 px-3 py-2.5 hover:bg-rose-500/5 rounded-xl text-xs font-bold transition-all cursor-pointer"
           >
             <LogOut className="w-4.5 h-4.5" /> Đăng xuất
-          </button>
+          </Button>
         </div>
       </aside>
 
       {/* 2. MAIN SCREEN AREA */}
       <div className="flex-1 h-screen min-h-0 flex flex-col min-w-0 pr-0 overflow-hidden">
-        
+
         {/* TOP COMPONENT APP BAR HEADER */}
         <header className="shrink-0 sticky top-0 border-b border-slate-850 bg-slate-900/80 backdrop-blur-md px-5 pb-3.5 pt-[calc(env(safe-area-inset-top)_+_0.875rem)] flex items-center justify-between z-30">
-          
+
           <div className="flex items-center gap-4 min-w-0">
             {/* Mobile menu trigger */}
-            <button
+            <Button
               onClick={() => setMobileMenuOpen(true)}
               className="lg:hidden p-2 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl leading-none cursor-pointer"
             >
               <Menu className="w-4.5 h-4.5" />
-            </button>
+            </Button>
 
             {/* SSE replication indicators — bản đầy đủ (chữ) từ sm trở lên */}
             <div className="hidden sm:flex items-center gap-2 bg-slate-950 p-2 neu-pressed-sm rounded-xl text-[10px] text-slate-400">
@@ -1803,7 +1804,7 @@ export default function App() {
             <GlobalSearch getAuthHeader={getAuthHeader} onNavigate={tab => setActiveTab(tab)} />
 
             {/* Theme Toggle Button */}
-            <button
+            <Button
               onClick={toggleTheme}
               className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none cursor-pointer group flex items-center justify-center"
               title={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
@@ -1813,11 +1814,11 @@ export default function App() {
               ) : (
                 <Sun className="w-4.5 h-4.5 text-amber-500 transition-transform group-hover:rotate-45" />
               )}
-            </button>
+            </Button>
 
             {/* Notifications Alert Bells list */}
             <div className="relative" ref={notifRef}>
-              <button
+              <Button
                 onClick={() => { setNotifOpen(!notifOpen); fetchNotifications(); }}
                 className="p-2.5 text-slate-400 hover:text-slate-100 bg-slate-950 neu-btn rounded-xl outline-none leading-none relative cursor-pointer group"
               >
@@ -1827,7 +1828,7 @@ export default function App() {
                     {unreadNotifs.length}
                   </span>
                 )}
-              </button>
+              </Button>
 
               {/* Notif box menu floating absolute */}
               {notifOpen && (
@@ -1835,12 +1836,12 @@ export default function App() {
                   <div className="flex justify-between items-center pb-2.5 border-b border-slate-800 text-xs text-slate-450 font-bold mb-2">
                     <span className="flex items-center gap-1.5"><Bell className="w-4 h-4 text-sky-400" /> Bản tin ({unreadNotifs.length})</span>
                     {unreadNotifs.length > 0 && (
-                      <button 
+                      <Button
                         onClick={handleMarkAllNotifsRead}
                         className="text-[10px] text-sky-400 hover:text-sky-300 transition-colors"
                       >
                         Đọc hết
-                      </button>
+                      </Button>
                     )}
                   </div>
 
@@ -1849,15 +1850,15 @@ export default function App() {
                       <p className="text-[11px] text-slate-500 italic py-6 text-center">Hộp thư trống...</p>
                     ) : (
                       notifications.map(n => (
-                        <div 
-                          key={n.id} 
+                        <div
+                          key={n.id}
                           onClick={() => handleMarkNotifRead(n.id)}
                           className={`p-2 rounded-xl text-left text-[11px] hover:bg-slate-850 relative group cursor-pointer border ${n.isRead ? "bg-slate-950/20 border-transparent text-slate-500" : "bg-slate-950 border-slate-800/60 text-slate-200 font-medium"}`}
                         >
                           <p className="font-bold text-slate-300 pr-4">{n.title}</p>
                           <p className="text-slate-450 mt-0.5 leading-relaxed font-sans">{n.content}</p>
                           <span className="text-[9px] text-slate-500/80 font-mono mt-1 block">{formatNotifTime(n.createdAt)}</span>
-                          
+
                           {!n.isRead && (
                             <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-sky-500" />
                           )}
@@ -1888,6 +1889,7 @@ export default function App() {
               transition={{ duration: 0.15 }}
               className="min-h-full pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))]"
             >
+              <PageShell page={activeTab}>
               {activeTab === "dashboard" && (
                 <Dashboard
                   currentUser={currentUser}
@@ -1908,7 +1910,7 @@ export default function App() {
               )}
 
               {activeTab === "tasks" && (
-                <Tasks 
+                <Tasks
                   currentUser={currentUser}
                   users={users}
                   tasks={tasks}
@@ -1945,7 +1947,7 @@ export default function App() {
               )}
 
               {activeTab === "notes" && (
-                <Notes 
+                <Notes
                   currentUser={currentUser}
                   users={users}
                   notes={notes}
@@ -2062,6 +2064,7 @@ export default function App() {
                   onSetRewardApprovalThreshold={handleSetRewardApprovalThreshold}
                 />
               )}
+              </PageShell>
             </motion.div>
           </AnimatePresence>
         </main>
@@ -2069,7 +2072,7 @@ export default function App() {
 
       {/* MOBILE FULL-SCREEN MOBILE OVERLAY MENU DRAWER */}
       {mobileMenuOpen && (
-        <div 
+        <div
           onClick={() => setMobileMenuOpen(false)}
           className="fixed inset-0 bg-slate-950/90 z-40 lg:hidden flex justify-start backdrop-blur-sm"
         >
@@ -2095,12 +2098,12 @@ export default function App() {
                     <span className="text-[9px] uppercase font-mono text-slate-500">Raspberry Pi Server</span>
                   </div>
                 </div>
-                <button 
+                <Button
                   onClick={() => setMobileMenuOpen(false)}
                   className="p-1.5 text-slate-400 hover:text-slate-200 bg-slate-950 border border-slate-800 rounded-lg leading-none cursor-pointer"
                 >
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               {/* Nav links */}
@@ -2109,7 +2112,7 @@ export default function App() {
                   const Icon = link.icon;
                   const isActive = activeTab === link.id;
                   return (
-                    <button
+                    <Button
                       key={link.id}
                       onClick={() => {
                         setActiveTab(link.id);
@@ -2119,7 +2122,7 @@ export default function App() {
                     >
                       <Icon className="w-4.5 h-4.5" />
                       <span>{link.label}</span>
-                    </button>
+                    </Button>
                   );
                 })}
               </nav>
@@ -2144,14 +2147,14 @@ export default function App() {
 
               {/* PWA: nút cài app — đặt trên avatar, không còn nổi đè lên nút thêm nhanh */}
               {installPrompt && (
-                <button
+                <Button
                   onClick={handleInstallApp}
                   className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md shadow-emerald-500/10"
                 >
                   <Home className="w-4 h-4" /> Cài app lên máy
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 type="button"
                 onClick={() => openSettingsTab("profile")}
                 className="w-full flex items-center gap-3 px-1.5 py-2 rounded-xl text-xs text-left hover:bg-slate-800/40 focus:outline-none focus:ring-2 focus:ring-sky-500/40 transition-all cursor-pointer"
@@ -2165,14 +2168,14 @@ export default function App() {
                     {ROLE_LABELS[currentUser.role]}{currentUser.familyRelation ? ` • ${FAMILY_RELATION_LABELS[currentUser.familyRelation]}` : ""}{appVersion ? ` • v${appVersion}` : ""}
                   </span>
                 </div>
-              </button>
+              </Button>
 
-              <button 
+              <Button
                 onClick={handleLogout}
                 className="w-full text-slate-400 hover:text-rose-400 flex items-center gap-3 px-3 py-3 hover:bg-rose-500/5 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 <LogOut className="w-4.5 h-4.5" /> Đăng xuất
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@450;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@450;600;700&display=swap');
 @import "tailwindcss";
 
 /*
@@ -27,14 +27,14 @@
   /* NEUMORPHISM (Sáng): canvas là gam xanh-xám mềm để thẻ "nổi" nhờ bóng kép.
    * Thẻ (slate-900) sáng hơn canvas một chút → vẫn phân biệt được kể cả khi
    * thiếu bóng (an toàn cho ~187 chỗ dùng bg-slate-900 chưa gắn .neu-*). */
-  --slate-950: #e4e9f1;  /* Main canvas bg -> soft neumorphic base */
-  --slate-900: #eef2f8;  /* Box/card backgrounds -> raised surface */
-  --slate-850: #d7dfe9;  /* Soft borders (dịu, không chọi với bóng) */
-  --slate-800: #e0e6ef;  /* Hover and active sub-areas */
+  --slate-950: #f8fafc;
+  --slate-900: #ffffff;
+  --slate-850: #e2e8f0;
+  --slate-800: #f1f5f9;
 
   /* Cặp màu bóng cho hiệu ứng nổi/lõm — dùng trong các lớp .neu-* bên dưới */
-  --neu-hi: #ffffff;     /* nguồn sáng trên-trái */
-  --neu-lo: #c5cedb;     /* bóng đổ dưới-phải */
+  --neu-hi: rgba(255, 255, 255, 0.9);
+  --neu-lo: rgba(15, 23, 42, 0.08);
 
   --slate-500: #64748b;  /* Placeholder / weak info -> Slate 500 (was 400, too light on white) */
   --slate-450: #475569;  /* helper details -> Slate 600 for stronger contrast */
@@ -43,18 +43,18 @@
   --slate-200: #1e293b;  /* Primary body text -> Slate 800 */
   --slate-100: #0f172a;  /* Heavy heading titles -> Slate 900 */
 
-  /* Vibrant Accent Colors (Vibrant Indigo theme replacing Sky) */
-  --sky-950: #f0fdfa;    /* Light backdrop accent */
-  --sky-900: #f5f3ff;    /* Accent highlight backdrops */
-  --sky-850: #e0e7ff;
-  --sky-800: #c7d2fe;
-  --sky-700: #4338ca;    /* Indigo intense focus */
-  --sky-600: #4f46e5;    /* Action text hover color */
-  --sky-500: #4f46e5;    /* Primary Action Brand buttons (vivid Indigo) */
-  --sky-400: #6366f1;    /* Accent details - Indigo-500 */
-  --sky-300: #818cf8;    /* Muted accent details */
-  --sky-200: #c7d2fe;
-  --sky-100: #e0e7ff;
+  /* Calm teal accent: clear enough for actions without the generic indigo cast. */
+  --sky-950: #ecfdf8;
+  --sky-900: #e3f8f2;
+  --sky-850: #c9eee4;
+  --sky-800: #a9e1d4;
+  --sky-700: #087f70;
+  --sky-600: #0b8f7e;
+  --sky-500: #109b88;
+  --sky-400: #1fac98;
+  --sky-300: #69cbbb;
+  --sky-200: #a9e1d4;
+  --sky-100: #d4f2eb;
 }
 
 .dark {
@@ -62,13 +62,13 @@
 
   /* NEUMORPHISM (Tối): canvas navy sâu, thẻ nhỉnh sáng hơn để bóng kép đọc rõ.
    * neu-hi/neu-lo lệch ±sáng quanh màu thẻ tạo cảm giác đùn nổi. */
-  --slate-950: #171d29;  /* Deep neumorphic canvas */
-  --slate-900: #1f2735;  /* Box/card backgrounds -> raised navy card */
-  --slate-850: #2a3345;  /* Soft borders -> dark slate border */
-  --slate-800: #2f3a4e;  /* Hover and active sub-areas */
+  --slate-950: #09090b;
+  --slate-900: #111113;
+  --slate-850: #27272a;
+  --slate-800: #18181b;
 
-  --neu-hi: #29344a;     /* nguồn sáng trên-trái (navy nhạt) */
-  --neu-lo: #0d1119;     /* bóng đổ dưới-phải (gần đen) */
+  --neu-hi: rgba(255, 255, 255, 0.035);
+  --neu-lo: rgba(0, 0, 0, 0.38);
   
   --slate-500: #8392a8;  /* Placeholder / weak info -> lighter for readability on dark cards */
   --slate-450: #9fb0c9;  /* helper details -> brighter */
@@ -77,22 +77,21 @@
   --slate-200: #e2e8f0;  /* Primary body text -> Slate 200 */
   --slate-100: #f8fafc;  /* Heavy heading titles -> Slate 100 */
 
-  /* Vibrant Indigo accents customized beautifully for dark mode */
-  --sky-950: #0f172a;
-  --sky-900: #1e1b4b;
-  --sky-850: #312e81;
-  --sky-800: #3730a3;
-  --sky-700: #4338ca;
-  --sky-600: #4f46e5;
-  --sky-500: #6366f1;    /* Lighter, brighter Neon-ish Indigo for high contrast readability */
-  --sky-400: #818cf8;
-  --sky-300: #a5b4fc;
-  --sky-200: #c7d2fe;
-  --sky-100: #e0e7ff;
+  --sky-950: #102a29;
+  --sky-900: #123633;
+  --sky-850: #17453f;
+  --sky-800: #19584f;
+  --sky-700: #167967;
+  --sky-600: #1b9b84;
+  --sky-500: #28b79c;
+  --sky-400: #4dceb6;
+  --sky-300: #82ddcc;
+  --sky-200: #afe9de;
+  --sky-100: #d5f4ee;
 }
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 
   --color-slate-950: var(--slate-950);
@@ -120,38 +119,146 @@
   --color-sky-100: var(--sky-100);
 }
 
+/* Global UI polish: a warmer, editorial type hierarchy and consistent controls. */
+body {
+  font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  background-image: radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--sky-500) 7%, transparent), transparent 30rem);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Geist", ui-sans-serif, sans-serif;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+input, select, textarea {
+  border: 1px solid color-mix(in srgb, var(--slate-850) 86%, transparent);
+  border-radius: 0.625rem;
+  background: var(--slate-900);
+  color: var(--slate-100);
+  transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+input:hover, select:hover, textarea:hover { border-color: color-mix(in srgb, var(--sky-400) 48%, var(--slate-850)); }
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--sky-500);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sky-500) 18%, transparent), 0 5px 16px color-mix(in srgb, var(--sky-500) 10%, transparent);
+}
+
+button { font-family: inherit; }
+button:not(:disabled) { transition: transform 160ms ease, box-shadow 180ms ease, background-color 180ms ease, border-color 180ms ease; }
+button:not(:disabled):active { transform: translateY(1px) scale(0.985); }
+
+/* Keep the app's raised surfaces soft instead of relying on stark borders. */
+.rounded-xl, .rounded-2xl, .rounded-3xl { border-color: color-mix(in srgb, var(--slate-850) 72%, transparent); }
+
+/* Layout surfaces: make existing dashboard panels read like shadcn Card without
+   requiring a risky rewrite of every feature-specific layout component. */
+.bg-slate-900.rounded-xl,
+.bg-slate-900.rounded-2xl,
+.bg-slate-900.rounded-3xl,
+.bg-slate-900.neu-raised,
+.bg-slate-900.neu-raised-sm,
+.bg-slate-900.neu-raised-lg {
+  border: 1px solid var(--slate-850);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px var(--neu-lo), 0 1px 0 var(--neu-hi) inset;
+}
+
+[role="dialog"] {
+  border-color: var(--slate-850);
+  border-radius: 0.75rem;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.22);
+}
+
+/* shadcn-like separators and muted surfaces for toolbars, tabs, and list rows. */
+[data-slot="separator"] { background: var(--slate-850); }
+[data-slot="tabs-list"] { background: var(--slate-800); border: 1px solid var(--slate-850); border-radius: 0.5rem; }
+[data-slot="tabs-trigger"][data-state="active"] { background: var(--slate-900); color: var(--slate-100); box-shadow: 0 1px 2px var(--neu-lo); }
+
+/* Keep every shadcn Button compact, including legacy call sites with rounded-xl. */
+[data-slot="button"] { border-radius: 0.375rem; }
+
+/* Every route opened from the main menu shares the same shadcn layout grammar. */
+.app-page {
+  container-type: inline-size;
+  color: var(--slate-200);
+}
+.app-page .rounded-2xl,
+.app-page .rounded-3xl { border-radius: 0.75rem; }
+.app-page .rounded-xl { border-radius: 0.625rem; }
+.app-page .neu-raised,
+.app-page .neu-raised-sm,
+.app-page .neu-raised-lg,
+.app-page .neu-flat {
+  border: 1px solid var(--slate-850);
+  background-color: var(--slate-900);
+  box-shadow: 0 1px 2px var(--neu-lo), 0 1px 0 var(--neu-hi) inset;
+}
+.app-page .neu-pressed,
+.app-page .neu-pressed-sm {
+  border: 1px solid var(--slate-850);
+  background-color: var(--slate-800);
+  box-shadow: none;
+}
+.app-page .neu-raised.bg-gradient-to-br,
+.app-page .neu-raised-sm.bg-gradient-to-br,
+.app-page .neu-raised-lg.bg-gradient-to-br { background-image: none; }
+.app-page .shadow-xl:not([role="dialog"]),
+.app-page .shadow-2xl:not([role="dialog"]) { box-shadow: 0 4px 12px var(--neu-lo); }
+.app-page h1,
+.app-page h2 { color: var(--slate-100); font-weight: 650; }
+.app-page h3,
+.app-page h4 { color: var(--slate-100); font-weight: 600; }
+.app-page table { border-collapse: separate; border-spacing: 0; }
+.app-page thead { background: var(--slate-800); }
+.app-page tbody > tr { border-color: var(--slate-850); }
+
 /* ── NEUMORPHISM UTILITIES ─────────────────────────────────────────────────
    Bóng KÉP (nổi/lõm) theme-aware qua --neu-hi/--neu-lo (đổi theo Sáng/Tối).
    Dùng cho BỀ MẶT NẰM TRÊN canvas (thẻ, nút, ô nhập) — KHÔNG dùng cho phần
    tử nổi trên lớp phủ (modal/dropdown/toast): ở đó nền không đồng màu nên bóng
    kép sẽ trông sai; cứ để shadow-xl/2xl mặc định.
    Quy ước: raised = đùn nổi, pressed = ấn lõm, flat = nổi nhẹ, inset khi :active. */
-.neu-raised     { box-shadow: 5px 5px 12px var(--neu-lo), -5px -5px 12px var(--neu-hi); }
-.neu-raised-sm  { box-shadow: 3px 3px 7px var(--neu-lo), -3px -3px 7px var(--neu-hi); }
-.neu-raised-lg  { box-shadow: 9px 9px 22px var(--neu-lo), -9px -9px 22px var(--neu-hi); }
-.neu-flat       { box-shadow: 2px 2px 6px var(--neu-lo), -2px -2px 6px var(--neu-hi); }
-.neu-pressed    { box-shadow: inset 4px 4px 9px var(--neu-lo), inset -4px -4px 9px var(--neu-hi); }
-.neu-pressed-sm { box-shadow: inset 2px 2px 5px var(--neu-lo), inset -2px -2px 5px var(--neu-hi); }
+.neu-raised,
+.neu-raised-sm,
+.neu-raised-lg {
+  border: 1px solid var(--slate-850);
+  box-shadow: 0 1px 2px var(--neu-lo), 0 1px 0 var(--neu-hi) inset;
+}
+.neu-flat {
+  border: 1px solid var(--slate-850);
+  box-shadow: 0 1px 2px var(--neu-lo);
+}
+.neu-pressed,
+.neu-pressed-sm {
+  border: 1px solid var(--slate-850);
+  box-shadow: 0 1px 2px var(--neu-lo) inset;
+}
 
 /* Thẻ nổi hoàn chỉnh: nền bề mặt + bo góc + bóng nổi (tái dùng cho màn hình mới) */
 .neu-card {
   background: var(--slate-900);
-  border-radius: 1.25rem;
-  box-shadow: 5px 5px 12px var(--neu-lo), -5px -5px 12px var(--neu-hi);
+  border: 1px solid var(--slate-850);
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px var(--neu-lo), 0 1px 0 var(--neu-hi) inset;
 }
 
 /* Nút bấm nổi → lõm khi nhấn (phản hồi chạm tự nhiên trên PWA iPhone). */
 .neu-btn {
-  box-shadow: 4px 4px 10px var(--neu-lo), -4px -4px 10px var(--neu-hi);
+  border: 1px solid var(--slate-850);
+  box-shadow: 0 1px 2px var(--neu-lo), 0 1px 0 var(--neu-hi) inset;
   transition: box-shadow 0.15s ease, transform 0.12s ease;
 }
-.neu-btn:hover { box-shadow: 5px 5px 12px var(--neu-lo), -5px -5px 12px var(--neu-hi); }
+.neu-btn:hover { box-shadow: 0 2px 5px var(--neu-lo), 0 1px 0 var(--neu-hi) inset; }
 .neu-btn:active {
-  box-shadow: inset 3px 3px 7px var(--neu-lo), inset -3px -3px 7px var(--neu-hi);
+  box-shadow: 0 1px 2px var(--neu-lo) inset;
   transform: translateY(0.5px);
 }
 /* Nút ở trạng thái đang chọn (nav active, tab active) — giữ lõm cố định */
-.neu-btn-active { box-shadow: inset 3px 3px 7px var(--neu-lo), inset -3px -3px 7px var(--neu-hi); }
+.neu-btn-active { box-shadow: 0 1px 2px var(--neu-lo) inset; }
 
 @media (prefers-reduced-motion: reduce) {
   .neu-btn { transition: none; }
@@ -369,5 +476,3 @@ html {
 @media (prefers-reduced-motion: reduce) {
   .card-ring-spin { animation: none; }
 }
-
-

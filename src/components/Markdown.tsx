@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Input } from "./ui";
 import React from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -24,7 +25,7 @@ const components: Components = {
   ul: ({ node, ...p }) => <ul className="list-disc pl-5 my-1.5 space-y-1 marker:text-slate-600" {...p} />,
   ol: ({ node, ...p }) => <ol className="list-decimal pl-5 my-1.5 space-y-1 marker:text-slate-500" {...p} />,
   li: ({ node, ...p }) => <li className="text-slate-300" {...p} />,
-  input: ({ node, ...p }) => <input {...p} disabled className="mr-1.5 align-middle accent-emerald-500 w-3.5 h-3.5 rounded pointer-events-none" />,
+  input: ({ node, ...p }) => <Input {...p} disabled className="mr-1.5 align-middle accent-emerald-500 w-3.5 h-3.5 rounded pointer-events-none" />,
   blockquote: ({ node, ...p }) => <blockquote className="border-l-2 border-sky-500/50 pl-3 my-2 text-slate-400 italic" {...p} />,
   hr: () => <hr className="my-3 border-slate-800" />,
   pre: ({ node, ...p }) => <pre className="bg-slate-950 border border-slate-800 rounded-lg p-3 my-2 overflow-x-auto" {...p} />,

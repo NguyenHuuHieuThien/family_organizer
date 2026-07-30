@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, Bot, CheckCircle2, Loader2, Mic, MicOff, Send, ShoppingCart, X } from "lucide-react";
 import { User } from "../types.js";
@@ -198,13 +199,13 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setOpen(true)}
         className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-5 z-30 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-full w-12 h-12 shadow-2xl shadow-sky-500/20 flex items-center justify-center"
         title={t("assistant.title")}
       >
         <Bot className="w-5 h-5" />
-      </button>
+      </Button>
 
       <AnimatePresence>
         {open && (
@@ -225,9 +226,9 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                   <Bot className="w-4 h-4 text-sky-400" />
                   <span className="text-sm font-bold text-slate-100">{t("assistant.title")}</span>
                 </div>
-                <button onClick={() => setOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-100 bg-slate-950 rounded-lg">
+                <Button onClick={() => setOpen(false)} className="p-1.5 text-slate-400 hover:text-slate-100 bg-slate-950 rounded-lg">
                   <X className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               <div className="h-96 overflow-y-auto p-4 space-y-3">
@@ -273,7 +274,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                                 <span>{t("assistant.actionDone")}</span>
                               </div>
                             ) : (
-                              <button
+                              <Button
                                 type="button"
                                 onClick={() => void runAction(action)}
                                 disabled={action.status === "running"}
@@ -285,7 +286,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                                   <ShoppingCart className="w-3.5 h-3.5" />
                                 )}
                                 {action.status === "running" ? t("assistant.actionAdding") : t("assistant.actionAddBtn", { n: action.items.length })}
-                              </button>
+                              </Button>
                             )}
                           </div>
                         ))}
@@ -297,7 +298,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
               </div>
 
               <form onSubmit={ask} className="p-3 border-t border-slate-800 flex gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={startVoiceInput}
                   disabled={loading}
@@ -305,16 +306,16 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
                   title={isListening ? t("assistant.voiceStopTitle") : t("assistant.voiceMicTitle")}
                 >
                   {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                </button>
-                <input
+                </Button>
+                <Input
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={isListening ? t("assistant.inputListening") : t("assistant.inputPlaceholder")}
                   className="flex-1 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 min-w-0"
                 />
-                <button disabled={loading} type="submit" className="bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2">
+                <Button disabled={loading} type="submit" className="bg-sky-500 hover:bg-sky-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2">
                   <Send className="w-4 h-4" />
-                </button>
+                </Button>
               </form>
             </motion.div>
           </div>

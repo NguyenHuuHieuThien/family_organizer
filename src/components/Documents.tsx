@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Plus, Trash2, Pencil, X, Calendar, User as UserIcon, Paperclip, ExternalLink, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import { FamilyDocument, DocumentFile, DocumentType, DOCUMENT_TYPE_LABELS, User, UserRole } from "../types.js";
@@ -312,21 +313,21 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             />
           </div>
           <div className="md:col-span-4 relative">
-            <input
+            <Input
               value={title}
               onChange={(e) => { setTitle(e.target.value); setTitleManual(e.target.value.trim() !== ""); }}
               placeholder={t("documents.titlePlaceholder")}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 pr-16 text-slate-200 outline-none focus:border-indigo-500"
             />
             {titleManual && (
-              <button
+              <Button
                 type="button"
                 onClick={() => { setTitleManual(false); setTitle(autoTitle(type, ownerId)); }}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 bg-slate-800 rounded-md px-1.5 py-0.5 cursor-pointer"
                 title={t("documents.resetAutoTitleTooltip")}
               >
                 {t("documents.autoTitleBtn")}
-              </button>
+              </Button>
             )}
           </div>
 
@@ -342,8 +343,8 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
               ]}
             />
           </div>
-          <input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder={t("documents.docNumberPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
-          <input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder={t("documents.issuerPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <Input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder={t("documents.docNumberPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <Input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder={t("documents.issuerPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
 
           <div className="md:col-span-3 space-y-1">
             <label className="text-slate-500 text-[10px] block">{t("documents.issueDateLabel")}</label>
@@ -354,7 +355,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             <DateInputDMY value={expiryDate} onChange={setExpiryDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
           </div>
 
-          <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("documents.notesPlaceholder")} className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
+          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("documents.notesPlaceholder")} className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
           <div className="md:col-span-2">
             <FancySelect
               value={isShared ? "true" : "false"}
@@ -376,7 +377,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
               </label>
               <label className={`text-[11px] font-bold rounded-lg px-2.5 py-1 cursor-pointer flex items-center gap-1 shrink-0 ${uploading || files.length >= MAX_DOC_FILES ? "bg-slate-800 text-slate-600 cursor-not-allowed" : "bg-slate-800 hover:bg-slate-700 text-indigo-400"}`}>
                 <Plus className="w-3 h-3" /> {uploading ? t("documents.uploading") : t("documents.addFile")}
-                <input type="file" accept="image/*,application/pdf,.pdf" multiple disabled={uploading || files.length >= MAX_DOC_FILES} onChange={handleFilePick} className="hidden" />
+                <Input type="file" accept="image/*,application/pdf,.pdf" multiple disabled={uploading || files.length >= MAX_DOC_FILES} onChange={handleFilePick} className="hidden" />
               </label>
             </div>
             {files.length > 0 && (
@@ -391,9 +392,9 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                     ) : (
                       <img src={f.url} alt={f.fileName} className="w-16 h-16 object-cover rounded-lg border border-slate-700" />
                     )}
-                    <button type="button" onClick={() => removeFile(f.id)} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 cursor-pointer" title={t("documents.removeFileTooltip")}>
+                    <Button type="button" onClick={() => removeFile(f.id)} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 cursor-pointer" title={t("documents.removeFileTooltip")}>
                       <X className="w-3 h-3" />
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -401,13 +402,13 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
           </div>
 
           <div className="md:col-span-6 flex items-center gap-2">
-            <button disabled={saving || uploading} type="submit" className="bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 text-white rounded-xl px-4 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <Button disabled={saving || uploading} type="submit" className="bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 text-white rounded-xl px-4 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
               <Plus className="w-4 h-4" /> {editingId ? t("documents.saveChanges") : t("documents.addDoc")}
-            </button>
+            </Button>
             {editingId && (
-              <button type="button" onClick={resetForm} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl px-4 py-2.5 font-bold cursor-pointer">
+              <Button type="button" onClick={resetForm} className="bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl px-4 py-2.5 font-bold cursor-pointer">
                 {t("documents.cancelBtn")}
-              </button>
+              </Button>
             )}
           </div>
         </form>
@@ -464,12 +465,12 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                     </div>
                     {canManage && (
                     <div className="flex items-center gap-1 shrink-0">
-                      <button onClick={() => startEdit(doc)} className="p-1.5 text-slate-500 hover:text-amber-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title={t("documents.editTooltip")}>
+                      <Button onClick={() => startEdit(doc)} className="p-1.5 text-slate-500 hover:text-amber-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title={t("documents.editTooltip")}>
                         <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button onClick={() => handleDelete(doc)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title={t("documents.deleteTooltip")}>
+                      </Button>
+                      <Button onClick={() => handleDelete(doc)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg cursor-pointer" title={t("documents.deleteTooltip")}>
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     </div>
                     )}
                   </div>
@@ -507,7 +508,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                             <span className="text-[8px] font-bold">PDF</span>
                           </a>
                         ) : (
-                          <button
+                          <Button
                             key={f.id}
                             type="button"
                             onClick={() => {
@@ -521,7 +522,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                             <span className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/40 rounded-lg flex items-center justify-center transition-colors">
                               <ExternalLink className="w-4 h-4 text-white opacity-0 group-hover:opacity-100" />
                             </span>
-                          </button>
+                          </Button>
                         )
                       ))}
                     </div>
@@ -551,21 +552,21 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                 <a href={viewer.files[viewer.index].url} target="_blank" rel="noreferrer" aria-label={t("documents.openOriginalAria")} title={t("documents.openOriginalTooltip")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
                   <ExternalLink className="size-4" />
                 </a>
-                <button type="button" onClick={closeViewer} aria-label={t("documents.closeViewerAria")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
+                <Button type="button" onClick={closeViewer} aria-label={t("documents.closeViewerAria")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
                   <X className="size-4" />
-                </button>
+                </Button>
               </div>
             </div>
             <div className="min-h-0 flex-1 bg-slate-950 flex items-center justify-center p-3 relative">
               <img src={viewer.files[viewer.index].url} alt={viewer.files[viewer.index].fileName} className="max-h-[72vh] max-w-full object-contain rounded-lg" />
               {viewer.files.length > 1 && (
                 <>
-                  <button type="button" onClick={viewerPrev} aria-label={t("documents.prevImage")} className="absolute left-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
+                  <Button type="button" onClick={viewerPrev} aria-label={t("documents.prevImage")} className="absolute left-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
                     <ChevronLeft className="size-5" />
-                  </button>
-                  <button type="button" onClick={viewerNext} aria-label={t("documents.nextImage")} className="absolute right-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
+                  </Button>
+                  <Button type="button" onClick={viewerNext} aria-label={t("documents.nextImage")} className="absolute right-3 top-1/2 -translate-y-1/2 size-9 rounded-full bg-slate-900/80 hover:bg-slate-800 text-slate-200 flex items-center justify-center border border-slate-700">
                     <ChevronRight className="size-5" />
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

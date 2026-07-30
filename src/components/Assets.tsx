@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input, Textarea } from "./ui";
 import React, { useMemo, useState, useCallback, useRef } from "react";
 import {
   Calendar,
@@ -708,20 +709,20 @@ export function Assets({
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 size-4 text-slate-500" />
-            <input
+            <Input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t("assets.searchPlaceholder")}
               className="w-full pl-9 pr-3 py-2 bg-slate-950 neu-pressed-sm rounded-xl text-xs text-slate-200 outline-none focus:border-emerald-500"
             />
           </div>
-          <button
+          <Button
             type="button"
             onClick={openCreateForm}
             className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Plus className="size-4" /> {t("assets.addAssetButton")}
-          </button>
+          </Button>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
           <div>
@@ -752,9 +753,9 @@ export function Assets({
       {filteredAssets.length === 0 ? (
         <div className="bg-slate-900/40 border border-dashed border-slate-800 rounded-2xl py-12 text-center space-y-3">
           <p className="text-sm text-slate-500">{t("assets.noAssetsMessage")}</p>
-          <button type="button" onClick={openCreateForm} className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
+          <Button type="button" onClick={openCreateForm} className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer">
             <Plus className="size-4" /> {t("assets.addFirstAssetButton")}
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
@@ -767,7 +768,7 @@ export function Assets({
             return (
               <Reveal as="article" key={asset.id} delay={0.16 + staggerDelay(assetIndex)} hoverLift className="bg-slate-900 neu-raised hover:border-emerald-500/25 rounded-2xl p-4 shadow-lg hover:shadow-emerald-500/5 transition-[box-shadow,border-color] duration-300 space-y-4">
                 <div className="flex gap-3">
-                  <button
+                  <Button
                     type="button"
                     disabled={!firstPhoto}
                     onClick={() => firstPhoto && setSelectedPhoto({ asset, photo: firstPhoto })}
@@ -779,7 +780,7 @@ export function Assets({
                     ) : (
                       <Icon className="size-8 text-slate-600" />
                     )}
-                  </button>
+                  </Button>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
@@ -791,16 +792,16 @@ export function Assets({
                       {canManageAsset(asset) && (
                         <div className="flex items-center gap-1 shrink-0">
                           {onSaveTransaction && (
-                            <button type="button" onClick={() => openSellForm(asset)} aria-label={t("assets.sellAssetAriaLabel", { name: asset.name })} title={t("assets.sellAssetDialogTitle")} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-emerald-400 flex items-center justify-center cursor-pointer">
+                            <Button type="button" onClick={() => openSellForm(asset)} aria-label={t("assets.sellAssetAriaLabel", { name: asset.name })} title={t("assets.sellAssetDialogTitle")} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-emerald-400 flex items-center justify-center cursor-pointer">
                               <HandCoins className="size-3.5" />
-                            </button>
+                            </Button>
                           )}
-                          <button type="button" onClick={() => openEditForm(asset)} aria-label={t("assets.editAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
+                          <Button type="button" onClick={() => openEditForm(asset)} aria-label={t("assets.editAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
                             <Pencil className="size-3.5" />
-                          </button>
-                          <button type="button" onClick={() => handleDelete(asset)} aria-label={t("assets.deleteAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
+                          </Button>
+                          <Button type="button" onClick={() => handleDelete(asset)} aria-label={t("assets.deleteAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
                             <Trash2 className="size-3.5" />
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -897,9 +898,9 @@ export function Assets({
                     {asset.photos?.length > 1 && (
                       <div className="flex flex-wrap gap-2">
                         {asset.photos.map(photo => (
-                          <button key={photo.id} type="button" onClick={() => setSelectedPhoto({ asset, photo })} className="size-10 rounded-lg neu-btn overflow-hidden bg-slate-950 cursor-pointer" aria-label={t("assets.viewPhotoButtonAriaLabel", { name: photo.fileName })}>
+                          <Button key={photo.id} type="button" onClick={() => setSelectedPhoto({ asset, photo })} className="size-10 rounded-lg neu-btn overflow-hidden bg-slate-950 cursor-pointer" aria-label={t("assets.viewPhotoButtonAriaLabel", { name: photo.fileName })}>
                             <img src={photo.thumbnailDataUrl} alt={photo.fileName} className="size-full object-cover" />
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     )}
@@ -930,9 +931,9 @@ export function Assets({
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100">{editingAsset ? t("assets.editAssetTitle") : t("assets.addAssetTitle")}</h3>
-              <button type="button" onClick={closeForm} aria-label={t("assets.closeFormAriaLabel")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
+              <Button type="button" onClick={closeForm} aria-label={t("assets.closeFormAriaLabel")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center">
                 <X className="size-4" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleSubmit} onPaste={handlePhotoPaste} className="flex flex-col min-h-0 flex-1 overflow-hidden text-xs">
@@ -955,7 +956,7 @@ export function Assets({
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">{t("assets.formNameLabel")} <span className="text-rose-400">*</span></label>
-                    <input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t("assets.formNamePlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
+                    <Input value={formName} onChange={(e) => setFormName(e.target.value)} placeholder={t("assets.formNamePlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
                   </div>
                 </div>
 
@@ -977,7 +978,7 @@ export function Assets({
                     <>
                       <div className="space-y-1">
                         <label className="text-slate-400 block font-semibold">{isGoldType(formType) ? t("assets.formWeightLabel") : t("assets.formQuantityLabel")}</label>
-                        <input type="number" min="0" step="0.000001" value={formQuantity || ""} onChange={(e) => setFormQuantity(Number(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                        <Input type="number" min="0" step="0.000001" value={formQuantity || ""} onChange={(e) => setFormQuantity(Number(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-400 block font-semibold">{t("assets.formUnitLabel")}</label>
@@ -993,7 +994,7 @@ export function Assets({
                             ]}
                           />
                         ) : (
-                          <input value={formUnit} onChange={(e) => setFormUnit(e.target.value)} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                          <Input value={formUnit} onChange={(e) => setFormUnit(e.target.value)} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                         )}
                       </div>
                     </>
@@ -1020,7 +1021,7 @@ export function Assets({
                         <span className="ml-1.5 text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">AUTO</span>
                       )}
                     </label>
-                    <input inputMode="numeric" value={formatMoneyInput(formEstimatedValue)} onChange={(e) => setFormEstimatedValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
+                    <Input inputMode="numeric" value={formatMoneyInput(formEstimatedValue)} onChange={(e) => setFormEstimatedValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                     {formAutoValue && (
                       <p className="text-[10px] text-emerald-400/70 flex items-center gap-1">
                         <TrendingUp className="size-3 shrink-0" />
@@ -1039,7 +1040,7 @@ export function Assets({
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">{t("assets.formPurchaseValueLabel")}</label>
-                    <input inputMode="numeric" value={formatMoneyInput(formPurchaseValue)} onChange={(e) => setFormPurchaseValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
+                    <Input inputMode="numeric" value={formatMoneyInput(formPurchaseValue)} onChange={(e) => setFormPurchaseValue(parseMoneyInput(e.target.value))} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none font-mono" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">{t("assets.formPurchaseDateLabel")}</label>
@@ -1049,10 +1050,10 @@ export function Assets({
 
                 {formType === "crypto" && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder={t("assets.formCryptoSymbolPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formNetwork} onChange={(e) => setFormNetwork(e.target.value)} placeholder={t("assets.formNetworkPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formWalletLabel} onChange={(e) => setFormWalletLabel(e.target.value)} placeholder={t("assets.formWalletLabelPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formWalletAddressMasked} onChange={(e) => setFormWalletAddressMasked(e.target.value)} placeholder={t("assets.formWalletAddressPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder={t("assets.formCryptoSymbolPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formNetwork} onChange={(e) => setFormNetwork(e.target.value)} placeholder={t("assets.formNetworkPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formWalletLabel} onChange={(e) => setFormWalletLabel(e.target.value)} placeholder={t("assets.formWalletLabelPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formWalletAddressMasked} onChange={(e) => setFormWalletAddressMasked(e.target.value)} placeholder={t("assets.formWalletAddressPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                     {marketPrices && formSymbol && marketPrices.crypto[formSymbol.toUpperCase()] && (
                       <div className="md:col-span-4 flex items-center gap-2 text-[10px] text-sky-400/80">
                         <TrendingUp className="size-3 shrink-0" />
@@ -1069,10 +1070,10 @@ export function Assets({
 
                 {formType === "land" && (
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={t("assets.formAddressPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input type="number" min="0" step="0.01" value={formAreaM2 || ""} onChange={(e) => setFormAreaM2(Number(e.target.value))} placeholder={t("assets.formAreaPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formCertificateNo} onChange={(e) => setFormCertificateNo(e.target.value)} placeholder={t("assets.formCertificatePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formParcelNo} onChange={(e) => setFormParcelNo(e.target.value)} placeholder={t("assets.formParcelPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formAddress} onChange={(e) => setFormAddress(e.target.value)} placeholder={t("assets.formAddressPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input type="number" min="0" step="0.01" value={formAreaM2 || ""} onChange={(e) => setFormAreaM2(Number(e.target.value))} placeholder={t("assets.formAreaPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formCertificateNo} onChange={(e) => setFormCertificateNo(e.target.value)} placeholder={t("assets.formCertificatePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formParcelNo} onChange={(e) => setFormParcelNo(e.target.value)} placeholder={t("assets.formParcelPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
@@ -1090,12 +1091,12 @@ export function Assets({
                           ...GOLD_PURITY_OPTIONS.map(o => ({ value: o.value, label: `${o.label} (${Math.round(o.factor * 100)}%)` }))
                         ]}
                       />
-                      <button type="button" onClick={() => setShowGoldPurityInfo(true)} aria-label={t("assets.goldPurityInfoButtonTitle")} title={t("assets.goldPurityInfoButtonTitle")} className="shrink-0 size-9 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700 flex items-center justify-center cursor-pointer">
+                      <Button type="button" onClick={() => setShowGoldPurityInfo(true)} aria-label={t("assets.goldPurityInfoButtonTitle")} title={t("assets.goldPurityInfoButtonTitle")} className="shrink-0 size-9 rounded-lg bg-slate-800 border border-slate-700 text-amber-400 hover:bg-slate-700 flex items-center justify-center cursor-pointer">
                         <Info className="size-4" />
-                      </button>
+                      </Button>
                     </div>
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formBrandPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder={t("assets.formSerialPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formBrandPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder={t("assets.formSerialPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                     {marketPrices?.gold && (
                       <div className="md:col-span-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] text-amber-400/80">
                         <span className="flex items-center gap-1"><TrendingUp className="size-3" /> {t("assets.referenceGoldPrice")}</span>
@@ -1110,21 +1111,21 @@ export function Assets({
 
                 {formType === "vehicle" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formVehicleBrandPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder={t("assets.formVehicleSerialPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formVehicleBrandPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formSerialNo} onChange={(e) => setFormSerialNo(e.target.value)} placeholder={t("assets.formVehicleSerialPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
                 {formType === "stock" && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl p-3">
-                    <input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder={t("assets.formStockSymbolPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                    <input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formStockExchangePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formSymbol} onChange={(e) => setFormSymbol(e.target.value.toUpperCase())} placeholder={t("assets.formStockSymbolPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                    <Input value={formBrand} onChange={(e) => setFormBrand(e.target.value)} placeholder={t("assets.formStockExchangePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <input value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder={t("assets.formLocationPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
-                  <textarea rows={2} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("assets.formNotesPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <Input value={formLocation} onChange={(e) => setFormLocation(e.target.value)} placeholder={t("assets.formLocationPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
+                  <Textarea rows={2} value={formNotes} onChange={(e) => setFormNotes(e.target.value)} placeholder={t("assets.formNotesPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none" />
                 </div>
 
                 <div className="bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-3">
@@ -1135,7 +1136,7 @@ export function Assets({
                     </div>
                     <label className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-800 text-sky-400 hover:bg-slate-700 ${imageProcessing ? "opacity-60 cursor-wait pointer-events-none" : "cursor-pointer"}`}>
                       <Upload className="size-4" /> {imageProcessing ? t("assets.optimizingPhotos") : t("assets.uploadPhotosButton")}
-                      <input type="file" accept="image/*,.heic,.heif" multiple onChange={handlePhotoFiles} disabled={imageProcessing} className="hidden" />
+                      <Input type="file" accept="image/*,.heic,.heif" multiple onChange={handlePhotoFiles} disabled={imageProcessing} className="hidden" />
                     </label>
                   </div>
                   {formPhotos.length > 0 && (
@@ -1143,9 +1144,9 @@ export function Assets({
                       {formPhotos.map(photo => (
                         <div key={photo.id} className="relative rounded-xl overflow-hidden neu-pressed-sm bg-slate-950 aspect-square">
                           <img src={photo.thumbnailDataUrl} alt={photo.fileName} className="size-full object-cover" />
-                          <button type="button" onClick={() => setFormPhotos(prev => prev.filter(p => p.id !== photo.id))} aria-label={t("assets.deletePhotoAriaLabel", { name: photo.fileName })} className="absolute right-1 top-1 size-6 rounded-lg bg-slate-950/90 text-slate-400 hover:text-rose-400 flex items-center justify-center">
+                          <Button type="button" onClick={() => setFormPhotos(prev => prev.filter(p => p.id !== photo.id))} aria-label={t("assets.deletePhotoAriaLabel", { name: photo.fileName })} className="absolute right-1 top-1 size-6 rounded-lg bg-slate-950/90 text-slate-400 hover:text-rose-400 flex items-center justify-center">
                             <X className="size-3.5" />
-                          </button>
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -1154,12 +1155,12 @@ export function Assets({
               </div>
 
               <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
-                <button type="button" onClick={closeForm} disabled={imageProcessing} className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl font-bold disabled:opacity-50">
+                <Button type="button" onClick={closeForm} disabled={imageProcessing} className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl font-bold disabled:opacity-50">
                   {t("assets.closeFormButton")}
-                </button>
-                <button type="submit" disabled={imageProcessing} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold disabled:opacity-50">
+                </Button>
+                <Button type="submit" disabled={imageProcessing} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold disabled:opacity-50">
                   {editingAsset ? t("assets.saveChangesButton") : t("assets.saveAssetButton")}
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>
@@ -1174,9 +1175,9 @@ export function Assets({
                 <p className="text-sm font-bold text-slate-100 truncate">{selectedPhoto.asset.name}</p>
                 <p className="text-[11px] text-slate-500 tabular-nums">{selectedPhoto.photo.width}x{selectedPhoto.photo.height} • {selectedPhoto.photo.sizeKb}KB</p>
               </div>
-              <button type="button" onClick={() => setSelectedPhoto(null)} aria-label={t("assets.closePhotoAriaLabel")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
+              <Button type="button" onClick={() => setSelectedPhoto(null)} aria-label={t("assets.closePhotoAriaLabel")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
                 <X className="size-4" />
-              </button>
+              </Button>
             </div>
             <div className="min-h-0 flex-1 bg-slate-950 flex items-center justify-center p-3">
               <img src={selectedPhoto.photo.fullDataUrl} alt={selectedPhoto.photo.fileName} className="max-h-[72vh] max-w-full object-contain rounded-lg" />
@@ -1190,9 +1191,9 @@ export function Assets({
           <div ref={goldInfoRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
             <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
               <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5"><Gem className="size-4 text-amber-400" /> {t("assets.goldPurityInfoTitle")}</p>
-              <button type="button" onClick={() => setShowGoldPurityInfo(false)} aria-label={t("common.close")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
+              <Button type="button" onClick={() => setShowGoldPurityInfo(false)} aria-label={t("common.close")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
                 <X className="size-4" />
-              </button>
+              </Button>
             </div>
             <div className="overflow-y-auto p-4 space-y-3">
               <p className="text-[11px] text-slate-400 leading-relaxed">
@@ -1242,9 +1243,9 @@ export function Assets({
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
                 <HandCoins className="size-5 text-emerald-400" /> {t("assets.sellAssetDialogTitle")}
               </h3>
-              <button type="button" onClick={closeSell} disabled={selling} aria-label={t("common.close")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center disabled:opacity-50">
+              <Button type="button" onClick={closeSell} disabled={selling} aria-label={t("common.close")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center disabled:opacity-50">
                 <X className="size-4" />
-              </button>
+              </Button>
             </div>
 
             <div className="space-y-4 overflow-y-auto px-5 py-4 flex-1 min-h-0 text-xs">
@@ -1263,26 +1264,26 @@ export function Assets({
 
               {/* Chọn cách định giá bán */}
               <div className="grid grid-cols-2 gap-2">
-                <button
+                <Button
                   type="button"
                   onClick={() => handleSellModeChange("estimate")}
                   disabled={sellEstimate <= 0}
                   className={`px-3 py-2.5 rounded-xl font-bold border transition-all ${sellMode === "estimate" ? "bg-emerald-500 text-slate-950 border-emerald-500" : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"} disabled:opacity-40 disabled:cursor-not-allowed`}
                 >
                   {t("assets.sellByEstimate")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => handleSellModeChange("custom")}
                   className={`px-3 py-2.5 rounded-xl font-bold border transition-all ${sellMode === "custom" ? "bg-emerald-500 text-slate-950 border-emerald-500" : "bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200"}`}
                 >
                   {t("assets.sellCustomPrice")}
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("assets.actualSellPriceLabel", { currency: sellingAsset.currency })}</label>
-                <input
+                <Input
                   inputMode="numeric"
                   value={formatMoneyInput(sellPrice)}
                   onChange={(e) => { setSellMode("custom"); setSellPrice(parseMoneyInput(e.target.value)); }}
@@ -1326,7 +1327,7 @@ export function Assets({
 
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("assets.sellNoteLabel")}</label>
-                <input value={sellNote} onChange={(e) => setSellNote(e.target.value)} placeholder={t("assets.sellNotePlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
+                <Input value={sellNote} onChange={(e) => setSellNote(e.target.value)} placeholder={t("assets.sellNotePlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
 
               <p className="text-[10px] text-slate-500 leading-relaxed">
@@ -1335,12 +1336,12 @@ export function Assets({
             </div>
 
             <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
-              <button type="button" onClick={closeSell} disabled={selling} className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl font-bold disabled:opacity-50">
+              <Button type="button" onClick={closeSell} disabled={selling} className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl font-bold disabled:opacity-50">
                 {t("common.cancel")}
-              </button>
-              <button type="button" onClick={handleConfirmSell} disabled={selling || sellPrice <= 0} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold disabled:opacity-50 flex items-center gap-1.5">
+              </Button>
+              <Button type="button" onClick={handleConfirmSell} disabled={selling || sellPrice <= 0} className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl font-bold disabled:opacity-50 flex items-center gap-1.5">
                 <HandCoins className="size-4" /> {selling ? t("assets.processingLabel") : t("assets.confirmSellButton")}
-              </button>
+              </Button>
             </div>
           </motion.div>
         </div>

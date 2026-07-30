@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useState } from "react";
 import { Lock, User as UserIcon, Home, AlertCircle, Eye, EyeOff, Loader2, ArrowRight, ShieldCheck, Sun, Moon, Languages, Check, ChevronDown } from "lucide-react";
 import { motion } from "motion/react";
@@ -127,7 +128,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
       <div className="absolute right-4 top-[calc(env(safe-area-inset-top)_+_1rem)] z-20 flex items-center gap-2">
         {/* Bộ chọn ngôn ngữ */}
         <div className="relative">
-          <button
+          <Button
             type="button"
             onClick={() => setLangOpen((o) => !o)}
             aria-haspopup="listbox"
@@ -139,7 +140,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
             <span className="text-sm leading-none">{currentLang.flag}</span>
             <Languages className="w-4 h-4 transition-transform group-hover:scale-110" />
             <ChevronDown className={`w-3 h-3 transition-transform ${langOpen ? "rotate-180" : ""}`} />
-          </button>
+          </Button>
 
           {langOpen && (
             <>
@@ -159,7 +160,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
                 {SUPPORTED_LANGUAGES.map((l) => {
                   const active = l.code === currentLang.code;
                   return (
-                    <button
+                    <Button
                       key={l.code}
                       type="button"
                       role="option"
@@ -177,7 +178,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
                       <span className="text-base leading-none">{l.flag}</span>
                       <span className="flex-1 text-left">{l.label}</span>
                       {active && <Check className="w-3.5 h-3.5 text-sky-400" />}
-                    </button>
+                    </Button>
                   );
                 })}
               </motion.div>
@@ -187,7 +188,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
 
         {/* Nút đổi Sáng/Tối */}
         {onToggleTheme && (
-          <button
+          <Button
             type="button"
             onClick={onToggleTheme}
             title={theme === "light" ? t("theme.toDark") : t("theme.toLight")}
@@ -199,7 +200,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
             ) : (
               <Sun className="w-4.5 h-4.5 text-amber-500 transition-transform group-hover:rotate-45" />
             )}
-          </button>
+          </Button>
         )}
       </div>
 
@@ -247,7 +248,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
             <label className="text-slate-400 block font-semibold">{t("auth.usernameLabel")}</label>
             <div className="relative group">
               <UserIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-sky-400 transition-colors" />
-              <input
+              <Input
                 type="text"
                 placeholder={t("auth.usernamePlaceholder")}
                 value={username}
@@ -262,7 +263,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
             <label className="text-slate-400 block font-semibold">{t("auth.passwordLabel")}</label>
             <div className="relative group">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-sky-400 transition-colors" />
-              <input
+              <Input
                 type={showPwd ? "text" : "password"}
                 placeholder={t("auth.passwordPlaceholder")}
                 value={password}
@@ -270,7 +271,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
                 autoComplete="current-password"
                 className="w-full bg-slate-950 neu-pressed-sm rounded-xl py-2.5 pl-10 pr-11 text-slate-200 outline-none transition-all focus:ring-2 focus:ring-sky-500/30"
               />
-              <button
+              <Button
                 type="button"
                 onClick={() => setShowPwd(s => !s)}
                 tabIndex={-1}
@@ -278,11 +279,11 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-500 hover:text-slate-300 rounded-lg transition-colors cursor-pointer"
               >
                 {showPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+              </Button>
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={loading}
             className="group w-full bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white font-bold py-2.5 px-4 rounded-xl cursor-pointer select-none transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-sky-500/20 text-xs"
@@ -298,7 +299,7 @@ export function Auth({ onLoginSuccess, theme = "dark", onToggleTheme }: AuthProp
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </>
             )}
-          </button>
+          </Button>
         </form>
 
         {/* Chân trang: nhấn mạnh tính riêng tư của server gia đình */}

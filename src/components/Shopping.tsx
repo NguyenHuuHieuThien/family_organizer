@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input, Textarea } from "./ui";
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { ShoppingCart, Plus, Trash2, CheckCircle2, Circle, Eraser, ChefHat, Sparkles, Loader2, Shuffle } from "lucide-react";
 import { ShoppingItem, User, UserRole, StoredMealPlan } from "../types.js";
@@ -330,13 +331,13 @@ export function Shopping({
         exit={{ opacity: 0 }}
         className="flex items-center gap-3 p-3 bg-slate-950/60 border border-slate-800/60 rounded-xl hover:bg-slate-800/30 transition-all group"
       >
-        <button
+        <Button
           onClick={() => onToggleItem(item.id)}
           className={`shrink-0 transition-all cursor-pointer ${done ? "text-emerald-400" : "text-slate-500 hover:text-emerald-400"}`}
           title={done ? t("shopping.unmarkDone") : t("shopping.markDone")}
         >
           {done ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-        </button>
+        </Button>
 
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold truncate ${done ? "line-through text-slate-500" : "text-slate-200"}`}>
@@ -354,13 +355,13 @@ export function Shopping({
         </div>
 
         {(currentUser.role === "admin" || item.creatorId === currentUser.id) && (
-          <button
+          <Button
             onClick={() => onDeleteItem(item.id)}
             className="shrink-0 p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
             title={t("shopping.deleteItem")}
           >
             <Trash2 className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         )}
       </motion.div>
     );
@@ -375,7 +376,7 @@ export function Shopping({
           <IconChip accent="emerald"><ShoppingCart className="w-4 h-4" /></IconChip> {t("shopping.listTitle")}
         </h3>
         <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2.5">
-          <input
+          <Input
             ref={nameInputRef}
             type="text"
             placeholder={t("shopping.namePlaceholder")}
@@ -383,20 +384,20 @@ export function Shopping({
             onChange={(e) => setName(e.target.value)}
             className="flex-1 bg-slate-950 neu-pressed-sm focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
           />
-          <input
+          <Input
             type="text"
             placeholder={t("shopping.qtyPlaceholder")}
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
             className="sm:w-40 bg-slate-950 neu-pressed-sm focus:border-emerald-500 rounded-xl px-3.5 py-2.5 text-slate-200 placeholder-slate-500 text-xs focus:outline-none transition-all"
           />
-          <button
+          <Button
             type="submit"
             disabled={adding}
             className="bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 px-4 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> {t("shopping.add")}
-          </button>
+          </Button>
         </form>
         {error && <p className="text-rose-400 text-[11px] font-medium">{error}</p>}
       </Reveal>
@@ -412,21 +413,21 @@ export function Shopping({
         <div className="grid grid-cols-3 gap-2.5">
           <label className="space-y-1">
             <span className="text-slate-400 font-semibold block">{t("shopping.adults")}</span>
-            <input type="text" inputMode="numeric" value={adultsInput}
+            <Input type="text" inputMode="numeric" value={adultsInput}
               onChange={(e) => setAdultsInput(sanitizeInt(e.target.value).slice(0, 2))}
               onBlur={() => setAdultsInput(String(clampInt(adultsInput, 0, 10, householdDefaults.adults)))}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
           </label>
           <label className="space-y-1">
             <span className="text-slate-400 font-semibold block">{t("shopping.children")}</span>
-            <input type="text" inputMode="numeric" value={childrenInput}
+            <Input type="text" inputMode="numeric" value={childrenInput}
               onChange={(e) => setChildrenInput(sanitizeInt(e.target.value).slice(0, 2))}
               onBlur={() => setChildrenInput(String(clampInt(childrenInput, 0, 10, householdDefaults.children)))}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
           </label>
           <label className="space-y-1">
             <span className="text-slate-400 font-semibold block">{t("shopping.daysCount")}</span>
-            <input type="text" inputMode="numeric" value={daysInput}
+            <Input type="text" inputMode="numeric" value={daysInput}
               onChange={(e) => setDaysInput(sanitizeInt(e.target.value).slice(0, 1))}
               onBlur={() => setDaysInput(String(clampInt(daysInput, 1, 7, 7)))}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 font-bold" />
@@ -437,24 +438,24 @@ export function Shopping({
         {aiEnabled && (
           <label className="space-y-1 block">
             <span className="text-slate-400 font-semibold block">{t("shopping.aiNotesLabel")}</span>
-            <textarea value={planNotes} onChange={(e) => setPlanNotes(e.target.value)} rows={2}
+            <Textarea value={planNotes} onChange={(e) => setPlanNotes(e.target.value)} rows={2}
               placeholder={t("shopping.aiNotesPlaceholder")}
               className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-emerald-500 resize-none" />
           </label>
         )}
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <button type="button" onClick={() => regenerate("random")} disabled={planBusy !== ""}
+          <Button type="button" onClick={() => regenerate("random")} disabled={planBusy !== ""}
             className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all">
             {planBusy === "random" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Shuffle className="w-4 h-4" />}
             {planBusy === "random" ? t("shopping.generating") : (weekPlan ? t("shopping.regenerate") : t("shopping.generate"))}
-          </button>
+          </Button>
           {aiEnabled && (
-            <button type="button" onClick={() => regenerate("ai")} disabled={planBusy !== ""}
+            <Button type="button" onClick={() => regenerate("ai")} disabled={planBusy !== ""}
               className="flex-1 bg-violet-500 hover:bg-violet-400 disabled:opacity-50 text-slate-950 px-4 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 cursor-pointer transition-all">
               {planBusy === "ai" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
               {planBusy === "ai" ? t("shopping.aiGenerating") : t("shopping.generateAi")}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -487,7 +488,7 @@ export function Shopping({
                       const checked = !excluded.has(g.name);
                       const note = groceryNote(g);
                       return (
-                        <button
+                        <Button
                           key={g.name}
                           type="button"
                           onClick={() => toggleGrocery(g.name)}
@@ -501,7 +502,7 @@ export function Shopping({
                             </span>
                             {note && <span className="block text-[10px] text-slate-500 leading-snug mt-0.5">{note}</span>}
                           </span>
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -516,7 +517,7 @@ export function Shopping({
                   <CheckCircle2 className="w-3.5 h-3.5" /> {addedCount > 0 ? t("shopping.addedToList", { n: addedCount }) : t("shopping.allInList")}
                 </span>
               )}
-              <button
+              <Button
                 type="button"
                 onClick={addSelectedToList}
                 disabled={planBusy !== "" || selectedCount === 0}
@@ -524,7 +525,7 @@ export function Shopping({
               >
                 {planBusy === "add" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {t("shopping.addToCart", { n: selectedCount })}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -545,13 +546,13 @@ export function Shopping({
             )}
           </div>
           {shoppingItems.length > 0 && (
-            <button
+            <Button
               onClick={handleClearAll}
               className="text-[11px] text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors cursor-pointer shrink-0"
               title={t("shopping.clearAllTitle")}
             >
               <Trash2 className="w-3.5 h-3.5" /> {t("shopping.clearAll")}
-            </button>
+            </Button>
           )}
         </div>
         {pending.length === 0 ? (
@@ -586,12 +587,12 @@ export function Shopping({
           <ShimmerLine accent="sky" />
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("shopping.purchasedTitle", { n: purchased.length })}</h4>
-            <button
+            <Button
               onClick={handleClearPurchased}
               className="text-[11px] text-slate-400 hover:text-rose-400 flex items-center gap-1 transition-colors cursor-pointer"
             >
               <Eraser className="w-3.5 h-3.5" /> {t("shopping.clearPurchased")}
-            </button>
+            </Button>
           </div>
           <div className="space-y-2">
             <AnimatePresence>{purchased.map(item => renderItem(item, true))}</AnimatePresence>

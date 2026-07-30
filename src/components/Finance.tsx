@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import {
   TrendingUp,
@@ -280,7 +281,7 @@ function MoneyInput({ value, onChange, placeholder, className, id, autoFocus, op
   return (
     <div className="relative">
       <div className="flex items-stretch gap-1.5">
-        <input
+        <Input
           ref={inputRef}
           id={id}
           type="text"
@@ -296,16 +297,16 @@ function MoneyInput({ value, onChange, placeholder, className, id, autoFocus, op
         />
         {operators && (
           <div className="flex gap-1 shrink-0">
-            <button
+            <Button
               type="button" tabIndex={-1} aria-label={t("finance.moneyAddPlus")}
               onPointerDown={(e) => e.preventDefault()} onClick={() => appendOp("+")}
               className="w-9 grid place-items-center rounded-lg bg-slate-800 hover:bg-emerald-500/20 text-slate-300 hover:text-emerald-400 font-bold text-lg leading-none transition-colors"
-            >+</button>
-            <button
+            >+</Button>
+            <Button
               type="button" tabIndex={-1} aria-label={t("finance.moneyMulTimes")}
               onPointerDown={(e) => e.preventDefault()} onClick={() => appendOp("*")}
               className="w-9 grid place-items-center rounded-lg bg-slate-800 hover:bg-sky-500/20 text-slate-300 hover:text-sky-400 font-bold text-sm leading-none transition-colors"
-            >×</button>
+            >×</Button>
           </div>
         )}
       </div>
@@ -966,20 +967,20 @@ export function Finance({
   return (
     <div className="space-y-6" id="finance-module">
       <Reveal className="bg-slate-950 neu-pressed-sm rounded-2xl p-1.5 flex flex-col sm:flex-row gap-1.5 text-xs font-bold">
-        <button
+        <Button
           type="button"
           onClick={() => setFinanceView("cashflow")}
           className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-[box-shadow,color] duration-200 ${financeView === "cashflow" ? "bg-slate-900 neu-raised-sm text-emerald-400" : "text-slate-400 hover:text-slate-200"}`}
         >
           <Wallet className="w-4 h-4" /> {t("finance.tabTransactions")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={() => setFinanceView("assets")}
           className={`flex-1 px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-[box-shadow,color] duration-200 ${financeView === "assets" ? "bg-slate-900 neu-raised-sm text-amber-400" : "text-slate-400 hover:text-slate-200"}`}
         >
           <FileText className="w-4 h-4" /> {t("finance.tabAssets")}
-        </button>
+        </Button>
       </Reveal>
 
       {financeView === "assets" ? (
@@ -1000,46 +1001,46 @@ export function Finance({
         <div className="flex items-center gap-2">
           <div className="flex-1 grid grid-cols-3 gap-1.5 text-[11px] font-bold">
             {(["month", "quarter", "year"] as PeriodMode[]).map(m => (
-              <button
+              <Button
                 key={m}
                 type="button"
                 onClick={() => setPeriodMode(m)}
                 className={`py-2 rounded-xl transition-all duration-150 cursor-pointer active:scale-95 active:brightness-90 ${periodMode === m ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/30" : "bg-slate-900 neu-raised-sm text-slate-400 hover:text-slate-200"}`}
               >
                 {tPeriodMode(m)}
-              </button>
+              </Button>
             ))}
           </div>
-          <button
+          <Button
             type="button"
             onClick={() => setShowCompare(s => !s)}
             className={`flex items-center gap-1 px-3 py-2 rounded-xl text-[11px] font-bold transition-[box-shadow,color] duration-200 cursor-pointer ${showCompare ? "bg-slate-900 neu-raised-sm text-violet-400" : "bg-slate-950 neu-pressed-sm text-slate-400 hover:text-slate-200"}`}
             title={t("finance.compare")}
           >
             <BarChart3 className="w-3.5 h-3.5" /> {t("finance.compare")}
-          </button>
+          </Button>
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <button
+          <Button
             type="button"
             onClick={() => setAnchor(a => stepAnchor(periodMode, a, -1))}
             className="p-2 rounded-xl bg-slate-950 neu-btn text-slate-300 hover:text-sky-400 transition-colors cursor-pointer"
             title={t("finance.prevPeriod")}
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
 
           <div className="text-center min-w-0">
             <p className="text-lg md:text-xl font-extrabold text-slate-100 truncate tracking-tight">{tPeriodLabel(periodMode, anchor)}</p>
             {!isCurrentPeriod ? (
-              <button
+              <Button
                 type="button"
                 onClick={() => setAnchor(new Date())}
                 className="inline-flex items-center gap-1 text-[11px] text-sky-400 hover:text-sky-300 font-semibold cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" /> {t("finance.backToCurrent")}
-              </button>
+              </Button>
             ) : (
               <span className="inline-flex items-center gap-1 text-[11px] text-emerald-400 font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> {t("finance.currentPeriod")}
@@ -1047,7 +1048,7 @@ export function Finance({
             )}
           </div>
 
-          <button
+          <Button
             type="button"
             onClick={() => canGoNext && setAnchor(a => stepAnchor(periodMode, a, 1))}
             disabled={!canGoNext}
@@ -1055,7 +1056,7 @@ export function Finance({
             title={t("finance.nextPeriod")}
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </Reveal>
 
@@ -1245,9 +1246,9 @@ export function Finance({
                   placeholder={t("finance.budgetLimitPlaceholder")}
                   className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
                 />
-                <button type="submit" className="bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl px-3 py-2 font-bold">
+                <Button type="submit" className="bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl px-3 py-2 font-bold">
                   {t("common.save")}
-                </button>
+                </Button>
               </form>
               {budgetError && <p className="text-[11px] text-rose-400">{budgetError}</p>}
             </>
@@ -1274,17 +1275,17 @@ export function Finance({
                       </span>
                       {isEditing ? (
                         <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => saveEditBudget(b)} className="text-emerald-400 hover:text-emerald-300 font-bold text-[11px]">{t("finance.budgetEditSave")}</button>
-                          <button onClick={() => setEditingBudgetId(null)} className="text-slate-500 hover:text-slate-300 font-bold text-[11px]">{t("finance.budgetEditCancel")}</button>
+                          <Button onClick={() => saveEditBudget(b)} className="text-emerald-400 hover:text-emerald-300 font-bold text-[11px]">{t("finance.budgetEditSave")}</Button>
+                          <Button onClick={() => setEditingBudgetId(null)} className="text-slate-500 hover:text-slate-300 font-bold text-[11px]">{t("finance.budgetEditCancel")}</Button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2 shrink-0">
-                          <button onClick={() => startEditBudget(b)} className="text-slate-500 hover:text-sky-400" title={t("finance.budgetEditTitle")}>
+                          <Button onClick={() => startEditBudget(b)} className="text-slate-500 hover:text-sky-400" title={t("finance.budgetEditTitle")}>
                             <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => onDeleteBudget(b.id)} className="text-slate-500 hover:text-rose-400" title={t("finance.budgetDeleteTitle")}>
+                          </Button>
+                          <Button onClick={() => onDeleteBudget(b.id)} className="text-slate-500 hover:text-rose-400" title={t("finance.budgetDeleteTitle")}>
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -1340,8 +1341,8 @@ export function Finance({
             <span className="text-[10px] text-slate-500 font-mono">{t("finance.billCount", { n: recurringBills.length })}</span>
           </div>
           <form onSubmit={handleCreateBill} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <input value={billTitle} onChange={(e) => setBillTitle(e.target.value)} placeholder={t("finance.billNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
-            <input type="text" inputMode="numeric" value={formatMoneyInput(billAmount)} onChange={(e) => setBillAmount(parseMoneyInput(e.target.value))} placeholder={t("finance.billAmountPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+            <Input value={billTitle} onChange={(e) => setBillTitle(e.target.value)} placeholder={t("finance.billNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
+            <Input type="text" inputMode="numeric" value={formatMoneyInput(billAmount)} onChange={(e) => setBillAmount(parseMoneyInput(e.target.value))} placeholder={t("finance.billAmountPlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none" />
             <DateInputDMY value={billDueDate} onChange={setBillDueDate} className="bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none font-mono" />
             <FancySelect
               value={billFrequency}
@@ -1355,7 +1356,7 @@ export function Finance({
               ariaLabel={t("finance.billCatAriaLabel")}
               options={billCategoryOptions}
             />
-            <button type="submit" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl px-3 py-2 font-bold">{t("common.save")}</button>
+            <Button type="submit" className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl px-3 py-2 font-bold">{t("common.save")}</Button>
           </form>
           {billError && <p className="text-[11px] text-rose-400">{billError}</p>}
           <div className="space-y-2 max-h-80 overflow-y-auto pr-1 -mr-1 scrollbar-thin">
@@ -1373,20 +1374,20 @@ export function Finance({
                       <CheckCircle2 className="w-3 h-3" /> {t("finance.billPaid")}
                     </span>
                   ) : (
-                    <button
+                    <Button
                       onClick={() => onPayRecurringBill(b.id)}
                       className="flex items-center gap-1 px-2.5 py-1.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-lg text-[10px] font-bold hover:bg-sky-500/20 transition-colors cursor-pointer"
                     >
                       <CreditCard className="w-3 h-3" /> {payButtonLabel(b.frequency)}
-                    </button>
+                    </Button>
                   )}
-                  <button
+                  <Button
                     onClick={() => handleOpenEditBill(b)}
                     className="p-1.5 text-slate-500 hover:text-sky-400 transition-colors cursor-pointer"
                   >
                     <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={async () => {
                       const ok = await confirm({
                         title: t("finance.billDeleteTitle"),
@@ -1399,7 +1400,7 @@ export function Finance({
                     className="p-1.5 text-slate-500 hover:text-rose-400 transition-colors cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             ))}
@@ -1435,7 +1436,7 @@ export function Finance({
       {chartCategoryDistribution.length > 0 && (
         <div className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-xl grid grid-cols-1 md:grid-cols-2 gap-6" id="finance-statistics">
           <ShimmerLine accent="violet" />
-          
+
           {/* Phân hóa hạng mục: thanh gradient màu theo hạng mục, track lõm, chạy mượt khi hiện */}
           <div className="space-y-4">
             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -1544,7 +1545,7 @@ export function Finance({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-500" />
-            <input
+            <Input
               type="text"
               placeholder={t("finance.filterSearch")}
               value={searchTerm}
@@ -1627,15 +1628,15 @@ export function Finance({
           <div className="bg-slate-950 p-4 border-b border-slate-800 text-xs text-slate-400 font-semibold uppercase tracking-wider flex justify-between items-center gap-2">
             <span>{t("finance.txListHeader", { period: tPeriodLabel(periodMode, anchor), count: filteredTransactions.length })}</span>
             <div className="flex items-center gap-1.5">
-              <button
+              <Button
                 type="button"
                 onClick={exportTransactionsCsv}
                 className="flex items-center gap-1 normal-case bg-slate-900 hover:bg-slate-800 neu-btn text-sky-400 rounded-lg px-2.5 py-1.5 text-[11px] font-bold cursor-pointer"
                 title={t("finance.exportCsvTitle")}
               >
                 <FileText className="w-3.5 h-3.5" /> {t("finance.exportCsv")}
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={exportReportPdf}
                 disabled={exportingPdf}
@@ -1643,7 +1644,7 @@ export function Finance({
                 title={t("finance.exportPdfTitle")}
               >
                 <FileDown className="w-3.5 h-3.5" /> {exportingPdf ? t("finance.exportingPdf") : t("finance.exportPdf")}
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -1717,13 +1718,13 @@ export function Finance({
                   <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0自 mt-2 sm:mt-0 font-sans">
                     {/* Receipt handle */}
                     {tx.receiptImage ? (
-                      <button 
+                      <Button
                         onClick={() => setSelectedReceipt(tx.receiptImage!)}
                         className="flex items-center gap-1 bg-slate-950 text-sky-400 hover:bg-slate-850 neu-btn text-[10px] px-2 py-1 rounded-lg cursor-pointer"
                         title={t("finance.txViewReceiptTitle")}
                       >
                         <ImageIcon className="w-3.5 h-3.5" /> {t("finance.txViewReceiptTitle")}
-                      </button>
+                      </Button>
                     ) : null}
 
                     {/* Monetary value block */}
@@ -1736,20 +1737,20 @@ export function Finance({
                     {/* Edit + Trash: admin hoặc chính người tạo */}
                     {(canAccessFinance(currentUser.role) && (currentUser.role === UserRole.ADMIN || tx.creatorId === currentUser.id)) && (
                       <div className="flex items-center gap-1.5">
-                        <button
+                        <Button
                           onClick={() => openEditTransaction(tx)}
                           className="p-1.5 bg-slate-950 neu-btn hover:text-sky-400 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
                           title={t("finance.txEditTitle")}
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           onClick={() => handleDeleteClick(tx.id)}
                           className="p-1.5 bg-slate-950 neu-btn hover:text-rose-450 hover:bg-slate-800 rounded-lg text-slate-500 transition-all cursor-pointer"
                           title={t("finance.txDeleteTitle")}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -1782,12 +1783,12 @@ export function Finance({
                   ? <><Pencil className="w-5 h-5 text-sky-400" /> {t("finance.formTitleEdit")}</>
                   : <><CreditCard className="w-5 h-5 text-sky-400" /> {t("finance.formTitleNew")}</>}
               </h3>
-              <button
+              <Button
                 onClick={closeForm}
                 className="text-slate-400 hover:text-slate-200 bg-slate-800 p-1.5 rounded-lg"
               >
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
 
             <form onSubmit={handleCreateTransaction} onPaste={handleReceiptPaste} className="flex flex-col min-h-0 flex-1 overflow-hidden text-xs">
@@ -1800,26 +1801,26 @@ export function Finance({
 
               {/* Type toggle: Income vs Expense */}
               <div className="grid grid-cols-2 gap-2.5 bg-slate-950 p-1 rounded-xl border border-slate-800/80 font-bold text-center">
-                <button 
+                <Button
                   type="button"
                   onClick={() => { setFormType(TransactionType.EXPENSE); setFormCategory(ExpenseCategory.FOOD); }}
                   className={`py-2 rounded-lg cursor-pointer transition-all ${formType === TransactionType.EXPENSE ? "bg-rose-500 text-slate-950" : "text-slate-400"}`}
                 >
                   {t("finance.formExpenseBtn")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => { setFormType(TransactionType.INCOME); setFormCategory("Lương tháng"); }}
                   className={`py-2 rounded-lg cursor-pointer transition-all ${formType === TransactionType.INCOME ? "bg-emerald-500 text-slate-950" : "text-slate-400"}`}
                 >
                   {t("finance.formIncomeBtn")}
-                </button>
+                </Button>
               </div>
 
               {/* Description Input */}
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">{t("finance.formDescLabel")} <span className="text-rose-400">*</span></label>
-                <input
+                <Input
                   type="text"
                   placeholder={formType === TransactionType.EXPENSE ? t("finance.formDescPlaceholderExpense") : t("finance.formDescPlaceholderIncome")}
                   value={formDesc}
@@ -1878,7 +1879,7 @@ export function Finance({
                         ]}
                       />
                       {!isPresetIncome(formCategory as string) && (
-                        <input
+                        <Input
                           type="text"
                           placeholder={t("finance.formCatOtherPlaceholder")}
                           value={formCategory}
@@ -1909,7 +1910,7 @@ export function Finance({
               {/* Receipt File upload */}
               <div className="space-y-1 bg-slate-950/40 p-4 neu-pressed-sm rounded-xl">
                 <label className="text-slate-400 block font-semibold mb-1">{t("finance.formReceiptLabel")}</label>
-                <input
+                <Input
                   type="file"
                   accept="image/*,.heic,.heif"
                   onChange={handleFileChange}
@@ -1917,17 +1918,17 @@ export function Finance({
                   className="w-full text-slate-400 font-mono text-[10px] file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-sky-400 file:cursor-pointer hover:file:bg-slate-755 disabled:opacity-50"
                 />
                 {receiptProcessing && <p className="text-[10px] text-sky-400 mt-1">{t("finance.formReceiptUploading")}</p>}
-                
+
                 {formReceiptBase64 && (
                   <div className="mt-3 flex items-center justify-between bg-slate-900 p-2 border border-slate-800 rounded-lg">
                     <span className="text-emerald-400 text-[10px] flex items-center gap-1">{t("finance.formReceiptDone")}</span>
-                    <button 
-                      type="button" 
+                    <Button
+                      type="button"
                       onClick={() => setFormReceiptBase64("")}
                       className="text-slate-500 hover:text-rose-400 stroke-2"
                     >
                       <X className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -1935,19 +1936,19 @@ export function Finance({
               </div>
 
               <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
-                <button
+                <Button
                   type="button"
                   onClick={closeForm}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
                   {t("finance.formClose")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   className={`px-4 py-2 rounded-xl font-bold transition-all cursor-pointer ${formType === TransactionType.EXPENSE ? "bg-rose-500 hover:bg-rose-450 text-slate-950" : "bg-emerald-500 hover:bg-emerald-450 text-slate-950"}`}
                 >
                   {editingTx ? t("finance.formSaveEdit") : t("finance.formSave")}
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>
@@ -1956,7 +1957,7 @@ export function Finance({
 
       {/* Image Previewer Modal */}
       {selectedReceipt && (
-        <div 
+        <div
           onClick={() => setSelectedReceipt(null)}
           className="fixed inset-0 bg-slate-950/90 backdrop-blur-xs flex items-center justify-center z-50 p-4 cursor-pointer"
           id="receipt-preview-modal"
@@ -1964,16 +1965,16 @@ export function Finance({
           <div ref={receiptRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={t("finance.receiptDialogAriaLabel")} className="relative max-w-full max-h-[85vh] p-1.5 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl outline-none">
             <img
               src={selectedReceipt}
-              alt={t("finance.receiptAlt")} 
+              alt={t("finance.receiptAlt")}
               className="max-w-full max-h-[80vh] object-contain rounded-xl"
               referrerPolicy="no-referrer"
             />
-            <button 
+            <Button
               onClick={() => setSelectedReceipt(null)}
               className="absolute top-4 right-4 bg-slate-950/80 hover:bg-slate-800 p-2 text-slate-250 neu-btn hover:text-slate-100 rounded-lg cursor-pointer"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -1987,18 +1988,18 @@ export function Finance({
           <div ref={billEditorRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl outline-none">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-slate-100">{t("finance.editBillDialogTitle")}</h3>
-              <button onClick={() => setEditingBill(null)} className="text-slate-500 hover:text-slate-300 cursor-pointer">
+              <Button onClick={() => setEditingBill(null)} className="text-slate-500 hover:text-slate-300 cursor-pointer">
                 <X className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
             <form onSubmit={handleSaveEditBill} className="space-y-3 text-xs">
-              <input
+              <Input
                 value={editTitle}
                 onChange={e => setEditTitle(e.target.value)}
                 placeholder={t("finance.editBillNamePlaceholder")}
                 className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-slate-200 outline-none"
               />
-              <input
+              <Input
                 type="text"
                 inputMode="numeric"
                 value={formatMoneyInput(editAmount)}
@@ -2026,19 +2027,19 @@ export function Finance({
               {editError && <p className="text-[11px] text-rose-400">{editError}</p>}
               <p className="text-[10px] text-slate-500">{t("finance.editBillHint")}</p>
               <div className="flex gap-2 pt-1">
-                <button
+                <Button
                   type="button"
                   onClick={() => setEditingBill(null)}
                   className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl px-3 py-2 font-bold cursor-pointer"
                 >
                   {t("finance.editBillCancel")}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   className="flex-1 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl px-3 py-2 font-bold cursor-pointer"
                 >
                   {t("finance.editBillSave")}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

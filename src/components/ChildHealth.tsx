@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input, Textarea } from "./ui";
 import React, { useEffect, useMemo, useState } from "react";
 import { Syringe, Plus, Trash2, Check, Calendar, Ruler, HeartPulse, Pill, ShieldAlert, Phone, Pencil, X, Droplet, AlertTriangle, Stethoscope, Cake, FileDown } from "lucide-react";
 import { VaccinationRecord, GrowthRecord, MedicationReminder, MedicationLog, User, UserRole, EmergencyProfile, EmergencyContact, BLOOD_TYPE_OPTIONS, FAMILY_RELATION_LABELS } from "../types.js";
@@ -436,14 +437,14 @@ export function ChildHealth({
             const Icon = tab.icon;
             const isActive = section === tab.id;
             return (
-              <button
+              <Button
                 key={tab.id}
                 type="button"
                 onClick={() => setSection(tab.id)}
                 className={`px-2 py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all ${isActive ? tab.active : "text-slate-400 hover:text-slate-200 hover:bg-slate-800"}`}
               >
                 <Icon className="w-4 h-4" /> <span className="truncate">{tab.label}</span>
-              </button>
+              </Button>
             );
           })}
         </div>
@@ -465,13 +466,13 @@ export function ChildHealth({
               </div>
               <div className="space-y-1">
                 <label className="text-slate-500 text-[10px] block">{t("childHealth.heightLabel")}</label>
-                <input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder={t("childHealth.heightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                <Input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder={t("childHealth.heightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
               <div className="space-y-1">
                 <label className="text-slate-500 text-[10px] block">{t("childHealth.weightLabel")}</label>
-                <input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder={t("childHealth.weightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                <Input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder={t("childHealth.weightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
               </div>
-              <button type="submit" className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer self-end"><Plus className="w-4 h-4" /> {t("childHealth.recordBtn")}</button>
+              <Button type="submit" className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer self-end"><Plus className="w-4 h-4" /> {t("childHealth.recordBtn")}</Button>
               {gError && <p className="col-span-2 sm:col-span-4 text-[11px] text-rose-400">{gError}</p>}
             </form>
           </Reveal>
@@ -563,7 +564,7 @@ export function ChildHealth({
                           <span className="text-slate-100 font-bold tabular-nums">
                             {g.heightCm != null ? `${g.heightCm} cm` : "—"} <span className="text-slate-500 font-normal">·</span> {g.weightKg != null ? `${g.weightKg} kg` : "—"}
                           </span>
-                          <button onClick={() => onDeleteGrowth(g.id)} className="text-slate-600 hover:text-rose-400 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+                          <Button onClick={() => onDeleteGrowth(g.id)} className="text-slate-600 hover:text-rose-400 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></Button>
                         </div>
                       ))}
                     </div>
@@ -585,16 +586,16 @@ export function ChildHealth({
             </h4>
             <form onSubmit={handleAddVaccine} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
               {renderMemberSelect("focus:border-sky-500", "col-span-1 sm:col-span-2")}
-              <input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder={t("childHealth.vaccineNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+              <Input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder={t("childHealth.vaccineNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
               <datalist id="vaccine-list">{COMMON_VACCINES.map(v => <option key={v} value={v} />)}</datalist>
-              <input value={vDose} onChange={e => setVDose(e.target.value)} placeholder={t("childHealth.vaccineDosePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+              <Input value={vDose} onChange={e => setVDose(e.target.value)} placeholder={t("childHealth.vaccineDosePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
               <div className="space-y-1">
                 <label className="text-slate-500 text-[10px] block">{t("childHealth.vaccineDateLabel")}</label>
                 <DateInputDMY value={vScheduled} onChange={setVScheduled} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 font-mono" />
               </div>
-              <input value={vNote} onChange={e => setVNote(e.target.value)} placeholder={t("childHealth.vaccineNotePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
+              <Input value={vNote} onChange={e => setVNote(e.target.value)} placeholder={t("childHealth.vaccineNotePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
               {vError && <p className="sm:col-span-2 text-[11px] text-rose-400">{vError}</p>}
-              <button type="submit" className="sm:col-span-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> {t("childHealth.addVaccineBtn")}</button>
+              <Button type="submit" className="sm:col-span-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> {t("childHealth.addVaccineBtn")}</Button>
             </form>
           </Reveal>
 
@@ -628,10 +629,10 @@ export function ChildHealth({
                               </p>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
-                              <button onClick={() => toggleVaccineDone(v)} className={`px-2 py-1 rounded-lg text-[10px] font-bold border cursor-pointer ${v.status === "done" ? "bg-emerald-500 text-slate-950 border-emerald-400" : "bg-slate-900 text-emerald-400 border-slate-700 hover:border-emerald-500/50"}`} title={t("childHealth.markVaccineDoneTitle")}>
+                              <Button onClick={() => toggleVaccineDone(v)} className={`px-2 py-1 rounded-lg text-[10px] font-bold border cursor-pointer ${v.status === "done" ? "bg-emerald-500 text-slate-950 border-emerald-400" : "bg-slate-900 text-emerald-400 border-slate-700 hover:border-emerald-500/50"}`} title={t("childHealth.markVaccineDoneTitle")}>
                                 <Check className="w-3 h-3" />
-                              </button>
-                              <button onClick={() => onDeleteVaccination(v.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></button>
+                              </Button>
+                              <Button onClick={() => onDeleteVaccination(v.id)} className="p-1.5 text-slate-500 hover:text-rose-400 cursor-pointer"><Trash2 className="w-3.5 h-3.5" /></Button>
                             </div>
                           </motion.div>
                         );
@@ -698,7 +699,7 @@ export function ChildHealth({
                           </div>
                           <div className="shrink-0 flex items-center gap-1.5">
                             {p && (
-                              <button
+                              <Button
                                 type="button"
                                 onClick={() => exportCardPdf(member, p)}
                                 disabled={exportingCardId !== null}
@@ -709,12 +710,12 @@ export function ChildHealth({
                                 {exportingCardId === member.id
                                   ? <span className="block w-3.5 h-3.5 border-2 border-slate-700 border-t-indigo-400 rounded-full animate-spin" />
                                   : <FileDown className="w-3.5 h-3.5" />}
-                              </button>
+                              </Button>
                             )}
                             {canEditEmergency && (
-                              <button type="button" onClick={() => openEpEdit(member.id)} title={t("childHealth.editCardTitle")} aria-label={t("childHealth.editCardTitle")} className="p-1.5 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-500 dark:hover:text-amber-400 cursor-pointer">
+                              <Button type="button" onClick={() => openEpEdit(member.id)} title={t("childHealth.editCardTitle")} aria-label={t("childHealth.editCardTitle")} className="p-1.5 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-500 dark:hover:text-amber-400 cursor-pointer">
                                 <Pencil className="w-3.5 h-3.5" />
-                              </button>
+                              </Button>
                             )}
                           </div>
                         </div>
@@ -851,9 +852,9 @@ export function ChildHealth({
                         {relationLabel && <p className="text-[10px] text-slate-500">{relationLabel}</p>}
                       </div>
                     </div>
-                    <button type="button" onClick={() => setEpEditingId(null)} title={t("childHealth.cancelBtn")} className="shrink-0 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 cursor-pointer transition-colors">
+                    <Button type="button" onClick={() => setEpEditingId(null)} title={t("childHealth.cancelBtn")} className="shrink-0 p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 cursor-pointer transition-colors">
                       <X className="w-3.5 h-3.5" />
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="space-y-2 text-xs">
@@ -870,61 +871,61 @@ export function ChildHealth({
                         </div>
                         <div className="space-y-1">
                           <label className="text-slate-500 text-[10px] block">{t("childHealth.bhytLabel")}</label>
-                          <input value={epBhyt} onChange={e => setEpBhyt(e.target.value)} placeholder={t("childHealth.formBhytPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                          <Input value={epBhyt} onChange={e => setEpBhyt(e.target.value)} placeholder={t("childHealth.formBhytPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <div className="space-y-1">
                           <label className="text-slate-500 text-[10px] block">{t("childHealth.heightLabel")} (cm)</label>
-                          <input value={epHeight} onChange={e => setEpHeight(e.target.value)} placeholder="112" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                          <Input value={epHeight} onChange={e => setEpHeight(e.target.value)} placeholder="112" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                         <div className="space-y-1">
                           <label className="text-slate-500 text-[10px] block">{t("childHealth.weightLabel")} (kg)</label>
-                          <input value={epWeight} onChange={e => setEpWeight(e.target.value)} placeholder="18,5" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                          <Input value={epWeight} onChange={e => setEpWeight(e.target.value)} placeholder="18,5" inputMode="decimal" className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
                         </div>
                         <p className="col-span-2 text-[9px] text-slate-600 -mt-0.5">{t("childHealth.formMeasureNote")}</p>
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">{t("childHealth.formAllergyLabel")}</label>
-                        <input value={epAllergies} onChange={e => setEpAllergies(e.target.value)} placeholder={t("childHealth.formAllergyPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <Input value={epAllergies} onChange={e => setEpAllergies(e.target.value)} placeholder={t("childHealth.formAllergyPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">{t("childHealth.formChronicLabel")}</label>
-                        <input value={epChronic} onChange={e => setEpChronic(e.target.value)} placeholder={t("childHealth.formChronicPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <Input value={epChronic} onChange={e => setEpChronic(e.target.value)} placeholder={t("childHealth.formChronicPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">{t("childHealth.formMedsLabel")}</label>
-                        <input value={epMeds} onChange={e => setEpMeds(e.target.value)} placeholder={t("childHealth.formMedsPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                        <Input value={epMeds} onChange={e => setEpMeds(e.target.value)} placeholder={t("childHealth.formMedsPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500" />
                       </div>
 
                       <div className="space-y-1.5">
                         <label className="text-slate-500 text-[10px] block">{t("childHealth.formContactsLabel")}</label>
                         {epContacts.map((c, i) => (
                           <div key={i} className="flex flex-wrap gap-1.5">
-                            <input value={c.name} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))} placeholder={t("childHealth.formContactNamePlaceholder")} className="basis-full sm:basis-0 sm:flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
-                            <input value={c.phone} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, phone: e.target.value } : x))} placeholder={t("childHealth.formContactPhonePlaceholder")} inputMode="tel" className="flex-1 min-w-0 sm:flex-none sm:w-28 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
-                            <input value={c.relation || ""} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, relation: e.target.value } : x))} placeholder={t("childHealth.formContactRelationPlaceholder")} className="w-24 sm:w-20 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
-                            <button type="button" onClick={() => setEpContacts(prev => prev.filter((_, xi) => xi !== i))} title={t("childHealth.removeContactTitle")} className="p-2 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0">
+                            <Input value={c.name} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, name: e.target.value } : x))} placeholder={t("childHealth.formContactNamePlaceholder")} className="basis-full sm:basis-0 sm:flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                            <Input value={c.phone} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, phone: e.target.value } : x))} placeholder={t("childHealth.formContactPhonePlaceholder")} inputMode="tel" className="flex-1 min-w-0 sm:flex-none sm:w-28 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500 font-mono" />
+                            <Input value={c.relation || ""} onChange={e => setEpContacts(prev => prev.map((x, xi) => xi === i ? { ...x, relation: e.target.value } : x))} placeholder={t("childHealth.formContactRelationPlaceholder")} className="w-24 sm:w-20 bg-slate-950 neu-pressed-sm rounded-lg px-2.5 py-2 text-slate-200 outline-none focus:border-amber-500" />
+                            <Button type="button" onClick={() => setEpContacts(prev => prev.filter((_, xi) => xi !== i))} title={t("childHealth.removeContactTitle")} className="p-2 rounded-lg bg-slate-800 hover:bg-rose-500/20 text-slate-500 hover:text-rose-400 cursor-pointer shrink-0">
                               <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                            </Button>
                           </div>
                         ))}
                         {epContacts.length < 5 && (
-                          <button type="button" onClick={() => setEpContacts(prev => [...prev, { name: "", phone: "", relation: "" }])} className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer">
+                          <Button type="button" onClick={() => setEpContacts(prev => [...prev, { name: "", phone: "", relation: "" }])} className="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 cursor-pointer">
                             <Plus className="w-3 h-3" /> {t("childHealth.addContactBtn")}
-                          </button>
+                          </Button>
                         )}
                       </div>
 
                       <div className="space-y-1">
                         <label className="text-slate-500 text-[10px] block">{t("childHealth.formNotesLabel")}</label>
-                        <textarea value={epNotes} onChange={e => setEpNotes(e.target.value)} rows={2} placeholder={t("childHealth.formNotesPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 resize-none" />
+                        <Textarea value={epNotes} onChange={e => setEpNotes(e.target.value)} rows={2} placeholder={t("childHealth.formNotesPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-amber-500 resize-none" />
                       </div>
 
                       {epError && <p className="text-[11px] text-rose-400">{epError}</p>}
-                      <button type="button" disabled={epSaving} onClick={saveEp} className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+                      <Button type="button" disabled={epSaving} onClick={saveEp} className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-60 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
                         <Check className="w-4 h-4" /> {epSaving ? t("childHealth.savingBtn") : t("childHealth.saveBtn")}
-                      </button>
+                      </Button>
                   </div>
                 </Reveal>
               );

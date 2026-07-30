@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Users,
@@ -822,7 +823,7 @@ export function Settings({
 
   // Avatar colors presets
   const colors = [
-    "bg-indigo-500", "bg-sky-500", "bg-emerald-500", "bg-teal-500", 
+    "bg-indigo-500", "bg-sky-500", "bg-emerald-500", "bg-teal-500",
     "bg-rose-500", "bg-pink-500", "bg-amber-500", "bg-purple-500"
   ];
 
@@ -832,33 +833,33 @@ export function Settings({
 
       {/* Settings Navigation sub-header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-4 gap-4" id="settings-sub-header">
-        
+
         {/* Navigation Tabs */}
         <div className="flex flex-wrap bg-slate-950 p-1.5 rounded-xl neu-pressed-sm gap-1 text-xs">
-          <button
+          <Button
             onClick={() => { setActiveTab("profile"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "profile" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <UserCircle className="w-4 h-4 text-indigo-400" /> {t("settings.tabs.profile")}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => { setActiveTab("members"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "members" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <Users className="w-4 h-4 text-sky-400" /> {t("settings.tabs.members")}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => { setActiveTab("backups"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "backups" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <Database className="w-4 h-4 text-amber-400" /> {t("settings.tabs.system")}
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => { setActiveTab("logs"); setActionSuccess(""); setActionError(""); }}
             className={`px-3 py-1.5 rounded-lg font-semibold flex items-center gap-1.5 cursor-pointer transition-all ${activeTab === "logs" ? "bg-slate-900 neu-flat text-slate-100" : "text-slate-400 hover:text-slate-200"}`}
           >
             <History className="w-4 h-4 text-emerald-400" /> {t("settings.tabs.logs")}
-          </button>
+          </Button>
         </div>
 
         {/* Current status info tag */}
@@ -902,17 +903,17 @@ export function Settings({
                 <div className="space-y-2 text-xs">
                   <label className={`inline-block bg-slate-800 hover:bg-slate-700 text-sky-400 font-semibold px-3 py-1.5 rounded-lg transition-all ${avatarProcessing ? "opacity-60 cursor-wait pointer-events-none" : "cursor-pointer"}`}>
                     {avatarProcessing ? "Đang tối ưu ảnh..." : "Tải ảnh lên"}
-                    <input type="file" accept="image/*,.heic,.heif" onChange={handleAvatarFile} disabled={avatarProcessing} className="hidden" />
+                    <Input type="file" accept="image/*,.heic,.heif" onChange={handleAvatarFile} disabled={avatarProcessing} className="hidden" />
                   </label>
                   {profAvatarImage && (
-                    <button
+                    <Button
                       type="button"
                       disabled={avatarProcessing}
                       onClick={() => setProfAvatarImage("")}
                       className="flex items-center gap-1 text-slate-500 hover:text-rose-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <X className="w-3.5 h-3.5" /> Xóa ảnh, dùng màu nền
-                    </button>
+                    </Button>
                   )}
                   <p className="text-[10px] text-slate-500 leading-relaxed">Ảnh lớn sẽ được tự thu nhỏ và nén trước khi lưu. Nếu không có ảnh, hệ thống dùng chữ cái trên nền màu bên dưới.</p>
                 </div>
@@ -923,7 +924,7 @@ export function Settings({
                 <label className="text-slate-400 block font-semibold text-xs">Màu nền dự phòng</label>
                 <div className="flex flex-wrap gap-2.5 pt-1">
                   {colors.map(c => (
-                    <button
+                    <Button
                       key={c}
                       type="button"
                       onClick={() => setProfAvatarColor(c)}
@@ -944,7 +945,7 @@ export function Settings({
 
               <div className="space-y-1 text-xs">
                 <label className="text-slate-400 block font-semibold">Tên đăng nhập (không đổi được)</label>
-                <input
+                <Input
                   type="text"
                   value={`@${currentUser.username}`}
                   disabled
@@ -954,7 +955,7 @@ export function Settings({
 
               <div className="space-y-1 text-xs">
                 <label className="text-slate-400 block font-semibold">Tên xưng hô hiển thị <span className="text-rose-450">*</span></label>
-                <input
+                <Input
                   type="text"
                   value={profFullName}
                   onChange={(e) => setProfFullName(e.target.value)}
@@ -974,7 +975,7 @@ export function Settings({
                 </div>
                 <div className="space-y-1 text-xs min-w-0">
                   <label className="text-slate-400 font-semibold flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-emerald-400" /> Số điện thoại</label>
-                  <input
+                  <Input
                     type="tel"
                     value={profPhone}
                     onChange={(e) => setProfPhone(e.target.value)}
@@ -995,14 +996,14 @@ export function Settings({
                 </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
                 disabled={loadingAction === "profile" || avatarProcessing}
                 className="w-full mt-2 bg-indigo-500 hover:bg-indigo-400 text-slate-950 font-bold py-2 px-4 rounded-xl cursor-pointer transition-all disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 <Save className="w-4 h-4" />
                 {loadingAction === "profile" ? "Đang lưu..." : avatarProcessing ? "Đang tối ưu ảnh..." : "Lưu hồ sơ cá nhân"}
-              </button>
+              </Button>
             </div>
           </form>
 
@@ -1032,7 +1033,7 @@ export function Settings({
             </h3>
             <div className="space-y-1 text-xs">
               <label className="text-slate-400 block font-semibold">Mật khẩu hiện tại</label>
-              <input
+              <Input
                 type="password"
                 value={curPwd}
                 onChange={(e) => setCurPwd(e.target.value)}
@@ -1042,7 +1043,7 @@ export function Settings({
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1 text-xs">
                 <label className="text-slate-400 block font-semibold">Mật khẩu mới</label>
-                <input
+                <Input
                   type="password"
                   value={newPwd}
                   onChange={(e) => setNewPwd(e.target.value)}
@@ -1051,7 +1052,7 @@ export function Settings({
               </div>
               <div className="space-y-1 text-xs">
                 <label className="text-slate-400 block font-semibold">Nhập lại mật khẩu mới</label>
-                <input
+                <Input
                   type="password"
                   value={confirmPwd}
                   onChange={(e) => setConfirmPwd(e.target.value)}
@@ -1059,14 +1060,14 @@ export function Settings({
                 />
               </div>
             </div>
-            <button
+            <Button
               type="submit"
               disabled={loadingAction === "password"}
               className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2 px-4 rounded-xl cursor-pointer transition-all disabled:opacity-50 text-xs flex items-center gap-1.5"
             >
               <KeyRound className="w-4 h-4" />
               {loadingAction === "password" ? "Đang đổi..." : "Đổi mật khẩu"}
-            </button>
+            </Button>
           </form>
         </div>
       )}
@@ -1074,13 +1075,13 @@ export function Settings({
       {activeTab === "members" && (
         <div className="space-y-6" id="settings-tab-members">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
+
             {/* List of existing members */}
             <div className="space-y-4">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2 border-b border-slate-800 pb-2">
                 Danh sách tài khoản gia đình ({users.length})
               </h3>
-              
+
               <div className="divide-y divide-slate-800/60 space-y-3 max-h-[350px] overflow-y-auto pr-1">
                 {users.filter(u => !u.isDeleted).map(u => (
                   <div key={u.id} className="pt-3 flex items-center justify-between text-xs">
@@ -1116,34 +1117,34 @@ export function Settings({
 
                       {/* Reset password (Admin only) */}
                       {currentUser.role === UserRole.ADMIN && (
-                        <button
+                        <Button
                           onClick={() => handleOpenEditUser(u)}
                           className="p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-sky-400 rounded-lg cursor-pointer transition-all"
                           title={`Sửa thông tin & vai trò của ${u.fullName}`}
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       )}
                       {currentUser.role === UserRole.ADMIN && (
-                        <button
+                        <Button
                           onClick={() => { setResetTarget(u); setResetNewPwd(""); setActionError(""); setActionSuccess(""); }}
                           className="p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-amber-400 rounded-lg cursor-pointer transition-all"
                           title={`Đặt lại mật khẩu cho ${u.fullName}`}
                         >
                           <KeyRound className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       )}
 
                       {/* Delete member (Admin only, cannot delete self) */}
                       {currentUser.role === UserRole.ADMIN && u.id !== currentUser.id && (
-                        <button
+                        <Button
                           onClick={() => handleDeleteUserClick(u)}
                           disabled={loadingAction === `delete-user-${u.id}`}
                           className="p-1.5 bg-slate-950 neu-btn hover:bg-slate-800 text-slate-500 hover:text-rose-400 rounded-lg cursor-pointer transition-all disabled:opacity-50"
                           title={`Xóa tài khoản ${u.fullName}`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -1157,7 +1158,7 @@ export function Settings({
                 <UserPlus className="w-4.5 h-4.5 text-sky-400 animate-pulse" />
                 Tạo tài khoản thành viên mới
               </h3>
-              
+
               {currentUser.role !== UserRole.ADMIN ? (
                 /* Protected block */
                 <div className="py-12 text-center space-y-2">
@@ -1169,8 +1170,8 @@ export function Settings({
                 <form onSubmit={handleRegisterUser} className="space-y-3.5 text-xs">
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">Tên đăng nhập <span className="text-rose-450">*</span></label>
-                    <input 
-                      type="text" 
+                    <Input
+                      type="text"
                       placeholder="Viết liền không dấu, ví dụ: bevy"
                       value={regUsername}
                       onChange={(e) => setRegUsername(e.target.value)}
@@ -1180,8 +1181,8 @@ export function Settings({
 
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">Tên xưng hô đầy đủ <span className="text-rose-450">*</span></label>
-                    <input 
-                      type="text" 
+                    <Input
+                      type="text"
                       placeholder="Ví dụ: Bé Vy (Con út)"
                       value={regFullName}
                       onChange={(e) => setRegFullName(e.target.value)}
@@ -1216,7 +1217,7 @@ export function Settings({
 
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">Mật khẩu khởi tạo <span className="text-rose-450">*</span></label>
-                    <input
+                    <Input
                       type="password"
                       placeholder="Mật khẩu riêng..."
                       value={regPassword}
@@ -1236,7 +1237,7 @@ export function Settings({
                     </div>
                     <div className="space-y-1 min-w-0">
                       <label className="text-slate-400 font-semibold flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-emerald-400" /> Số điện thoại</label>
-                      <input
+                      <Input
                         type="tel"
                         placeholder="09xx xxx xxx"
                         value={regPhone}
@@ -1262,7 +1263,7 @@ export function Settings({
                     <label className="text-slate-400 block font-semibold">Màu sắc thương hiệu cá nhân</label>
                     <div className="flex wrap gap-2.5 pt-1">
                       {colors.map(c => (
-                        <button 
+                        <Button
                           key={c}
                           type="button"
                           onClick={() => setRegAvatar(c)}
@@ -1274,13 +1275,13 @@ export function Settings({
                     </div>
                   </div>
 
-                  <button 
+                  <Button
                     type="submit"
                     disabled={loadingAction === "register"}
                     className="w-full mt-3 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold py-2 px-4 rounded-xl cursor-pointer transition-all select-none disabled:opacity-50 text-center flex items-center justify-center"
                   >
                     {loadingAction === "register" ? "Đang xử lý đăng ký..." : "Kích hoạt tài khoản"}
-                  </button>
+                  </Button>
                 </form>
               )}
             </div>
@@ -1300,14 +1301,14 @@ export function Settings({
             </div>
 
             {/* Daily backups trigger */}
-            <button 
+            <Button
               disabled={currentUser.role !== UserRole.ADMIN || loadingAction === "backup"}
               onClick={handleTriggerManualBackup}
               className="bg-amber-500 hover:bg-amber-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 text-xs px-3.5 py-2 rounded-xl font-bold flex items-center gap-1.5 transition-all self-start md:self-auto shrink-0 shadow duration-150 cursor-pointer"
             >
-              <Download className="w-4 h-4" /> 
+              <Download className="w-4 h-4" />
               {loadingAction === "backup" ? "Đang sao lưu tệp..." : "Tạo điểm hồi phục (Backup)"}
-            </button>
+            </Button>
           </div>
 
           {currentUser.role !== UserRole.ADMIN ? (
@@ -1331,23 +1332,23 @@ export function Settings({
                   rồi bấm "Nhập tệp & khôi phục" là hệ thống trở lại y nguyên thời điểm sao lưu.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <button
+                  <Button
                     disabled={loadingAction === "full-export" || loadingAction === "full-import"}
                     onClick={handleDownloadFullBackup}
                     className="flex-1 bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 text-xs px-3.5 py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   >
                     <Download className="w-4 h-4" />
                     {loadingAction === "full-export" ? "Đang đóng gói & tải về..." : "Tải backup toàn phần (.zip)"}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     disabled={loadingAction === "full-export" || loadingAction === "full-import"}
                     onClick={() => fullImportInputRef.current?.click()}
                     className="flex-1 bg-slate-900 hover:bg-slate-800 disabled:cursor-not-allowed disabled:text-slate-600 border border-rose-500/30 text-rose-400 text-xs px-3.5 py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                   >
                     <Upload className="w-4 h-4" />
                     {loadingAction === "full-import" ? "Đang khôi phục toàn phần..." : "Nhập tệp & khôi phục toàn phần"}
-                  </button>
-                  <input
+                  </Button>
+                  <Input
                     ref={fullImportInputRef}
                     type="file"
                     accept=".zip,application/zip"
@@ -1381,22 +1382,22 @@ export function Settings({
 
                       <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                         {/* Restore trigger */}
-                        <button 
+                        <Button
                           disabled={Boolean(loadingAction && loadingAction.startsWith("restore"))}
                           onClick={() => handleRestoreClick(b.id, b.filename)}
                           className="px-2.5 py-1.5 bg-slate-900 neu-btn hover:text-emerald-450 hover:bg-slate-800 hover:border-slate-700 text-emerald-400 font-bold rounded-lg flex items-center gap-1 cursor-pointer transition-all"
                         >
                           <RefreshCw className="w-3.5 h-3.5" /> Khôi phục
-                        </button>
-                        
+                        </Button>
+
                         {/* Delete trigger */}
-                        <button 
+                        <Button
                           onClick={() => handleDeleteBackupClick(b.id)}
                           className="p-1.5 bg-slate-900 neu-btn hover:bg-slate-800 text-slate-500 hover:text-rose-450 rounded-lg cursor-pointer"
                           title="Xóa tệp"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -1440,12 +1441,12 @@ export function Settings({
                     </div>
                   ))}
                   {activityLogs.length > logsLimit && (
-                    <button
+                    <Button
                       onClick={() => setLogsLimit(l => l + 30)}
                       className="w-full mt-2 py-2 text-[11px] font-bold text-sky-400 hover:text-sky-300 bg-slate-900 hover:bg-slate-800 neu-btn rounded-lg transition-all cursor-pointer font-sans"
                     >
                       Xem thêm ({activityLogs.length - logsLimit} mục cũ hơn)
-                    </button>
+                    </Button>
                   )}
                 </>
               )}
@@ -1481,7 +1482,7 @@ export function Settings({
               <div className="space-y-3 overflow-y-auto px-5 py-4 flex-1 min-h-0">
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">Tên hiển thị <span className="text-rose-450">*</span></label>
-                <input
+                <Input
                   type="text"
                   value={euFullName}
                   onChange={(e) => setEuFullName(e.target.value)}
@@ -1523,7 +1524,7 @@ export function Settings({
                 </div>
                 <div className="space-y-1 min-w-0">
                   <label className="text-slate-400 font-semibold flex items-center gap-1"><Phone className="w-3.5 h-3.5 text-emerald-400" /> SĐT</label>
-                  <input
+                  <Input
                     type="tel"
                     value={euPhone}
                     onChange={(e) => setEuPhone(e.target.value)}
@@ -1547,7 +1548,7 @@ export function Settings({
                 <label className="text-slate-400 block font-semibold">Màu nền avatar</label>
                 <div className="flex flex-wrap gap-2.5 pt-1">
                   {colors.map(c => (
-                    <button
+                    <Button
                       key={c}
                       type="button"
                       onClick={() => setEuColor(c)}
@@ -1561,20 +1562,20 @@ export function Settings({
               </div>
 
               <div className="flex items-center justify-end gap-2.5 px-5 py-4 border-t border-slate-800 shrink-0">
-                <button
+                <Button
                   type="button"
                   onClick={() => setEditTarget(null)}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
                   Hủy bỏ
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={loadingAction === "edit-user"}
                   className="px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                 >
                   <Save className="w-4 h-4" /> {loadingAction === "edit-user" ? "Đang lưu..." : "Lưu thay đổi"}
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>
@@ -1608,7 +1609,7 @@ export function Settings({
             <form onSubmit={handleResetPasswordSubmit} className="space-y-3 text-xs">
               <div className="space-y-1">
                 <label className="text-slate-400 block font-semibold">Mật khẩu mới (tối thiểu 4 ký tự)</label>
-                <input
+                <Input
                   autoFocus
                   type="text"
                   value={resetNewPwd}
@@ -1618,20 +1619,20 @@ export function Settings({
                 />
               </div>
               <div className="flex items-center justify-end gap-2.5 pt-1">
-                <button
+                <Button
                   type="button"
                   onClick={() => setResetTarget(null)}
                   className="px-4 py-2 bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 rounded-xl transition-all cursor-pointer font-bold"
                 >
                   Hủy bỏ
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={loadingAction === "reset-pwd"}
                   className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl font-bold transition-all cursor-pointer disabled:opacity-50"
                 >
                   {loadingAction === "reset-pwd" ? "Đang đặt..." : "Đặt lại"}
-                </button>
+                </Button>
               </div>
             </form>
           </motion.div>
@@ -1651,7 +1652,7 @@ export function Settings({
                 tab Nhiệm vụ. Mặc định bật khi nhà có tài khoản Trẻ em; tắt đi nếu không dùng.
               </p>
             </div>
-            <button
+            <Button
               type="button"
               onClick={toggleRewards}
               disabled={rewardsBusy}
@@ -1659,7 +1660,7 @@ export function Settings({
               className={`shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all disabled:opacity-50 ${rewardsEnabled ? "bg-amber-500/10 text-amber-400 border-amber-500/20" : "bg-slate-900 text-slate-500 border-slate-800"}`}
             >
               {rewardsBusy ? "..." : rewardsEnabled ? "ĐANG BẬT" : "ĐANG TẮT"}
-            </button>
+            </Button>
           </div>
           {rewardsErr && <p className="text-[11px] text-rose-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {rewardsErr}</p>}
 
@@ -1675,21 +1676,21 @@ export function Settings({
                   </p>
                 </div>
                 <div className="shrink-0 flex items-center gap-2">
-                  <input
+                  <Input
                     type="number"
                     min={0}
                     value={thresholdInput}
                     onChange={(e) => setThresholdInput(e.target.value)}
                     className="w-16 bg-slate-900 neu-pressed-sm rounded-lg px-2.5 py-1.5 text-xs text-slate-200 text-center outline-none focus:border-amber-500"
                   />
-                  <button
+                  <Button
                     type="button"
                     onClick={saveThreshold}
                     disabled={thresholdBusy || thresholdInput === String(rewardApprovalThreshold || 0)}
                     className="text-[10px] font-bold px-2.5 py-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-400 cursor-pointer transition-all disabled:opacity-40"
                   >
                     {thresholdBusy ? "..." : "Lưu"}
-                  </button>
+                  </Button>
                 </div>
               </div>
               {thresholdMsg && <p className="text-[11px] text-slate-400">{thresholdMsg}</p>}
@@ -1733,7 +1734,7 @@ export function Settings({
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            <input
+            <Input
               type="password"
               autoComplete="off"
               value={aiKeyInput}
@@ -1741,7 +1742,7 @@ export function Settings({
               placeholder="Dán Gemini API key (AIza…)"
               className="flex-1 bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-violet-500"
             />
-            <button
+            <Button
               type="button"
               onClick={() => saveAiKey(false)}
               disabled={aiKeyBusy || !aiKeyInput.trim()}
@@ -1749,16 +1750,16 @@ export function Settings({
             >
               {aiKeyBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Lưu & kiểm tra
-            </button>
+            </Button>
           </div>
           <div className="flex items-center gap-3">
             <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer noopener" className="text-[11px] text-sky-400 hover:underline">
               Lấy key miễn phí ở Google AI Studio →
             </a>
             {aiKeyStatus?.configured && aiKeyStatus.source === "app" && (
-              <button type="button" onClick={() => saveAiKey(true)} disabled={aiKeyBusy} className="text-[11px] text-slate-400 hover:text-rose-400 ml-auto cursor-pointer">
+              <Button type="button" onClick={() => saveAiKey(true)} disabled={aiKeyBusy} className="text-[11px] text-slate-400 hover:text-rose-400 ml-auto cursor-pointer">
                 Xóa key trong app
-              </button>
+              </Button>
             )}
           </div>
           {aiKeyErr && <p className="text-[11px] text-rose-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {aiKeyErr}</p>}
@@ -1782,7 +1783,7 @@ export function Settings({
             </div>
             {/* Công tắc bật/tắt gửi hằng đêm */}
             {tgStatus?.configured && (
-              <button
+              <Button
                 type="button"
                 onClick={() => saveTgConfig({ enabled: !tgStatus.enabled })}
                 disabled={tgBusy !== ""}
@@ -1790,12 +1791,12 @@ export function Settings({
                 className={`shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all ${tgStatus.enabled ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-slate-900 text-slate-500 border-slate-800"}`}
               >
                 {tgStatus.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
-              </button>
+              </Button>
             )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px_auto] gap-2">
-            <input
+            <Input
               type="password"
               autoComplete="off"
               value={tgToken}
@@ -1803,13 +1804,13 @@ export function Settings({
               placeholder={tgStatus?.configured ? `Bot token (đang dùng ${tgStatus.maskedToken})` : "Bot token (123456:ABC-…)"}
               className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 min-w-0"
             />
-            <input
+            <Input
               value={tgChatId}
               onChange={(e) => setTgChatId(e.target.value)}
               placeholder="Chat ID"
               className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 font-mono"
             />
-            <button
+            <Button
               type="button"
               onClick={() => saveTgConfig({
                 ...(tgToken.trim() ? { botToken: tgToken.trim() } : {}),
@@ -1821,12 +1822,12 @@ export function Settings({
             >
               {tgBusy === "save" ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               Lưu & bật
-            </button>
+            </Button>
           </div>
 
           {tgStatus?.configured && (
             <div className="flex flex-wrap gap-2">
-              <button
+              <Button
                 type="button"
                 onClick={sendTgTest}
                 disabled={tgBusy !== ""}
@@ -1834,7 +1835,7 @@ export function Settings({
               >
                 <Send className={`w-4 h-4 ${tgBusy === "test" ? "animate-pulse" : ""}`} />
                 {tgBusy === "test" ? "Đang nén & gửi..." : "Gửi backup ngay để thử"}
-              </button>
+              </Button>
             </div>
           )}
 
@@ -1851,7 +1852,7 @@ export function Settings({
                     {tgStatus.weeklyDigestEnabled ? " AI viết bản tin thân thiện nếu đã cấu hình Gemini." : ""}
                   </p>
                 </div>
-                <button
+                <Button
                   type="button"
                   onClick={() => saveTgConfig({ weeklyDigestEnabled: !tgStatus.weeklyDigestEnabled })}
                   disabled={tgBusy !== ""}
@@ -1859,9 +1860,9 @@ export function Settings({
                   className={`shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all ${tgStatus.weeklyDigestEnabled ? "bg-violet-500/10 text-violet-400 border-violet-500/20" : "bg-slate-900 text-slate-500 border-slate-800"}`}
                 >
                   {tgStatus.weeklyDigestEnabled ? "ĐANG BẬT" : "ĐANG TẮT"}
-                </button>
+                </Button>
               </div>
-              <button
+              <Button
                 type="button"
                 onClick={sendTgDigestTest}
                 disabled={tgDigestBusy}
@@ -1869,7 +1870,7 @@ export function Settings({
               >
                 <Send className={`w-4 h-4 ${tgDigestBusy ? "animate-pulse" : ""}`} />
                 {tgDigestBusy ? "Đang tạo & gửi bản tin..." : "Gửi bản tin tuần ngay để thử"}
-              </button>
+              </Button>
               {tgDigestMsg && (
                 <p className={`text-[11px] flex items-center gap-1.5 ${tgDigestMsg.startsWith("Lỗi") ? "text-rose-400" : "text-emerald-400"}`}>
                   {tgDigestMsg.startsWith("Lỗi") ? <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> : <CheckCircle className="w-3.5 h-3.5 shrink-0" />}
@@ -1900,14 +1901,14 @@ export function Settings({
             <code className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-[10px] text-slate-300 font-mono truncate select-all">
               {icsUrl}
             </code>
-            <button
+            <Button
               type="button"
               onClick={copyIcsUrl}
               className={`shrink-0 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all ${icsCopied ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-slate-800 hover:bg-slate-700 text-sky-400"}`}
             >
               {icsCopied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {icsCopied ? "Đã chép" : "Sao chép"}
-            </button>
+            </Button>
           </div>
           <p className="text-[10px] text-slate-500">
             ⚠️ Link chứa mã truy cập lịch của gia đình — chỉ chia sẻ cho người trong nhà. Cần truy cập được server (Tailscale/LAN) thì lịch mới đồng bộ.
@@ -1929,7 +1930,7 @@ export function Settings({
                 : "Đang tải thông tin phiên bản..."}
             </p>
           </div>
-          <button
+          <Button
             type="button"
             onClick={handleCheckUpdate}
             disabled={updateBusy !== ""}
@@ -1937,7 +1938,7 @@ export function Settings({
           >
             <RefreshCw className={`w-4 h-4 ${updateBusy === "check" ? "animate-spin" : ""}`} />
             {updateBusy === "check" ? "Đang kiểm tra..." : "Kiểm tra cập nhật"}
-          </button>
+          </Button>
         </div>
 
         {updateCheck && (
@@ -1950,7 +1951,7 @@ export function Settings({
                 {updateCheck.latestMessage && <p className="text-amber-200/80 font-mono text-[11px]">“{updateCheck.latestMessage}”</p>}
 
                 {currentUser.role === UserRole.ADMIN && updateCheck.canAutoUpdate && (
-                  <button
+                  <Button
                     type="button"
                     onClick={handleApplyUpdate}
                     disabled={updateBusy !== ""}
@@ -1960,7 +1961,7 @@ export function Settings({
                       ? <RefreshCw className="w-4 h-4 animate-spin" />
                       : <Rocket className="w-4 h-4" />}
                     {updateBusy === "apply" ? "Đang gửi yêu cầu…" : updateBusy === "deploying" ? "Đang cập nhật…" : "Cập nhật ngay"}
-                  </button>
+                  </Button>
                 )}
                 {!updateCheck.canAutoUpdate && (
                   <p className="text-amber-200/70 text-[11px]">

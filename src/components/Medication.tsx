@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useMemo, useState, useRef } from "react";
 import { Pill, Plus, Trash2, Clock, X, Check, Ban } from "lucide-react";
 import { MedicationReminder, MedicationLog, User, canManageMedication } from "../types.js";
@@ -185,8 +186,8 @@ export function Medication({
 
         {canManageMedication(currentUser.role) && (
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
-            <input ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("medication.namePlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
-            <input value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder={t("medication.dosagePlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <Input ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("medication.namePlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <Input value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder={t("medication.dosagePlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
             <div className="md:col-span-2">
               <FancySelect
                 value={patientId}
@@ -203,15 +204,15 @@ export function Medication({
                 {times.map((tm, i) => (
                   <span key={`${tm}-${i}`} className="flex items-center gap-1 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-lg pl-2.5 pr-1 py-1 font-mono text-[11px]">
                     {tm}
-                    <button type="button" onClick={() => removeTime(i)} className="hover:text-rose-200 cursor-pointer" title={t("medication.removeTimeTitle")}>
+                    <Button type="button" onClick={() => removeTime(i)} className="hover:text-rose-200 cursor-pointer" title={t("medication.removeTimeTitle")}>
                       <X className="w-3 h-3" />
-                    </button>
+                    </Button>
                   </span>
                 ))}
                 <TimeSelect24 value={timeDraft} onChange={setTimeDraft} />
-                <button type="button" onClick={addTime} className="bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
+                <Button type="button" onClick={addTime} className="bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg px-2.5 py-1 text-[11px] font-bold flex items-center gap-1 cursor-pointer">
                   <Plus className="w-3 h-3" /> {t("medication.addTime")}
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -224,10 +225,10 @@ export function Medication({
               <DateInputDMY value={endDate} onChange={setEndDate} className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500 font-mono" />
             </div>
 
-            <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("medication.notesPlaceholder")} className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
-            <button disabled={saving} type="submit" className="md:col-span-2 bg-rose-500 hover:bg-rose-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("medication.notesPlaceholder")} className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <Button disabled={saving} type="submit" className="md:col-span-2 bg-rose-500 hover:bg-rose-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
               <Plus className="w-4 h-4" /> {t("medication.addSchedule")}
-            </button>
+            </Button>
           </form>
         )}
         {error && <p className="text-[11px] text-rose-400">{error}</p>}
@@ -258,9 +259,9 @@ export function Medication({
                       <p className="text-xs text-slate-500">{med.dosage || t("medication.noDosage")} • {patient?.fullName || t("medication.memberFallback")}</p>
                     </div>
                     {canManageMedication(currentUser.role) && (
-                      <button onClick={() => onDeleteMedication(med.id)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg">
+                      <Button onClick={() => onDeleteMedication(med.id)} className="p-1.5 text-slate-500 hover:text-rose-400 bg-slate-950 neu-btn rounded-lg">
                         <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -286,7 +287,7 @@ export function Medication({
                                 <Clock className="w-3 h-3 text-slate-500" /> {time}
                               </span>
                               <div className="flex items-center gap-1">
-                                <button
+                                <Button
                                   type="button"
                                   disabled={busy}
                                   onClick={() => handleDoseClick(med, time, "taken")}
@@ -294,8 +295,8 @@ export function Medication({
                                   title={t("medication.takenTitle")}
                                 >
                                   <Check className="w-3 h-3" /> {t("medication.taken")}
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
                                   disabled={busy}
                                   onClick={() => handleDoseClick(med, time, "skipped")}
@@ -303,7 +304,7 @@ export function Medication({
                                   title={t("medication.skipTitle")}
                                 >
                                   <Ban className="w-3 h-3" /> {t("medication.skip")}
-                                </button>
+                                </Button>
                               </div>
                             </div>
                           );

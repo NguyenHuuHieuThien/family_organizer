@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { Button, Input } from "./ui";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Megaphone, Send, Loader2, Users, AlertCircle, CheckCircle2 } from "lucide-react";
@@ -75,7 +76,7 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
 
       {/* Recipient picker */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-        <button
+        <Button
           type="button"
           onClick={() => setRecipient("all")}
           className={`${chipBase} ${recipient === "all" ? "bg-amber-500/15 border-amber-500/40 text-amber-300" : "bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700"}`}
@@ -84,9 +85,9 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
             <Users className="w-3.5 h-3.5" />
           </span>
           {t("dashboard.quickNudge.recipientAll")}
-        </button>
+        </Button>
         {recipients.map(u => (
-          <button
+          <Button
             key={u.id}
             type="button"
             onClick={() => setRecipient(u.id)}
@@ -94,14 +95,14 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
           >
             <Avatar user={u} className="w-6 h-6 rounded-lg text-[10px]" extraClass="shrink-0" />
             {givenName(u.fullName)}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Preset quick messages */}
       <div className="flex flex-wrap gap-2">
         {PRESETS.map(p => (
-          <button
+          <Button
             key={p}
             type="button"
             disabled={busy}
@@ -109,13 +110,13 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
             className="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 neu-btn hover:border-sky-500/40 text-slate-300 rounded-lg text-xs font-medium cursor-pointer transition-all disabled:opacity-50"
           >
             {p}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* Custom message */}
       <div className="flex items-center gap-2">
-        <input
+        <Input
           type="text"
           value={custom}
           maxLength={300}
@@ -124,14 +125,14 @@ export function QuickNudge({ currentUser, users }: QuickNudgeProps) {
           placeholder={t("dashboard.quickNudge.customPlaceholder")}
           className="flex-1 min-w-0 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-sky-500"
         />
-        <button
+        <Button
           type="button"
           disabled={busy}
           onClick={() => send(custom)}
           className="flex items-center gap-1.5 px-3.5 py-2 bg-sky-500 hover:bg-sky-400 disabled:opacity-60 disabled:cursor-not-allowed text-slate-950 rounded-xl text-xs font-bold cursor-pointer transition-all shrink-0"
         >
           {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} {t("dashboard.quickNudge.sendBtn")}
-        </button>
+        </Button>
       </div>
 
       {msg && (
