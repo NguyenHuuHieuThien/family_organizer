@@ -5,7 +5,7 @@
 
 // File-based media storage. Images are written to data/uploads/<category>/<subfolder>/
 // and referenced from the DB by a short "/uploads/..." URL instead of being inlined
-// as base64. This keeps the SQLite document rows (and every full-DB write/backup)
+// as base64. This keeps the stored document payloads (and every full-DB write/backup)
 // small and fast. Files are served statically by the app.
 
 import fs from "fs";
@@ -19,7 +19,7 @@ export const UPLOADS_URL_PREFIX = "/uploads/";
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // Categories map to top-level folders ("tab/chủ đề" buckets).
-const ALLOWED_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes"]);
+const ALLOWED_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos"]);
 
 // Reject anything larger than this per single image (after client-side optimize).
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;

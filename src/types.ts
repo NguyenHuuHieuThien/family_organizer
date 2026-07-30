@@ -467,6 +467,25 @@ export interface FamilyDocument {
   updatedAt: string;
 }
 
+export interface FamilyPhoto {
+  id: string;
+  title: string;
+  description?: string;
+  url: string;      // "/uploads/photos/..."
+  fileName: string;
+  sizeKb?: number;
+  width?: number;
+  height?: number;
+  ownerId?: string;
+  album?: string;
+  takenAt?: string; // YYYY-MM-DD
+  tags: string[];
+  isShared: boolean;
+  creatorId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // --- Sức khỏe trẻ em: tiêm chủng & tăng trưởng ---
 export interface VaccinationRecord {
   id: string;
@@ -590,6 +609,7 @@ export interface FamilyOrganizerDB {
   growthRecords: GrowthRecord[];
   healthProfiles: EmergencyProfile[];
   documents: FamilyDocument[];
+  photos: FamilyPhoto[];
   shoppingItems: ShoppingItem[];
   dishLibrary: StoredDish[];
   mealPlan?: StoredMealPlan | null;

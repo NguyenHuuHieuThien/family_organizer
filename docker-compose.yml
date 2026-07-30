@@ -1,4 +1,16 @@
 services:
+  mongo:
+    image: mongo:8
+    container_name: family_organizer_mongo
+    restart: unless-stopped
+    volumes:
+      - ./mongo-data:/data/db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   family-organizer:
     # Pull the published image from GHCR so Watchtower can auto-update it.
     # CI (.github/workflows/docker-publish.yml) builds & pushes this on every push to main.
@@ -29,6 +41,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3002
+      - MONGO_URI=mongodb://mongo:27017/family_organizer
       - TZ=Asia/Ho_Chi_Minh
       # Compose auto-reads ./.env for ${VAR} substitution; ":-" => empty if missing
       # (gitignored, never baked into the image). Used by the AI assistant.

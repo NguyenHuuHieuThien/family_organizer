@@ -16,7 +16,6 @@
 
 import fs from "fs";
 import path from "path";
-import { ZipArchive } from "archiver";
 import { Open as unzipOpen } from "unzipper";
 import { FamilyDB, getAppSettings, replaceAppSettings } from "./db.js";
 import { UPLOADS_DIR } from "./media.js";
@@ -45,8 +44,10 @@ export function streamFullBackup(out: NodeJS.WritableStream): Promise<void> {
     }
   };
 
-  return new Promise((resolve, reject) => {
-    const archive = new ZipArchive({ zlib: { level: 6 } });
+  return new Promise(async (resolve, reject) => {
+    const archiverMod: any = await import("archiver");
+    const archiver = archiverMod.default || archiverMod;
+    const archive = archiver("zip", { zlib: { level: 6 } });
     archive.on("error", reject);
     archive.on("warning", (err) => console.error("Cảnh báo khi nén backup:", err));
     out.on("error", reject);
@@ -83,7 +84,7 @@ interface ZipEntryLike {
  *  2. Tạo backup JSON "an toàn" của trạng thái hiện tại (giữ vĩnh viễn, phòng lỡ tay).
  *  3. Đổi tên uploads hiện tại sang thư mục .old, giải nén uploads mới;
  *     lỗi giữa chừng thì trả lại thư mục cũ (rollback).
- *  4. Ghi đè app_settings.json + nạp snapshot DB vào SQLite.
+ *  4. Ghi đè app_settings.json + nạp snapshot DB vào MongoDB.
  */
 export async function importFullBackup(zipBuffer: Buffer, userId: string, username: string): Promise<{ restoredFiles: number }> {
   if (!zipBuffer || zipBuffer.length === 0) throw new Error("Tệp tải lên rỗng!");

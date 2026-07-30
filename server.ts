@@ -10,8 +10,8 @@ import os from "os";
 import fsp from "fs/promises";
 import crypto from "crypto";
 import { createServer as createViteServer } from "vite";
-import { FamilyDB, verifyPassword, getSessionSecret, getAppSettings, setAppSetting } from "./server/db.js";
-import { sqliteAppendServerMetric, sqliteGetServerMetrics } from "./server/sqlite.js";
+import { FamilyDB, verifyPassword, getSessionSecret, getAppSettings, setAppSetting, initFamilyStorage } from "./server/db.js";
+import { mongooseAppendServerMetric, mongooseGetServerMetrics } from "./server/mongoose.js";
 import { UserRole, isLimitedViewer, DishSlot, MealIngredient, DOCUMENT_TYPE_LABELS } from "./src/types.js";
 import { buildPlanFromLibrary, dedupeAndAnnotateGroceries } from "./src/utils/mealPlan.js";
 import { normalizeSearchText, matchesQuery, excerptAround } from "./src/utils/searchText.js";
@@ -71,7 +71,7 @@ function validateAssetPhotosPayload(photos: unknown) {
 }
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3002;
 
 // --- VERSION / UPDATE CONFIG ---
 // APP_VERSION/GIT_SHA/BUILD_TIME are baked into the image at build time (see Dockerfile + CI).
@@ -332,10 +332,26 @@ const canManageDocument = (
     (doc.isShared && session.role === UserRole.ADMIN);
 };
 
+const canViewPhoto = (
+  photo: { isShared: boolean; creatorId: string; ownerId?: string },
+  session: AuthRequest["userSession"]
+) => {
+  if (!session) return false;
+  return photo.isShared || photo.creatorId === session.userId || photo.ownerId === session.userId;
+};
+
+const canManagePhoto = (
+  photo: { isShared: boolean; creatorId: string; ownerId?: string },
+  session: AuthRequest["userSession"]
+) => {
+  if (!session) return false;
+  return photo.creatorId === session.userId || (photo.isShared && session.role === UserRole.ADMIN);
+};
+
 // --- MEDIA UPLOAD ---
 // Accepts an optimized base64 data URL, writes it to disk under the given
 // category folder, and returns the "/uploads/..." URL to store in the DB.
-const UPLOAD_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents"]);
+const UPLOAD_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos"]);
 
 app.post("/api/uploads", requireAuth, (req: AuthRequest, res: Response) => {
   const { dataUrl, category, subfolder } = req.body || {};
@@ -524,7 +540,7 @@ const readDisk = async () => {
   }
 };
 
-// Ghi telemetry vào SQLite 1 phút/lần (24/7) để biểu đồ giữ được lịch sử
+// Ghi telemetry vào MongoDB 1 phút/lần (24/7) để biểu đồ giữ được lịch sử
 // 24h/7 ngày qua các lần reload trang — client không cần poll dày.
 async function recordServerMetric() {
   try {
@@ -535,7 +551,7 @@ async function recordServerMetric() {
       readMemory(),
       readDisk()
     ]);
-    sqliteAppendServerMetric({
+    mongooseAppendServerMetric({
       t: Date.now(),
       cpu: cpuPercent,
       ram: memory ? (memory.usedBytes / memory.totalBytes) * 100 : null,
@@ -577,7 +593,7 @@ app.put("/api/server/homelab-links", requireAuth, requireRole([UserRole.ADMIN]),
 app.get("/api/server/history", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
   const range = req.query.range === "7d" ? "7d" : "24h";
   const sinceMs = Date.now() - (range === "7d" ? 7 * 24 : 24) * 3600 * 1000;
-  const all = sqliteGetServerMetrics(sinceMs);
+  const all = mongooseGetServerMetrics(sinceMs);
   const MAX_POINTS = 320;
   const step = Math.ceil(all.length / MAX_POINTS);
   const points = step > 1 ? all.filter((_, i) => i % step === 0 || i === all.length - 1) : all;
@@ -612,26 +628,27 @@ const readClientIp = (req: Request): string => {
   return raw.replace(/^::ffff:/, "");
 };
 
-// Dung lượng dữ liệu app: file SQLite (+wal/shm) đọc mỗi lần, thư mục uploads
-// walk đệ quy nhưng cache 5 phút (có thể nhiều file media).
+// Dung lượng dữ liệu app: thư mục MongoDB local/Docker + uploads.
+// Walk đệ quy nhưng cache uploads 5 phút (có thể nhiều file media).
 let uploadsSizeCache: { at: number; bytes: number } | null = null;
 async function readDataSizes(): Promise<{ dbBytes: number; uploadsBytes: number }> {
-  let dbBytes = 0;
-  for (const f of ["family.db", "family.db-wal", "family.db-shm"]) {
-    try { dbBytes += (await fsp.stat(path.join(process.cwd(), "data", f))).size; } catch { /* file chưa tồn tại */ }
-  }
-  if (!uploadsSizeCache || Date.now() - uploadsSizeCache.at > 5 * 60 * 1000) {
+  const dirSize = async (dir: string): Promise<number> => {
     let bytes = 0;
-    const walk = async (dir: string) => {
+    const walk = async (current: string) => {
       let entries;
-      try { entries = await fsp.readdir(dir, { withFileTypes: true }); } catch { return; }
+      try { entries = await fsp.readdir(current, { withFileTypes: true }); } catch { return; }
       for (const e of entries) {
-        const p = path.join(dir, e.name);
+        const p = path.join(current, e.name);
         if (e.isDirectory()) await walk(p);
         else { try { bytes += (await fsp.stat(p)).size; } catch { /* file vừa bị xóa */ } }
       }
     };
-    await walk(UPLOADS_DIR);
+    await walk(dir);
+    return bytes;
+  };
+  const dbBytes = await dirSize(path.join(process.cwd(), "mongo-data"));
+  if (!uploadsSizeCache || Date.now() - uploadsSizeCache.at > 5 * 60 * 1000) {
+    const bytes = await dirSize(UPLOADS_DIR);
     uploadsSizeCache = { at: Date.now(), bytes };
   }
   return { dbBytes, uploadsBytes: uploadsSizeCache.bytes };
@@ -1720,6 +1737,56 @@ app.delete("/api/documents/:id", requireAuth, requireRole([UserRole.ADMIN, UserR
   }
 });
 
+// --- KHO HÌNH ẢNH GIA ĐÌNH ---
+
+app.get("/api/photos", requireAuth, (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  const photos = FamilyDB.getPhotos().filter(photo => canViewPhoto(photo, session));
+  res.json({ photos });
+});
+
+app.post("/api/photos", requireAuth, requireRole([UserRole.ADMIN, UserRole.MEMBER, UserRole.CHILD]), (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  if (req.body?.id) {
+    const existing = FamilyDB.getPhotos().find(p => p.id === req.body.id);
+    if (!existing) {
+      res.status(404).json({ error: "Không tìm thấy ảnh" });
+      return;
+    }
+    if (!canManagePhoto(existing, session)) {
+      res.status(403).json({ error: "Bạn không có quyền sửa ảnh này." });
+      return;
+    }
+    if (hasEditConflict(existing, req.body)) {
+      res.status(409).json({ error: CONFLICT_MSG, conflict: true });
+      return;
+    }
+  }
+  try {
+    const photo = FamilyDB.savePhoto(req.body, session.userId, session.username);
+    broadcastSyncEvent("PHOTOS_UPDATE", { photoId: photo.id });
+    res.json({ photo });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete("/api/photos/:id", requireAuth, requireRole([UserRole.ADMIN, UserRole.MEMBER, UserRole.CHILD]), (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  const existing = FamilyDB.getPhotos().find(p => p.id === req.params.id);
+  if (existing && !canManagePhoto(existing, session)) {
+    res.status(403).json({ error: "Bạn không có quyền xóa ảnh này." });
+    return;
+  }
+  try {
+    FamilyDB.deletePhoto(req.params.id, session.userId, session.username);
+    broadcastSyncEvent("PHOTOS_UPDATE", { deletedId: req.params.id });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // --- SỨC KHỎE TRẺ: TIÊM CHỦNG & TĂNG TRƯỞNG (chỉ Admin/Member) ---
 // Sổ sức khỏe cả nhà đều xem được; thêm/sửa/xóa vẫn giới hạn Admin/Member ở các route ghi bên dưới.
 app.get("/api/child-health", requireAuth, (_req: AuthRequest, res: Response) => {
@@ -2734,6 +2801,8 @@ app.get("/api/widgets/history", requireAuth, (req: AuthRequest, res: Response) =
 // --- VITE MIDDLEWARE SETUP & STATIC SERVING ---
 
 async function startServer() {
+  await initFamilyStorage();
+
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
       server: {

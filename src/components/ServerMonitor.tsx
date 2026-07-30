@@ -11,7 +11,7 @@ import { User, UserRole } from "../types.js";
 import { useTranslation } from "react-i18next";
 
 // Client chỉ tải dữ liệu 1 phút/lần (server cũng tự ghi telemetry 1 phút/lần
-// vào SQLite nên biểu đồ giữ nguyên lịch sử qua các lần reload trang).
+// vào MongoDB nên biểu đồ giữ nguyên lịch sử qua các lần reload trang).
 const POLL_MS = 60 * 1000;
 
 type HistoryRange = "24h" | "7d";
@@ -623,7 +623,7 @@ export function ServerMonitor({ authHeaders, currentUser }: ServerMonitorProps) 
               <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">
                 <span className="text-slate-400">{t("serverMonitor.appData")}</span>
                 <span className="font-mono text-slate-200">
-                  SQLite {fmtBytes(stats.data.dbBytes)} · Media {fmtBytes(stats.data.uploadsBytes)}
+                  MongoDB {fmtBytes(stats.data.dbBytes)} · Media {fmtBytes(stats.data.uploadsBytes)}
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 bg-slate-950/40 neu-pressed-sm rounded-xl px-3 py-2">

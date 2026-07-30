@@ -27,6 +27,7 @@ import {
   ShoppingCart,
   FolderLock,
   HeartPulse,
+  Images,
   Cpu
 } from "lucide-react";
 import {
@@ -45,6 +46,7 @@ import {
   MedicationReminder,
   MedicationLog,
   FamilyDocument,
+  FamilyPhoto,
   SavingsGoal,
   Debt,
   VaccinationRecord,
@@ -64,6 +66,7 @@ import { Notes } from "./components/Notes.js";
 import { Finance } from "./components/Finance.js";
 import { Shopping } from "./components/Shopping.js";
 import { Documents } from "./components/Documents.js";
+import { Photos } from "./components/Photos.js";
 import { ChildHealth } from "./components/ChildHealth.js";
 import { Assistant } from "./components/Assistant.js";
 import { FabProvider } from "./components/FabHost.js";
@@ -209,7 +212,7 @@ export default function App() {
   // Push notifications: clear the app-icon badge when the app is opened/focused,
   // and deep-link to the right tab when a push notification is tapped.
   useEffect(() => {
-    const KNOWN_TABS = ["dashboard", "tasks", "plans", "notes", "shopping", "medications", "child-health", "finance", "documents", "server", "settings"];
+    const KNOWN_TABS = ["dashboard", "tasks", "plans", "notes", "shopping", "medications", "child-health", "finance", "documents", "photos", "server", "settings"];
     const clearBadge = () => { try { (navigator as any).clearAppBadge?.(); } catch (e) { /* ignore */ } };
 
     // Lịch thuốc giờ nằm trong "Sức khỏe gia đình": deep-link "medications" → mở tab
@@ -364,6 +367,7 @@ export default function App() {
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([]);
   const [healthProfiles, setHealthProfiles] = useState<EmergencyProfile[]>([]);
   const [documents, setDocuments] = useState<FamilyDocument[]>([]);
+  const [photos, setPhotos] = useState<FamilyPhoto[]>([]);
   const [shoppingItems, setShoppingItems] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
@@ -595,6 +599,19 @@ export default function App() {
     }
   };
 
+  const fetchPhotos = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch("/api/photos", { headers: getAuthHeader() });
+      if (res.ok) {
+        const data = await res.json();
+        setPhotos(data.photos || []);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const fetchNotifications = async () => {
     if (!currentUser) return;
     try {
@@ -720,6 +737,7 @@ export default function App() {
     fetchMedicationLogs();
     fetchChildHealth();
     fetchDocuments();
+    fetchPhotos();
     fetchShopping();
     fetchNotifications();
     fetchBackupsAndLogs();
@@ -839,6 +857,10 @@ export default function App() {
             break;
           case "DOCUMENTS_UPDATE":
             fetchDocuments();
+            fetchBackupsAndLogs();
+            break;
+          case "PHOTOS_UPDATE":
+            fetchPhotos();
             fetchBackupsAndLogs();
             break;
           case "CHILD_HEALTH_UPDATE":
@@ -1376,6 +1398,31 @@ export default function App() {
     return res.json();
   };
 
+  const handleSavePhoto = async (payload: Partial<FamilyPhoto>) => {
+    const res = await fetch("/api/photos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeader() },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+    }
+    return res.json();
+  };
+
+  const handleDeletePhoto = async (id: string) => {
+    const res = await fetch(`/api/photos/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeader()
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+    }
+    return res.json();
+  };
+
   // Ghi nhận / bỏ đánh dấu một liều thuốc (status: "taken" | "skipped" | "none")
   const handleLogDose = async (
     medicationId: string,
@@ -1625,7 +1672,7 @@ export default function App() {
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-4">
         <div className="space-y-4 text-center">
           <div className="relative w-12 h-12 border-4 border-slate-800 border-t-sky-500 rounded-full animate-spin mx-auto" />
-          <p className="text-slate-400 text-xs font-mono tracking-widest uppercase">Đang khởi tạo máy chủ tổ ấm...</p>
+          <p className="text-slate-400 text-xs font-semibold tracking-widest uppercase">Đang khởi tạo máy chủ tổ ấm...</p>
         </div>
       </div>
     );
@@ -1645,6 +1692,7 @@ export default function App() {
     { id: "plans", label: t("nav.plans"), icon: Calendar },
     { id: "notes", label: t("nav.notes"), icon: FileText },
     { id: "shopping", label: t("nav.shopping"), icon: ShoppingCart },
+    { id: "photos", label: t("nav.photos"), icon: Images },
     // Sổ sức khỏe cả nhà (gồm Tăng trưởng, Tiêm chủng, Lịch thuốc) — mọi thành viên đều xem được
     { id: "child-health", label: t("nav.childHealth"), icon: HeartPulse },
     ...(canAccessFinance(currentUser.role) ? [{ id: "documents", label: t("nav.documents"), icon: FolderLock }] : []),
@@ -1688,7 +1736,7 @@ export default function App() {
             </div>
             <div>
               <span className="text-md font-extrabold text-slate-100 block tracking-tight">Family Organizer</span>
-              <span className="text-[9px] uppercase font-mono tracking-widest text-slate-500">Raspberry Pi 5 Hub</span>
+              <span className="text-[9px] uppercase font-semibold tracking-widest text-slate-500">Raspberry Pi 5 Hub</span>
             </div>
           </div>
 
@@ -1701,9 +1749,9 @@ export default function App() {
                 <Button
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold cursor-pointer transition-all ${isActive ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/5" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"}`}
+                  className={`w-full flex items-center justify-start text-left gap-3 px-3 py-2.5 rounded-xl font-bold cursor-pointer transition-all ${isActive ? "bg-sky-500 text-slate-950 shadow-md shadow-sky-500/5" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"}`}
                 >
-                  <Icon className="w-4.5 h-4.5" />
+                  <Icon className="w-4 h-4 shrink-0" />
                   <span>{link.label}</span>
                 </Button>
               );
@@ -1732,7 +1780,7 @@ export default function App() {
             <Avatar user={currentUser} className="w-8.5 h-8.5 rounded-xl text-sm" extraClass="shrink-0" />
             <div className="space-y-0.5 truncate flex-1">
               <span className="font-bold text-slate-100 block truncate">{currentUser.fullName}</span>
-              <span className="text-[10px] text-slate-400 font-mono block truncate">
+              <span className="text-[10px] text-slate-400 font-medium block truncate">
                 {ROLE_LABELS[currentUser.role]}{currentUser.familyRelation ? ` • ${FAMILY_RELATION_LABELS[currentUser.familyRelation]}` : ""}{appVersion ? ` • v${appVersion}` : ""}
               </span>
             </div>
@@ -2035,6 +2083,16 @@ export default function App() {
                 />
               )}
 
+              {activeTab === "photos" && (
+                <Photos
+                  currentUser={currentUser}
+                  users={users}
+                  photos={photos}
+                  onSavePhoto={handleSavePhoto}
+                  onDeletePhoto={handleDeletePhoto}
+                />
+              )}
+
               {activeTab === "server" && currentUser.role === UserRole.ADMIN && (
                 <ServerMonitor authHeaders={getAuthHeader()} currentUser={currentUser} />
               )}
@@ -2095,7 +2153,7 @@ export default function App() {
                   </div>
                   <div>
                     <span className="text-sm font-bold text-slate-100 block">Family Hub</span>
-                    <span className="text-[9px] uppercase font-mono text-slate-500">Raspberry Pi Server</span>
+                    <span className="text-[9px] uppercase font-semibold tracking-widest text-slate-500">Raspberry Pi Server</span>
                   </div>
                 </div>
                 <Button
@@ -2118,9 +2176,9 @@ export default function App() {
                         setActiveTab(link.id);
                         setMobileMenuOpen(false);
                       }}
-                      className={`w-full flex items-center gap-3.5 px-3 py-3 rounded-xl font-bold cursor-pointer transition-all ${isActive ? "bg-sky-500 text-slate-950" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"}`}
+                      className={`w-full flex items-center justify-start text-left gap-3.5 px-3 py-3 rounded-xl font-bold cursor-pointer transition-all ${isActive ? "bg-sky-500 text-slate-950" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/40"}`}
                     >
-                      <Icon className="w-4.5 h-4.5" />
+                      <Icon className="w-4 h-4 shrink-0" />
                       <span>{link.label}</span>
                     </Button>
                   );
@@ -2164,7 +2222,7 @@ export default function App() {
                 <Avatar user={currentUser} className="w-8.5 h-8.5 rounded-xl text-sm" extraClass="shrink-0" />
                 <div className="space-y-0.5 truncate flex-1">
                   <span className="font-bold text-slate-100 block truncate">{currentUser.fullName}</span>
-                  <span className="text-[10px] text-slate-400 font-mono block truncate">
+                  <span className="text-[10px] text-slate-400 font-medium block truncate">
                     {ROLE_LABELS[currentUser.role]}{currentUser.familyRelation ? ` • ${FAMILY_RELATION_LABELS[currentUser.familyRelation]}` : ""}{appVersion ? ` • v${appVersion}` : ""}
                   </span>
                 </div>

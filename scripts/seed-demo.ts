@@ -4,7 +4,7 @@
  *
  * Chạy:  npm run seed:demo
  *
- * ⚠️  Script này XÓA TOÀN BỘ dữ liệu hiện tại trong family.db và thay bằng
+ * ⚠️  Script này XÓA TOÀN BỘ dữ liệu hiện tại trong MongoDB và thay bằng
  *     data ảo. CHỈ chạy trên máy dev — tuyệt đối không chạy production.
  *
  * Data ảo: gia đình 4 người (Ba / Mẹ / Bé Bin / Bé Na), đủ dữ liệu để
@@ -14,7 +14,7 @@
  */
 
 import crypto from "crypto";
-import { sqliteLoad, sqliteSave } from "../server/sqlite.js";
+import { flushMongooseWrites, initializeMongooseStorage, mongooseSave } from "../server/mongoose.js";
 import {
   UserRole,
   TaskStatus,
@@ -846,6 +846,7 @@ const demoDB: FamilyOrganizerDB = {
   growthRecords,
   healthProfiles,
   documents,
+  photos: [],
   shoppingItems,
   dishLibrary: [],
   mealPlan: null,
@@ -871,8 +872,10 @@ console.log(`📄  Documents:    ${documents.length}`);
 console.log(`🛒  Shopping:     ${shoppingItems.length}`);
 console.log(`🎁  Reward items: ${rewardItems.length}`);
 console.log("━".repeat(40));
-console.log("⚠️   Ghi đè toàn bộ data hiện tại trong data/family.db ...");
+console.log("⚠️   Ghi đè toàn bộ data hiện tại trong MongoDB ...");
 
-sqliteSave(demoDB);
+await initializeMongooseStorage(demoDB);
+mongooseSave(demoDB);
+await flushMongooseWrites();
 
 console.log("✅  Xong! Khởi động lại server: npm run dev\n");

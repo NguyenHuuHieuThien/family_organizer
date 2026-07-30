@@ -23,6 +23,7 @@ import {
   MedicationReminder,
   MedicationLog,
   FamilyDocument,
+  FamilyPhoto,
   DOCUMENT_TYPE_LABELS,
   SavingsGoal,
   SavingsContribution,
@@ -42,7 +43,7 @@ import {
 } from "../src/types.js";
 import { SEED_DISHES } from "../src/utils/mealPlan.js";
 import { isDebtFullyPaid } from "../src/utils/debt.js";
-import { sqliteIsEmpty, sqliteLoad, sqliteSave, sqliteCheckpoint } from "./sqlite.js";
+import { initializeMongooseStorage, mongooseLoad, mongooseSave, mongooseCheckpoint } from "./mongoose.js";
 import { deleteMediaByUrl } from "./media.js";
 import { dispatchPush } from "./push.js";
 
@@ -56,6 +57,16 @@ const VALID_DOCUMENT_TYPES = new Set<string>([
   "cccd", "passport", "driver_license", "vehicle_registration", "vehicle_inspection",
   "insurance", "health_insurance", "warranty", "contract", "certificate", "other"
 ]);
+
+function nextFamilyPhotoTitle(photos: FamilyPhoto[]): string {
+  const max = photos.reduce((best, photo) => {
+    const match = String(photo.title || "").match(/^FAMILY(\d+)$/i);
+    if (!match) return best;
+    const n = Number(match[1]);
+    return Number.isFinite(n) && n > best ? n : best;
+  }, 0);
+  return `FAMILY${String(max + 1).padStart(2, "0")}`;
+}
 
 // Collect the stored image URLs referenced by an asset's photos.
 function assetPhotoUrls(asset: { photos?: any[] } | undefined | null): string[] {
@@ -192,6 +203,7 @@ const initialDBState = (): FamilyOrganizerDB => {
     growthRecords: [],
     healthProfiles: [],
     documents: [],
+    photos: [],
     shoppingItems: [],
     dishLibrary: [],
     mealPlan: null,
@@ -223,6 +235,7 @@ function normalizeDB(db: any): FamilyOrganizerDB {
   db.growthRecords = db.growthRecords || [];
   db.healthProfiles = db.healthProfiles || [];
   db.documents = db.documents || [];
+  db.photos = db.photos || [];
   db.shoppingItems = db.shoppingItems || [];
   db.dishLibrary = db.dishLibrary || [];
   db.mealPlan = db.mealPlan || null;
@@ -257,29 +270,24 @@ if (!fs.existsSync(BACKUP_DIR)) {
   fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
 
-// One-time storage bootstrap: if SQLite is empty, import the existing db.json
+// One-time storage bootstrap: if MongoDB has no state yet, import existing db.json
 // (preserving ids so sessions/frontend keep working), otherwise seed a blank DB.
 // The original db.json is left untouched as a pre-migration rollback snapshot.
-(function bootstrapStorage() {
-  try {
-    if (!sqliteIsEmpty()) return;
-    let seed: FamilyOrganizerDB;
-    if (fs.existsSync(DB_FILE)) {
-      try {
-        seed = normalizeDB(JSON.parse(fs.readFileSync(DB_FILE, "utf8")));
-        console.log("Đã nhập dữ liệu từ db.json sang SQLite (family.db).");
-      } catch (e) {
-        console.error("db.json hỏng, khởi tạo CSDL trắng:", e);
-        seed = initialDBState();
-      }
-    } else {
+export async function initFamilyStorage(): Promise<void> {
+  let seed: FamilyOrganizerDB;
+  if (fs.existsSync(DB_FILE)) {
+    try {
+      seed = normalizeDB(JSON.parse(fs.readFileSync(DB_FILE, "utf8")));
+      console.log("Nếu MongoDB đang trống, sẽ nhập dữ liệu từ db.json.");
+    } catch (e) {
+      console.error("db.json hỏng, khởi tạo CSDL trắng:", e);
       seed = initialDBState();
     }
-    sqliteSave(seed);
-  } catch (e) {
-    console.error("Lỗi bootstrap SQLite:", e);
+  } else {
+    seed = initialDBState();
   }
-})();
+  await initializeMongooseStorage(seed);
+}
 
 function parseLocalDateTime(value: string): Date | null {
   if (!value) return null;
@@ -311,15 +319,14 @@ function advanceDateString(value: string, recurrenceType: string, interval = 1, 
 // Core DB operations helper
 export class FamilyDB {
   private static readRaw(): FamilyOrganizerDB {
-    return normalizeDB(sqliteLoad());
+    return normalizeDB(mongooseLoad());
   }
 
   private static writeRaw(db: FamilyOrganizerDB): void {
-    // better-sqlite3 is synchronous; the save runs in a single atomic WAL transaction.
     try {
-      sqliteSave(db);
+      mongooseSave(db);
     } catch (e) {
-      console.error("Lỗi ghi dữ liệu vào SQLite:", e);
+      console.error("Lỗi ghi dữ liệu vào MongoDB:", e);
     }
   }
 
@@ -349,8 +356,8 @@ export class FamilyDB {
     const destPath = path.join(BACKUP_DIR, filename);
 
     try {
-      // Snapshot the live SQLite data to a JSON file (human-readable, restore-friendly).
-      sqliteCheckpoint();
+      // Snapshot the live MongoDB-backed data to a JSON file (human-readable, restore-friendly).
+      mongooseCheckpoint();
       fs.writeFileSync(destPath, JSON.stringify(db, null, 2), "utf8");
 
       const stats = fs.statSync(destPath);
@@ -414,7 +421,7 @@ export class FamilyDB {
 
   // Snapshot đầy đủ của DB (đã checkpoint WAL) — dùng cho backup toàn phần.
   public static getFullSnapshot(): FamilyOrganizerDB {
-    sqliteCheckpoint();
+    mongooseCheckpoint();
     return this.readRaw();
   }
 
@@ -444,14 +451,14 @@ export class FamilyDB {
     }
   }
 
-  // Nạp một snapshot DB (đã parse từ tệp backup) vào SQLite — dùng cho import toàn phần.
+  // Nạp một snapshot DB (đã parse từ tệp backup) vào MongoDB — dùng cho import toàn phần.
   public static restoreFromSnapshot(parsedData: any, userId: string, username: string, sourceLabel: string): void {
     if (!parsedData || !parsedData.users || !parsedData.tasks) {
       throw new Error("Dữ liệu backup không hợp lệ hoặc thiếu thông tin cốt lõi (users/tasks)!");
     }
     const restored = normalizeDB(parsedData);
     this.reconcileBackupsWithDisk(restored);
-    sqliteSave(restored);
+    mongooseSave(restored);
     this.logActivity(userId, username, "Phục hồi toàn phần", `Đã khôi phục toàn bộ hệ thống từ ${sourceLabel}.`);
   }
 
@@ -473,8 +480,8 @@ export class FamilyDB {
         throw new Error("Tệp sao lưu không hợp lệ hoặc thiếu thông tin cốt lõi!");
       }
 
-      // Load the snapshot back into SQLite (atomic replace)
-      sqliteSave(normalizeDB(parsedData));
+      // Load the snapshot back into MongoDB (atomic replace of the live snapshot).
+      mongooseSave(normalizeDB(parsedData));
 
       // Re-log the activity to the newly loaded db!
       this.logActivity(userId, username, "Phục hồi hệ thống", `Đã phục hồi dữ liệu về điểm sao lưu: ${backup.filename}.`);
@@ -2459,6 +2466,84 @@ export class FamilyDB {
     db.documents = db.documents.filter(d => d.id !== id);
     this.writeRaw(db);
     this.logActivity(userId, username, "Giấy tờ", `Đã xóa giấy tờ "${doc.title}".`);
+  }
+
+  // --- Kho hình ảnh gia đình ---
+  public static getPhotos(): FamilyPhoto[] {
+    return this.readRaw().photos;
+  }
+
+  public static savePhoto(data: Partial<FamilyPhoto>, userId: string, username: string): FamilyPhoto {
+    const db = this.readRaw();
+    const now = new Date().toISOString();
+    if (!data.url || typeof data.url !== "string" || !data.url.startsWith("/uploads/photos/")) {
+      throw new Error("Ảnh không hợp lệ.");
+    }
+    const tags = Array.isArray(data.tags)
+      ? data.tags.map(t => String(t).trim()).filter(Boolean).slice(0, 12)
+      : [];
+
+    if (data.id) {
+      const idx = db.photos.findIndex(p => p.id === data.id);
+      if (idx === -1) throw new Error("Không tìm thấy ảnh");
+      const prev = db.photos[idx];
+      if (prev.url !== data.url) deleteMediaByUrl(prev.url);
+      const updated: FamilyPhoto = {
+        ...prev,
+        ...data,
+        title: data.title.trim(),
+        description: data.description?.trim() || undefined,
+        fileName: data.fileName?.trim() || prev.fileName || "photo",
+        ownerId: data.ownerId || undefined,
+        album: data.album?.trim() || undefined,
+        takenAt: data.takenAt || undefined,
+        tags,
+        isShared: data.isShared !== undefined ? data.isShared : prev.isShared,
+        updatedAt: now
+      } as FamilyPhoto;
+      db.photos[idx] = updated;
+      this.writeRaw(db);
+      this.logActivity(userId, username, "Hình ảnh", `Đã cập nhật ảnh "${updated.title}".`);
+      return updated;
+    }
+
+    const requestedTitle = data.title?.trim() || "";
+    const title = requestedTitle && !/^FAMILY\d+$/i.test(requestedTitle)
+      ? requestedTitle
+      : nextFamilyPhotoTitle(db.photos);
+
+    const photo: FamilyPhoto = {
+      id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      title,
+      description: data.description?.trim() || undefined,
+      url: data.url,
+      fileName: data.fileName?.trim() || "photo",
+      sizeKb: data.sizeKb,
+      width: data.width,
+      height: data.height,
+      ownerId: data.ownerId || undefined,
+      album: data.album?.trim() || undefined,
+      takenAt: data.takenAt || undefined,
+      tags,
+      isShared: data.isShared !== undefined ? data.isShared : true,
+      creatorId: userId,
+      createdAt: now,
+      updatedAt: now
+    };
+    db.photos.unshift(photo);
+    this.writeRaw(db);
+    this.logActivity(userId, username, "Hình ảnh", `Đã thêm ảnh "${photo.title}".`);
+    return photo;
+  }
+
+  public static deletePhoto(id: string, userId: string, username: string): void {
+    const db = this.readRaw();
+    const photo = db.photos.find(p => p.id === id);
+    if (!photo) return;
+    deleteMediaByUrl(photo.url);
+    db.photos = db.photos.filter(p => p.id !== id);
+    this.writeRaw(db);
+    this.logActivity(userId, username, "Hình ảnh", `Đã xóa ảnh "${photo.title}".`);
   }
 
   // Pre-deadline reminders: notify before tasks are due and before plans start.

@@ -312,7 +312,7 @@ cp .env.example .env
 npm run dev
 ```
 
-Ứng dụng khởi động tại `http://localhost:3000`.
+Ứng dụng khởi động tại `http://localhost:3002`.
 
 > Để test AI trong dev: nhập Gemini key trực tiếp trong **Settings → Thiết lập AI** (hoặc đặt `GEMINI_API_KEY` trong `.env` làm fallback).
 

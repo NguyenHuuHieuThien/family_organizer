@@ -13,8 +13,13 @@ import webpush from "web-push";
 const { setVapidDetails, sendNotification } = webpush;
 import { FamilyOrganizerDB, Notification, PushSubscriptionRecord } from "../src/types.js";
 
-const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || "";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
+function cleanEnvValue(value: string | undefined): string {
+  const v = String(value || "").trim();
+  return /^your_.+_here$/i.test(v) ? "" : v;
+}
+
+const VAPID_PUBLIC_KEY = cleanEnvValue(process.env.VAPID_PUBLIC_KEY);
+const VAPID_PRIVATE_KEY = cleanEnvValue(process.env.VAPID_PRIVATE_KEY);
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:admin@family-organizer.local";
 
 let configured = false;
@@ -24,7 +29,7 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
     configured = true;
     console.log("Web Push: VAPID đã cấu hình — thông báo đẩy BẬT.");
   } catch (e) {
-    console.error("VAPID không hợp lệ — thông báo đẩy TẮT:", e);
+    console.warn(`VAPID không hợp lệ — thông báo đẩy TẮT: ${e instanceof Error ? e.message : String(e)}`);
   }
 } else {
   console.log("Web Push: chưa có VAPID keys — thông báo đẩy TẮT (đặt VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY trong .env).");

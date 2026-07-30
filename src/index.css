@@ -122,13 +122,12 @@
 /* Global UI polish: a warmer, editorial type hierarchy and consistent controls. */
 body {
   font-family: "Geist", ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: -0.01em;
-  background-image: radial-gradient(circle at 12% 0%, color-mix(in srgb, var(--sky-500) 7%, transparent), transparent 30rem);
+  letter-spacing: 0;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Geist", ui-sans-serif, sans-serif;
-  letter-spacing: -0.025em;
+  font-family: inherit;
+  letter-spacing: 0;
   text-wrap: balance;
 }
 
@@ -303,8 +302,23 @@ html.theme-transition *::after {
 ::view-transition-old(root) { z-index: 0; }
 
 /* Global focus overlays & custom inputs to make them premium */
-input::placeholder, textarea::placeholder {
+input::placeholder,
+textarea::placeholder {
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  line-height: inherit !important;
   color: var(--slate-500) !important;
+  opacity: 1;
+}
+
+[data-placeholder] {
+  font-family: inherit !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
 }
 
 /*
