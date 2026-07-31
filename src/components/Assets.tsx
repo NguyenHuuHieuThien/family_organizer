@@ -928,7 +928,7 @@ export function Assets({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-5xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100">{editingAsset ? t("assets.editAssetTitle") : t("assets.addAssetTitle")}</h3>
@@ -1189,7 +1189,7 @@ export function Assets({
 
       {showGoldPurityInfo && (
         <div onClick={() => setShowGoldPurityInfo(false)} className="fixed inset-0 bg-slate-950/90 flex items-center justify-center z-50 p-4" id="gold-purity-info">
-          <div ref={goldInfoRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
+          <div ref={goldInfoRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col outline-none">
             <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between gap-3">
               <p className="text-sm font-bold text-slate-100 flex items-center gap-1.5"><Gem className="size-4 text-amber-400" /> {t("assets.goldPurityInfoTitle")}</p>
               <Button type="button" onClick={() => setShowGoldPurityInfo(false)} aria-label={t("common.close")} className="size-8 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200 flex items-center justify-center shrink-0">
@@ -1238,7 +1238,7 @@ export function Assets({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">

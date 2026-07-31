@@ -1021,7 +1021,7 @@ export function Schedules({
               onClick={(e) => e.stopPropagation()}
               role="dialog"
               aria-modal="true"
-              className={`bg-slate-900 border border-slate-800 ${borderLeftColor(viewingPlan.color)} rounded-2xl w-full max-w-md p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto outline-none`}
+              className={`bg-slate-900 border border-slate-800 ${borderLeftColor(viewingPlan.color)} rounded-2xl w-full max-w-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto outline-none`}
             >
               <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-800">
                 <div className="space-y-1 min-w-0">
@@ -1293,7 +1293,7 @@ export function Schedules({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+              className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
@@ -1385,7 +1385,7 @@ export function Schedules({
                 {newIsRecurring && newRecurrenceType === "weekly" && (
                   <div className="space-y-1 sm:col-span-2">
                     <label className="text-slate-400 block font-semibold">{t("schedules.recurWeekdayLabel")}</label>
-                    <div className="grid grid-cols-7 gap-1.5">
+                    <div className="grid grid-cols-1 gap-1.5">
                       {WEEKDAY_OPTIONS.map(day => {
                         const active = newRecurrenceWeekdays.includes(day.value);
                         return (
@@ -1393,7 +1393,7 @@ export function Schedules({
                             key={day.value}
                             type="button"
                             onClick={() => setNewRecurrenceWeekdays(prev => active ? prev.filter(v => v !== day.value) : [...prev, day.value].sort((a, b) => a - b))}
-                            className={`px-2 py-2 rounded-lg text-[11px] font-bold border cursor-pointer transition-colors ${active ? "bg-indigo-500 text-white border-indigo-400" : "bg-slate-950 text-slate-400 border-slate-800 hover:border-indigo-500/50"}`}
+                            className={`w-full justify-start px-3 py-2 rounded-lg text-[11px] font-bold border cursor-pointer transition-colors ${active ? "bg-indigo-500 text-white border-indigo-400" : "bg-slate-950 text-slate-400 border-slate-800 hover:border-indigo-500/50"}`}
                           >
                             {day.label}
                           </Button>

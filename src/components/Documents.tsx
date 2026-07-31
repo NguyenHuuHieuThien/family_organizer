@@ -8,7 +8,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FileText, Plus, Trash2, Pencil, X, Calendar, User as UserIcon, Paperclip, ExternalLink, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
 import { FamilyDocument, DocumentFile, DocumentType, DOCUMENT_TYPE_LABELS, User, UserRole } from "../types.js";
 import { motion, AnimatePresence } from "motion/react";
-import { optimizeAndUpload, uploadDataUrl } from "../utils/uploadImage.js";
+import { optimizeAndUpload, uploadDataUrlDetailed } from "../utils/uploadImage.js";
 import { useTabFab } from "./FabHost.js";
 import { useConfirm } from "./ConfirmDialog.js";
 import { useModalA11y } from "../hooks/useModalA11y.js";
@@ -58,6 +58,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const [notes, setNotes] = useState("");
   const [isShared, setIsShared] = useState(false);
   const [files, setFiles] = useState<DocumentFile[]>([]);
+  const [savePickedToDrive, setSavePickedToDrive] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   // updatedAt của bản giấy tờ lúc mở form sửa — server so để phát hiện sửa đè nhau (409)
   const [editingBaseUpdatedAt, setEditingBaseUpdatedAt] = useState("");
@@ -149,7 +150,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
       const added: DocumentFile[] = [];
       for (const file of picked) {
         const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-        let url: string; let sizeKb: number;
+        let url: string; let sizeKb: number; let driveFileId: string | undefined; let driveUrl: string | undefined;
         if (isPdf) {
           if (file.size > 10 * 1024 * 1024) throw new Error(t("documents.errorPdfTooLarge", { name: file.name }));
           const dataUrl = await new Promise<string>((resolve, reject) => {
@@ -158,7 +159,10 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             r.onerror = () => reject(new Error(t("documents.errorPdfRead")));
             r.readAsDataURL(file);
           });
-          url = await uploadDataUrl(dataUrl, "documents");
+          const uploaded = await uploadDataUrlDetailed(dataUrl, "documents", { saveToDrive: savePickedToDrive, fileName: file.name });
+          url = uploaded.url;
+          driveFileId = uploaded.driveFileId;
+          driveUrl = uploaded.driveUrl;
           sizeKb = Math.max(1, Math.round(file.size / 1024));
         } else {
           const up = await optimizeAndUpload(file, "documents", {
@@ -167,14 +171,18 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             maxSizes: [1600, 1280, 1024, 768],
             qualities: [0.86, 0.78, 0.68, 0.58],
             backgroundColor: "#ffffff"
-          });
+          }, undefined, { saveToDrive: savePickedToDrive, fileName: file.name });
           url = up.url;
+          driveFileId = up.driveFileId;
+          driveUrl = up.driveUrl;
           sizeKb = up.sizeKb;
         }
         added.push({
           id: `docfile_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
           fileName: file.name,
           url,
+          driveFileId,
+          driveUrl,
           sizeKb,
           createdAt: new Date().toISOString()
         });
@@ -381,6 +389,10 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                 <Input type="file" accept="image/*,application/pdf,.pdf" multiple disabled={uploading || files.length >= MAX_DOC_FILES} onChange={handleFilePick} className="hidden" />
               </label>
             </div>
+            <label className={`flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[11px] font-bold transition-all ${savePickedToDrive ? "border-indigo-500/35 bg-indigo-500/12 text-indigo-200" : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"}`}>
+              <span>Lưu thêm bản sao vào Google Drive khi thêm tệp mới</span>
+              <Input type="checkbox" checked={savePickedToDrive} onChange={(e) => setSavePickedToDrive(e.target.checked)} className="size-3.5 shrink-0 accent-indigo-500" />
+            </label>
             {files.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {files.map(f => (
@@ -396,6 +408,11 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                     <Button type="button" onClick={() => removeFile(f.id)} className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white rounded-full p-0.5 cursor-pointer" title={t("documents.removeFileTooltip")}>
                       <X className="w-3 h-3" />
                     </Button>
+                    {f.driveUrl && (
+                      <a href={f.driveUrl} target="_blank" rel="noreferrer" className="absolute -bottom-1.5 -right-1.5 bg-sky-500 text-white rounded-full p-0.5" title="Mở trên Google Drive">
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    )}
                   </div>
                 ))}
               </div>

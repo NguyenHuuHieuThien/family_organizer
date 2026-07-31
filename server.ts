@@ -23,6 +23,7 @@ import { telegramBackupStatus, sendBackupToTelegram, runTelegramBackupTick } fro
 import { sendWeeklyDigest, runWeeklyDigestTick } from "./server/weeklyDigest.js";
 import { icsFeedToken, isValidIcsToken, buildIcsFeed } from "./server/icsFeed.js";
 import { getVapidPublicKey, isPushConfigured, sendTestPush } from "./server/push.js";
+import { googleDriveStatus, testGoogleDriveConfig, uploadDataUrlToGoogleDrive } from "./server/googleDrive.js";
 
 // Accepted permission roles for write validation
 const VALID_ROLES = new Set<string>([UserRole.ADMIN, UserRole.MEMBER, UserRole.CHILD, UserRole.GUEST]);
@@ -404,15 +405,16 @@ const canManagePhoto = (
 // category folder, and returns the "/uploads/..." URL to store in the DB.
 const UPLOAD_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos", "chat"]);
 
-app.post("/api/uploads", requireAuth, (req: AuthRequest, res: Response) => {
-  const { dataUrl, category, subfolder } = req.body || {};
+app.post("/api/uploads", requireAuth, async (req: AuthRequest, res: Response) => {
+  const { dataUrl, category, subfolder, saveToDrive, fileName } = req.body || {};
   if (!UPLOAD_CATEGORIES.has(category)) {
     res.status(400).json({ error: "Loại ảnh tải lên không hợp lệ." });
     return;
   }
   try {
     const saved = saveDataUrlToFile(dataUrl, category, subfolder);
-    res.json(saved);
+    const drive = saveToDrive ? await uploadDataUrlToGoogleDrive(dataUrl, String(fileName || "")) : null;
+    res.json(drive ? { ...saved, driveFileId: drive.id, driveUrl: drive.webViewLink } : saved);
   } catch (err: any) {
     res.status(400).json({ error: err.message || "Tải ảnh lên thất bại." });
   }
@@ -774,6 +776,37 @@ app.post("/api/settings/ai", requireAuth, requireRole([UserRole.ADMIN]), async (
 
   setAppSetting("geminiApiKey", apiKey);
   res.json({ ...aiStatus(), message: "Đã lưu Gemini API key. Tính năng AI đã sẵn sàng." });
+});
+
+// --- GOOGLE DRIVE SETTINGS (admin only) ---
+
+app.get("/api/settings/google-drive", requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
+  res.json(googleDriveStatus());
+});
+
+app.post("/api/settings/google-drive", requireAuth, requireRole([UserRole.ADMIN]), async (req: AuthRequest, res: Response) => {
+  const { serviceAccountJson, folderId, enabled, clear } = req.body || {};
+  if (clear) {
+    setAppSetting("googleDriveServiceAccountJson", null);
+    setAppSetting("googleDriveFolderId", null);
+    setAppSetting("googleDriveEnabled", null);
+    res.json({ ...googleDriveStatus(), message: "Đã xóa kết nối Google Drive." });
+    return;
+  }
+  try {
+    if (serviceAccountJson !== undefined || folderId !== undefined) {
+      const nextJson = String(serviceAccountJson || getAppSettings().googleDriveServiceAccountJson || "").trim();
+      const nextFolder = String(folderId || getAppSettings().googleDriveFolderId || "").trim();
+      await testGoogleDriveConfig(nextJson, nextFolder);
+      setAppSetting("googleDriveServiceAccountJson", nextJson);
+      setAppSetting("googleDriveFolderId", nextFolder);
+      setAppSetting("googleDriveEnabled", "1");
+    }
+    if (enabled !== undefined) setAppSetting("googleDriveEnabled", enabled ? "1" : null);
+    res.json({ ...googleDriveStatus(), message: "Đã lưu kết nối Google Drive." });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Lưu Google Drive thất bại." });
+  }
 });
 
 // --- FEATURE TOGGLES (admin only) ---

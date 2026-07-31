@@ -512,7 +512,7 @@ export function Notes({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
@@ -632,23 +632,23 @@ export function Notes({
                 />
               </div>
 
-              <div className="flex flex-col md:flex-row items-center gap-4 bg-slate-950/40 p-4 neu-pressed-sm rounded-xl">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300 font-semibold select-none">
+              <div className="grid grid-cols-1 gap-2 bg-slate-950/40 p-4 neu-pressed-sm rounded-xl">
+                <label className={`flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${formIsPinned ? "border-yellow-500/35 bg-yellow-500/12 text-yellow-200" : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"}`}>
+                  <span>{t("notes.pinCheckbox")}</span>
                   <Checkbox
                     checked={formIsPinned}
                     onCheckedChange={(checked) => setFormIsPinned(checked === true)}
                     className="cursor-pointer"
                   />
-                  <span>{t("notes.pinCheckbox")}</span>
                 </label>
 
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300 font-semibold select-none">
+                <label className={`flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs font-bold transition-all ${formIsShared ? "border-sky-500/35 bg-sky-500/12 text-sky-200" : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"}`}>
+                  <span>{t("notes.shareCheckbox")}</span>
                   <Checkbox
                     checked={formIsShared}
                     onCheckedChange={(checked) => setFormIsShared(checked === true)}
                     className="cursor-pointer"
                   />
-                  <span>{t("notes.shareCheckbox")}</span>
                 </label>
               </div>
 
@@ -689,7 +689,7 @@ export function Notes({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto outline-none"
           >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="space-y-0.5">

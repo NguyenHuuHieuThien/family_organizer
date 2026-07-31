@@ -8,6 +8,7 @@ import { createPortal } from "react-dom";
 import { FileText, Image as ImageIcon, MessageCircle, Mic, Paperclip, Phone, PhoneOff, Send, Trash2, Video, X } from "lucide-react";
 import { Button, Textarea } from "./ui";
 import { Avatar } from "./Avatar.js";
+import { FancySelect } from "./FancySelect.js";
 import { FamilyChatAttachment, FamilyChatMessage, User, UserRole } from "../types.js";
 import { uploadDataUrl } from "../utils/uploadImage.js";
 
@@ -457,9 +458,15 @@ export function FamilyChat({ currentUser, users, messages, authHeaders, callSign
 
         {canSend && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 rounded-xl bg-slate-950/60 border border-slate-800 p-2">
-            <select value={callTargetId} onChange={(e) => setCallTargetId(e.target.value)} disabled={callStatus !== "idle"} className="h-9 min-w-0 flex-1 rounded-lg bg-slate-900 border border-slate-800 px-3 text-sm text-slate-200 outline-none focus:border-sky-500">
-              {callableUsers.length === 0 ? <option value="">Không có người để gọi</option> : callableUsers.map(u => <option key={u.id} value={u.id}>{u.fullName}</option>)}
-            </select>
+            <div className="min-w-0 flex-1">
+              <FancySelect
+                value={callTargetId}
+                onChange={setCallTargetId}
+                disabled={callStatus !== "idle"}
+                ariaLabel="Chọn người để gọi"
+                options={callableUsers.length === 0 ? [{ value: "", label: "Không có người để gọi" }] : callableUsers.map(u => ({ value: u.id, label: u.fullName }))}
+              />
+            </div>
             <div className="flex items-center gap-2">
               <Button type="button" onClick={() => void startCall("audio")} disabled={callStatus !== "idle" || !callTargetId} className="h-9 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white px-3"><Phone className="size-4" /> Gọi</Button>
               <Button type="button" onClick={() => void startCall("video")} disabled={callStatus !== "idle" || !callTargetId} className="h-9 rounded-lg bg-sky-500 hover:bg-sky-600 text-white px-3"><Video className="size-4" /> Video</Button>

@@ -219,7 +219,7 @@ export function Assistant({ currentUser, authHeaders }: AssistantProps) {
               role="dialog"
               aria-modal="true"
               aria-label={t("assistant.dialogAria")}
-              className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden outline-none"
+              className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden outline-none"
             >
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-800">
                 <div className="flex items-center gap-2">

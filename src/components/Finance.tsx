@@ -1777,7 +1777,7 @@ export function Finance({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
@@ -1987,7 +1987,7 @@ export function Finance({
       {/* Edit recurring bill modal */}
       {editingBill && (
         <div onClick={() => setEditingBill(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div ref={billEditorRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm p-5 shadow-2xl outline-none">
+          <div ref={billEditorRef} tabIndex={-1} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-5 shadow-2xl outline-none">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-bold text-slate-100">{t("finance.editBillDialogTitle")}</h3>
               <Button onClick={() => setEditingBill(null)} className="text-slate-500 hover:text-slate-300 cursor-pointer">

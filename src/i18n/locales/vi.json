@@ -365,7 +365,7 @@
     "expiryDateLabel": "Ngày hết hạn (để nhắc)",
     "notesPlaceholder": "Ghi chú thêm...",
     "shareScopeLabel": "Phạm vi chia sẻ",
-    "sharePrivateOption": "Riêng tư (ngườ tạo & chủ sở hữu)",
+    "sharePrivateOption": "Riêng tư (người tạo & chủ sở hữu)",
     "shareSharedOption": "Chia sẻ (ngườ lớn trong nhà)",
     "attachmentsLabel": "Ảnh/PDF đính kèm ({{count}}/{{max}})",
     "pasteHint": "— dán ảnh Ctrl+V được",

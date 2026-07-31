@@ -158,7 +158,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
               animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
               exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.97 }}
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
-              className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden"
+              className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden"
               onClick={e => e.stopPropagation()}
             >
               {/* Ô nhập */}

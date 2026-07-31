@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Button, Input } from "./ui";
+import { Button, Input, Textarea } from "./ui";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Users,
@@ -33,7 +33,8 @@ import {
   Send,
   Calendar,
   Copy,
-  Languages
+  Languages,
+  Cloud
 } from "lucide-react";
 import { User, UserRole, FamilyRelation, FAMILY_RELATION_LABELS, ROLE_LABELS } from "../types.js";
 import { useModalA11y } from "../hooks/useModalA11y.js";
@@ -41,7 +42,7 @@ import { FancySelect } from "./FancySelect.js";
 import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGUAGES } from "../i18n/index.js";
 
-// Role <select> options shared by the create + edit forms
+// Role options shared by the create + edit forms
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: UserRole.ADMIN, label: "Quản lý (Admin) — toàn quyền" },
   { value: UserRole.MEMBER, label: "Thành viên — người lớn" },
@@ -253,6 +254,14 @@ export function Settings({
   const [tgDigestBusy, setTgDigestBusy] = useState(false);
   const [tgDigestMsg, setTgDigestMsg] = useState("");
 
+  interface DriveStatus { configured: boolean; enabled: boolean; folderId: string; serviceAccountEmail: string }
+  const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
+  const [driveJson, setDriveJson] = useState("");
+  const [driveFolderId, setDriveFolderId] = useState("");
+  const [driveBusy, setDriveBusy] = useState(false);
+  const [driveMsg, setDriveMsg] = useState("");
+  const [driveErr, setDriveErr] = useState("");
+
   // Escape-to-close + scroll lock + focus trap for the edit-user & reset-password modals
   const editTargetRef = useRef<HTMLDivElement | null>(null);
   const resetTargetRef = useRef<HTMLDivElement | null>(null);
@@ -306,7 +315,33 @@ export function Settings({
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (d) { setTgStatus(d); setTgChatId(d.chatId || ""); } })
       .catch(() => {});
+    fetch("/api/settings/google-drive", { headers: authHeaders() })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) { setDriveStatus(d); setDriveFolderId(d.folderId || ""); } })
+      .catch(() => {});
   }, []);
+
+  const saveDriveConfig = async (patch?: { enabled?: boolean; clear?: boolean }) => {
+    setDriveBusy(true); setDriveMsg(""); setDriveErr("");
+    try {
+      const body = patch || { serviceAccountJson: driveJson.trim(), folderId: driveFolderId.trim(), enabled: true };
+      const res = await fetch("/api/settings/google-drive", {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lưu Google Drive thất bại.");
+      setDriveStatus(data);
+      setDriveFolderId(data.folderId || "");
+      setDriveJson("");
+      setDriveMsg(data.message || "Đã lưu kết nối Google Drive.");
+    } catch (err: any) {
+      setDriveErr(err.message || "Lưu Google Drive thất bại.");
+    } finally {
+      setDriveBusy(false);
+    }
+  };
 
   // Lưu cấu hình Telegram (token/chat id chỉ gửi khi người dùng có nhập) hoặc bật/tắt
   const saveTgConfig = async (patch: { botToken?: string; chatId?: string; enabled?: boolean; weeklyDigestEnabled?: boolean }) => {
@@ -1009,7 +1044,7 @@ export function Settings({
           </form>
 
           {/* Địa phương thời tiết (lưu riêng từng người trên máy này) */}
-          <div className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-3 max-w-md">
+          <div className="w-full bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-3">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <MapPin className="w-4.5 h-4.5 text-sky-400" /> Địa phương xem thời tiết
             </h3>
@@ -1021,14 +1056,14 @@ export function Settings({
                 value={weatherLoc}
                 onChange={onChangeWeatherLoc}
                 ariaLabel="Chọn địa phương xem thời tiết"
-                className="bg-slate-900"
+                className="bg-slate-900 !grid-cols-6"
                 options={VN_LOCATIONS.map(l => ({ value: l.code, label: l.name }))}
               />
             </div>
           </div>
 
           {/* Change password */}
-          <form onSubmit={handleChangePasswordSubmit} className="bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-3.5 max-w-md">
+          <form onSubmit={handleChangePasswordSubmit} className="w-full bg-slate-950 p-4.5 rounded-2xl neu-pressed-sm space-y-3.5">
             <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <KeyRound className="w-4.5 h-4.5 text-amber-400" /> Đổi mật khẩu
             </h3>
@@ -1469,7 +1504,7 @@ export function Settings({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center gap-3 px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <Avatar user={{ fullName: euFullName || editTarget.fullName, avatarColor: euColor, avatarImage: editTarget.avatarImage }} className="w-10 h-10 rounded-xl text-base" extraClass="shrink-0" />
@@ -1596,7 +1631,7 @@ export function Settings({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto outline-none"
           >
             <div className="flex items-center gap-3 pb-3 border-b border-slate-800">
               <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 shrink-0">
@@ -1765,6 +1800,70 @@ export function Settings({
           </div>
           {aiKeyErr && <p className="text-[11px] text-rose-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {aiKeyErr}</p>}
           {aiKeyMsg && <p className="text-[11px] text-emerald-400 flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 shrink-0" /> {aiKeyMsg}</p>}
+        </div>
+      )}
+
+      {/* Google Drive — lưu thêm bản sao giấy tờ/hình ảnh khi upload */}
+      {activeTab === "backups" && currentUser.role === UserRole.ADMIN && (
+        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-0.5 min-w-0">
+              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <Cloud className="w-4 h-4 text-sky-400" /> Kết nối Google Drive
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                {driveStatus?.configured
+                  ? `Đã kết nối ${driveStatus.serviceAccountEmail} vào thư mục ${driveStatus.folderId}. Khi thêm giấy tờ hoặc hình ảnh, người dùng có thể chọn lưu thêm bản sao lên Drive.`
+                  : "Dán Service Account JSON và Folder ID. Hãy chia sẻ thư mục Drive cho email service account trước khi lưu."}
+              </p>
+            </div>
+            {driveStatus?.configured && (
+              <Button
+                type="button"
+                onClick={() => saveDriveConfig({ enabled: !driveStatus.enabled })}
+                disabled={driveBusy}
+                className={`shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all disabled:opacity-50 ${driveStatus.enabled ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-slate-900 text-slate-500 border-slate-800"}`}
+              >
+                {driveStatus.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px_auto] gap-2">
+            <Textarea
+              value={driveJson}
+              onChange={(e) => setDriveJson(e.target.value)}
+              rows={3}
+              placeholder={driveStatus?.configured ? "Service Account JSON mới (để trống nếu chỉ đổi Folder ID)" : "Dán toàn bộ Service Account JSON"}
+              className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 font-mono min-w-0"
+            />
+            <Input
+              value={driveFolderId}
+              onChange={(e) => setDriveFolderId(e.target.value)}
+              placeholder="Google Drive Folder ID"
+              className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 font-mono"
+            />
+            <Button
+              type="button"
+              onClick={() => saveDriveConfig()}
+              disabled={driveBusy || (!driveJson.trim() && !driveStatus?.configured) || !driveFolderId.trim()}
+              className="bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all"
+            >
+              {driveBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              Lưu & kiểm tra
+            </Button>
+          </div>
+          <div className="flex items-center gap-3">
+            <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" rel="noreferrer noopener" className="text-[11px] text-sky-400 hover:underline">
+              Tạo service account trên Google Cloud →
+            </a>
+            {driveStatus?.configured && (
+              <Button type="button" onClick={() => saveDriveConfig({ clear: true })} disabled={driveBusy} className="text-[11px] text-slate-400 hover:text-rose-400 ml-auto cursor-pointer">
+                Xóa kết nối Drive
+              </Button>
+            )}
+          </div>
+          {driveErr && <p className="text-[11px] text-rose-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {driveErr}</p>}
+          {driveMsg && <p className="text-[11px] text-emerald-400 flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 shrink-0" /> {driveMsg}</p>}
         </div>
       )}
 

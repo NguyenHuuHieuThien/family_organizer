@@ -57,6 +57,15 @@
   --sky-100: #d4f2eb;
 }
 
+/* Radio/checkbox button fields must own their row inside form grids. */
+.grid > :has(> [role="radiogroup"]),
+.grid > :has(> [role="group"]),
+.grid > [role="radiogroup"],
+.grid > [role="group"] {
+  grid-column: 1 / -1;
+  width: 100%;
+}
+
 .dark {
   color-scheme: dark;  /* Bàn phím iOS + form control dùng gam tối theo theme app */
 

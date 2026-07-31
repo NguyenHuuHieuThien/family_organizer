@@ -1370,7 +1370,7 @@ export function Tasks({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] outline-none"
           >
             {/* Modal Header */}
             <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950">
@@ -1524,7 +1524,7 @@ export function Tasks({
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
-            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
           >
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-800 shrink-0">
               <h3 className="text-md font-bold text-slate-100 flex items-center gap-1.5">
@@ -1593,6 +1593,7 @@ export function Tasks({
                   <FancySelect
                     value={newAssignee}
                     onChange={setNewAssignee}
+                    mode="checkbox"
                     ariaLabel={t("tasks.formAssigneeLabel")}
                     options={[
                       { value: "unassigned", label: t("tasks.formAssigneeShared") },
@@ -1655,7 +1656,7 @@ export function Tasks({
                   <div className="space-y-1.5 col-span-2">
                     <label className="text-slate-400 block font-semibold">{t("tasks.formRotationLabel")}</label>
                     <p className="text-[10px] text-slate-500">{t("tasks.formRotationHint")}</p>
-                    <div className="flex flex-wrap gap-1.5">
+                    <div className="grid grid-cols-1 gap-1.5">
                       {users.filter(u => !u.isDeleted).map(u => {
                         const active = newRotationMemberIds.includes(u.id);
                         return (
@@ -1663,7 +1664,7 @@ export function Tasks({
                             type="button"
                             key={u.id}
                             onClick={() => setNewRotationMemberIds(prev => active ? prev.filter(id => id !== u.id) : [...prev, u.id])}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${active ? "bg-indigo-500 text-white border-indigo-400" : "bg-slate-950 text-slate-400 border-slate-800 hover:border-indigo-500/50"}`}
+                            className={`w-full justify-start px-3 py-2 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${active ? "bg-indigo-500 text-white border-indigo-400" : "bg-slate-950 text-slate-400 border-slate-800 hover:border-indigo-500/50"}`}
                           >
                             {active && newRotationMemberIds.indexOf(u.id) >= 0 ? `${newRotationMemberIds.indexOf(u.id) + 1}. ` : ""}{u.fullName}
                           </Button>
@@ -1716,7 +1717,7 @@ export function Tasks({
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-900 neu-raised rounded-2xl w-full max-w-md overflow-hidden"
+            className="bg-slate-900 neu-raised rounded-2xl w-full max-w-2xl overflow-hidden"
           >
             <div className="px-5 py-4 border-t-0 border-b border-slate-800 flex items-center gap-2">
               <CheckCircle className="w-5 h-5 text-emerald-400" />
@@ -1794,7 +1795,7 @@ export function Tasks({
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-slate-900 neu-raised rounded-2xl w-full max-w-md overflow-hidden"
+            className="bg-slate-900 neu-raised rounded-2xl w-full max-w-2xl overflow-hidden"
           >
             <div className="px-5 py-4 border-b border-slate-800 flex items-center gap-2">
               <RotateCcw className="w-5 h-5 text-rose-400" />

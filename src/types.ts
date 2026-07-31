@@ -446,6 +446,8 @@ export interface DocumentFile {
   id: string;
   fileName: string;
   url: string;      // "/uploads/documents/..."
+  driveFileId?: string;
+  driveUrl?: string;
   sizeKb?: number;
   createdAt: string;
 }
@@ -472,6 +474,8 @@ export interface FamilyPhoto {
   title: string;
   description?: string;
   url: string;      // "/uploads/photos/..."
+  driveFileId?: string;
+  driveUrl?: string;
   fileName: string;
   sizeKb?: number;
   width?: number;

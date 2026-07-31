@@ -19,7 +19,7 @@ export function DialogContent({
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-[61] grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-slate-850 bg-slate-900 p-6 text-slate-200 shadow-xl outline-none",
+          "fixed top-1/2 left-1/2 z-[61] grid w-[calc(100%-2rem)] max-w-2xl -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-slate-850 bg-slate-900 p-6 text-slate-200 shadow-xl outline-none",
           className,
         )}
         {...props}
