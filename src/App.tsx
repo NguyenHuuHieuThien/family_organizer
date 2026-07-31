@@ -14,6 +14,7 @@ import {
   Wallet,
   Settings2,
   Bell,
+  MessageCircle,
   LogOut,
   Menu,
   X,
@@ -46,7 +47,9 @@ import {
   MedicationReminder,
   MedicationLog,
   FamilyDocument,
+  FamilyChatAttachment,
   FamilyPhoto,
+  FamilyChatMessage,
   SavingsGoal,
   Debt,
   VaccinationRecord,
@@ -67,6 +70,7 @@ import { Finance } from "./components/Finance.js";
 import { Shopping } from "./components/Shopping.js";
 import { Documents } from "./components/Documents.js";
 import { Photos } from "./components/Photos.js";
+import { FamilyChat } from "./components/FamilyChat.js";
 import { ChildHealth } from "./components/ChildHealth.js";
 import { Assistant } from "./components/Assistant.js";
 import { FabProvider } from "./components/FabHost.js";
@@ -212,7 +216,7 @@ export default function App() {
   // Push notifications: clear the app-icon badge when the app is opened/focused,
   // and deep-link to the right tab when a push notification is tapped.
   useEffect(() => {
-    const KNOWN_TABS = ["dashboard", "tasks", "plans", "notes", "shopping", "medications", "child-health", "finance", "documents", "photos", "server", "settings"];
+    const KNOWN_TABS = ["dashboard", "tasks", "plans", "notes", "shopping", "chat", "medications", "child-health", "finance", "documents", "photos", "server", "settings"];
     const clearBadge = () => { try { (navigator as any).clearAppBadge?.(); } catch (e) { /* ignore */ } };
 
     // Lịch thuốc giờ nằm trong "Sức khỏe gia đình": deep-link "medications" → mở tab
@@ -368,6 +372,8 @@ export default function App() {
   const [healthProfiles, setHealthProfiles] = useState<EmergencyProfile[]>([]);
   const [documents, setDocuments] = useState<FamilyDocument[]>([]);
   const [photos, setPhotos] = useState<FamilyPhoto[]>([]);
+  const [chatMessages, setChatMessages] = useState<FamilyChatMessage[]>([]);
+  const [chatCallSignal, setChatCallSignal] = useState<any>(null);
   const [shoppingItems, setShoppingItems] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
@@ -385,7 +391,8 @@ export default function App() {
   // Notifications modal control
   const [notifOpen, setNotifOpen] = useState(false);
 
-  // Server-Sent Events (SSE) reference
+  // Realtime connection references (WebSocket primary, SSE fallback)
+  const wsRef = useRef<WebSocket | null>(null);
   const sseRef = useRef<EventSource | null>(null);
 
   // Notification popover wrapper (for click-away dismissal)
@@ -612,6 +619,19 @@ export default function App() {
     }
   };
 
+  const fetchChatMessages = async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch("/api/chat", { headers: getAuthHeader() });
+      if (res.ok) {
+        const data = await res.json();
+        setChatMessages(data.messages || []);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const fetchNotifications = async () => {
     if (!currentUser) return;
     try {
@@ -738,6 +758,7 @@ export default function App() {
     fetchChildHealth();
     fetchDocuments();
     fetchPhotos();
+    fetchChatMessages();
     fetchShopping();
     fetchNotifications();
     fetchBackupsAndLogs();
@@ -803,98 +824,140 @@ export default function App() {
     // Refresh dashboard widgets (weather/markets) periodically
     const widgetTimer = setInterval(() => { fetchWidgets(); }, 10 * 60 * 1000);
 
-    // Establish Server-Sent Events client loop pipeline
-    const sse = new EventSource("/api/realtime");
-    sseRef.current = sse;
+    const handleRealtimePayload = (payload: any) => {
+      console.log("⚓ Đã đồng bộ tài liệu thời gian thực:", payload);
 
-    sse.onopen = () => {
-      setIsOnline(true);
-    };
-
-    sse.onerror = () => {
-      setIsOnline(false);
-    };
-
-    sse.onmessage = (event) => {
-      try {
-        const payload = JSON.parse(event.data);
-        console.log("⚓ Đã đồng bộ tài liệu thời gian thực:", payload);
-
-        switch (payload.type) {
-          case "TASKS_UPDATE":
-            fetchTasks();
-            fetchRewards();
-            fetchNotifications();
-            fetchBackupsAndLogs(); // refresh logs
-            break;
-          case "PLANS_UPDATE":
-            fetchPlans();
-            fetchNotifications();
-            fetchBackupsAndLogs();
-            break;
-          case "NOTES_UPDATE":
-            fetchNotes();
-            fetchBackupsAndLogs();
-            break;
-          case "FINANCE_UPDATE":
-            fetchTransactions();
-            fetchFinancePlanning();
-            fetchBackupsAndLogs();
-            break;
-          case "REWARDS_UPDATE":
-            fetchRewards();
-            fetchBackupsAndLogs();
-            break;
-          case "MEDICATIONS_UPDATE":
-            fetchMedications();
-            fetchMedicationLogs();
-            fetchNotifications();
-            fetchBackupsAndLogs();
-            break;
-          case "SHOPPING_UPDATE":
-            fetchShopping();
-            fetchBackupsAndLogs();
-            break;
-          case "DOCUMENTS_UPDATE":
-            fetchDocuments();
-            fetchBackupsAndLogs();
-            break;
-          case "PHOTOS_UPDATE":
-            fetchPhotos();
-            fetchBackupsAndLogs();
-            break;
-          case "CHILD_HEALTH_UPDATE":
-            fetchChildHealth();
-            fetchNotifications();
-            fetchBackupsAndLogs();
-            break;
-          case "NOTIFICATIONS_UPDATE":
-            fetchNotifications();
-            break;
-          case "USERS_UPDATE":
-            fetchUsers();
-            fetchBackupsAndLogs();
-            break;
-          case "BACKUPS_UPDATE":
-            fetchBackupsAndLogs();
-            break;
-          case "SETTINGS_UPDATE":
-            fetchAppVersion(); // đồng bộ cờ tính năng (vd: bật/tắt Điểm thưởng)
-            break;
-          case "RESTORE_COMPLETED":
-            // Critical: full server reboot sync
-            fetchAllData();
-            break;
-          default:
-            break;
-        }
-      } catch (err) {
-        console.error("SSE message parsing failed:", err);
+      switch (payload.type) {
+        case "TASKS_UPDATE":
+          fetchTasks();
+          fetchRewards();
+          fetchNotifications();
+          fetchBackupsAndLogs(); // refresh logs
+          break;
+        case "PLANS_UPDATE":
+          fetchPlans();
+          fetchNotifications();
+          fetchBackupsAndLogs();
+          break;
+        case "NOTES_UPDATE":
+          fetchNotes();
+          fetchBackupsAndLogs();
+          break;
+        case "FINANCE_UPDATE":
+          fetchTransactions();
+          fetchFinancePlanning();
+          fetchBackupsAndLogs();
+          break;
+        case "REWARDS_UPDATE":
+          fetchRewards();
+          fetchBackupsAndLogs();
+          break;
+        case "MEDICATIONS_UPDATE":
+          fetchMedications();
+          fetchMedicationLogs();
+          fetchNotifications();
+          fetchBackupsAndLogs();
+          break;
+        case "SHOPPING_UPDATE":
+          fetchShopping();
+          fetchBackupsAndLogs();
+          break;
+        case "DOCUMENTS_UPDATE":
+          fetchDocuments();
+          fetchBackupsAndLogs();
+          break;
+        case "PHOTOS_UPDATE":
+          fetchPhotos();
+          fetchBackupsAndLogs();
+          break;
+        case "CHAT_UPDATE":
+          fetchChatMessages();
+          break;
+        case "CHAT_CALL_SIGNAL":
+          setChatCallSignal({ ...payload.signal, seq: Date.now() });
+          break;
+        case "CHILD_HEALTH_UPDATE":
+          fetchChildHealth();
+          fetchNotifications();
+          fetchBackupsAndLogs();
+          break;
+        case "NOTIFICATIONS_UPDATE":
+          fetchNotifications();
+          break;
+        case "USERS_UPDATE":
+          fetchUsers();
+          fetchBackupsAndLogs();
+          break;
+        case "BACKUPS_UPDATE":
+          fetchBackupsAndLogs();
+          break;
+        case "SETTINGS_UPDATE":
+          fetchAppVersion(); // đồng bộ cờ tính năng (vd: bật/tắt Điểm thưởng)
+          break;
+        case "RESTORE_COMPLETED":
+          // Critical: full server reboot sync
+          fetchAllData();
+          break;
+        default:
+          break;
       }
     };
 
+    const startSseFallback = () => {
+      if (sseRef.current) return;
+      const token = encodeURIComponent(authToken || localStorage.getItem("family_token") || "");
+      const sse = new EventSource(`/api/realtime?token=${token}`);
+      sseRef.current = sse;
+      sse.onopen = () => setIsOnline(true);
+      sse.onerror = () => setIsOnline(false);
+      sse.onmessage = (event) => {
+        try {
+          handleRealtimePayload(JSON.parse(event.data));
+        } catch (err) {
+          console.error("Realtime SSE parsing failed:", err);
+        }
+      };
+    };
+
+    // WebSocket runs on the same app origin at /api/ws. If a proxy blocks WS
+    // upgrade, fall back to the existing SSE stream so data sync keeps working.
+    let closingRealtime = false;
+    try {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const token = encodeURIComponent(authToken || localStorage.getItem("family_token") || "");
+      const ws = new WebSocket(`${protocol}//${window.location.host}/api/ws?token=${token}`);
+      wsRef.current = ws;
+      ws.onopen = () => setIsOnline(true);
+      ws.onerror = () => {
+        setIsOnline(false);
+        startSseFallback();
+      };
+      ws.onclose = () => {
+        if (wsRef.current === ws) wsRef.current = null;
+        if (!closingRealtime) startSseFallback();
+      };
+      ws.onmessage = (event) => {
+        try {
+          handleRealtimePayload(JSON.parse(event.data));
+        } catch (err) {
+          console.error("Realtime WebSocket parsing failed:", err);
+        }
+      };
+    } catch {
+      startSseFallback();
+    }
+
     return () => {
+      closingRealtime = true;
       clearInterval(widgetTimer);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
       if (sseRef.current) {
         sseRef.current.close();
         sseRef.current = null;
@@ -917,6 +980,10 @@ export default function App() {
     localStorage.removeItem("family_active_tab");
     setAuthToken(null);
     setCurrentUser(null);
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
     if (sseRef.current) {
       sseRef.current.close();
       sseRef.current = null;
@@ -1423,6 +1490,31 @@ export default function App() {
     return res.json();
   };
 
+  const handleSendChatMessage = async (content: string, attachments?: FamilyChatAttachment[]) => {
+    const res = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeader() },
+      body: JSON.stringify({ content, attachments: attachments || [] })
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+    }
+    return res.json();
+  };
+
+  const handleDeleteChatMessage = async (id: string) => {
+    const res = await fetch(`/api/chat/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeader()
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      throw new Error(data.error);
+    }
+    return res.json();
+  };
+
   // Ghi nhận / bỏ đánh dấu một liều thuốc (status: "taken" | "skipped" | "none")
   const handleLogDose = async (
     medicationId: string,
@@ -1692,6 +1784,7 @@ export default function App() {
     { id: "plans", label: t("nav.plans"), icon: Calendar },
     { id: "notes", label: t("nav.notes"), icon: FileText },
     { id: "shopping", label: t("nav.shopping"), icon: ShoppingCart },
+    { id: "chat", label: t("nav.chat"), icon: MessageCircle },
     { id: "photos", label: t("nav.photos"), icon: Images },
     // Sổ sức khỏe cả nhà (gồm Tăng trưởng, Tiêm chủng, Lịch thuốc) — mọi thành viên đều xem được
     { id: "child-health", label: t("nav.childHealth"), icon: HeartPulse },
@@ -2090,6 +2183,18 @@ export default function App() {
                   photos={photos}
                   onSavePhoto={handleSavePhoto}
                   onDeletePhoto={handleDeletePhoto}
+                />
+              )}
+
+              {activeTab === "chat" && (
+                <FamilyChat
+                  currentUser={currentUser}
+                  users={users}
+                  messages={chatMessages}
+                  authHeaders={getAuthHeader()}
+                  callSignal={chatCallSignal}
+                  onSendMessage={handleSendChatMessage}
+                  onDeleteMessage={handleDeleteChatMessage}
                 />
               )}
 

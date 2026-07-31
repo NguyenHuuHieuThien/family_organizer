@@ -9,7 +9,9 @@ import path from "path";
 import os from "os";
 import fsp from "fs/promises";
 import crypto from "crypto";
+import http from "http";
 import { createServer as createViteServer } from "vite";
+import { WebSocketServer, WebSocket } from "ws";
 import { FamilyDB, verifyPassword, getSessionSecret, getAppSettings, setAppSetting, initFamilyStorage } from "./server/db.js";
 import { mongooseAppendServerMetric, mongooseGetServerMetrics } from "./server/mongoose.js";
 import { UserRole, isLimitedViewer, DishSlot, MealIngredient, DOCUMENT_TYPE_LABELS } from "./src/types.js";
@@ -45,6 +47,8 @@ function validateAvatarImagePayload(avatarImage: unknown) {
 
 const MAX_ASSET_PHOTOS = 8;
 const MAX_ASSET_PHOTO_CHARS = 2_500_000;
+const MAX_CHAT_ATTACHMENTS = 6;
+const MAX_CHAT_ATTACHMENT_CHARS = 9_000_000;
 
 function validateImageRef(value: unknown, label: string, maxChars: number) {
   if (typeof value !== "string" || !isStoredImageRef(value)) {
@@ -67,6 +71,22 @@ function validateAssetPhotosPayload(photos: unknown) {
     const item = photo as any;
     validateImageRef(item.thumbnailDataUrl, `Ảnh thu nhỏ #${idx + 1}`, 500_000);
     validateImageRef(item.fullDataUrl, `Ảnh xem lớn #${idx + 1}`, MAX_ASSET_PHOTO_CHARS);
+  });
+}
+
+function validateChatAttachmentsPayload(attachments: unknown) {
+  if (attachments === undefined) return;
+  if (!Array.isArray(attachments)) throw new Error("Danh sách tệp đính kèm không hợp lệ.");
+  if (attachments.length > MAX_CHAT_ATTACHMENTS) throw new Error(`Mỗi tin nhắn chỉ nên đính kèm tối đa ${MAX_CHAT_ATTACHMENTS} tệp.`);
+  attachments.forEach((item, idx) => {
+    if (!item || typeof item !== "object") throw new Error(`Tệp đính kèm #${idx + 1} không hợp lệ.`);
+    const a = item as any;
+    if (typeof a.id !== "string" || !a.id.trim()) throw new Error(`Tệp đính kèm #${idx + 1} thiếu id.`);
+    if (typeof a.fileName !== "string" || !a.fileName.trim()) throw new Error(`Tệp đính kèm #${idx + 1} thiếu tên file.`);
+    if (typeof a.url !== "string" || !a.url.startsWith("/uploads/chat/")) throw new Error(`Tệp đính kèm #${idx + 1} không hợp lệ.`);
+    if (typeof a.mimeType !== "string" || !a.mimeType.trim()) throw new Error(`Tệp đính kèm #${idx + 1} thiếu kiểu file.`);
+    if (typeof a.kind !== "string" || !["image", "video", "audio", "file"].includes(a.kind)) throw new Error(`Tệp đính kèm #${idx + 1} có loại không hợp lệ.`);
+    if (typeof a.url === "string" && a.url.length > MAX_CHAT_ATTACHMENT_CHARS) throw new Error(`Tệp đính kèm #${idx + 1} quá lớn.`);
   });
 }
 
@@ -195,16 +215,47 @@ function recordLoginFailure(ip: string): void {
 }
 
 // Server-Sent Events client pool for real-time synchronization
-let sseClients: Response[] = [];
+type SseClient = { res: Response; userId: string | null };
+let sseClients: SseClient[] = [];
+type WsClient = { ws: WebSocket; userId: string };
+let wsClients: WsClient[] = [];
 
 // Realtime sync broadcast helper
 function broadcastSyncEvent(eventType: string, extraData: any = {}) {
   const payload = JSON.stringify({ type: eventType, timestamp: new Date().toISOString(), ...extraData });
   sseClients.forEach(client => {
     try {
-      client.write(`data: ${payload}\n\n`);
+      client.res.write(`data: ${payload}\n\n`);
     } catch (e) {
       console.error("SSE broadcast write failed:", e);
+    }
+  });
+  wsClients.forEach(client => {
+    if (client.ws.readyState !== WebSocket.OPEN) return;
+    try {
+      client.ws.send(payload);
+    } catch (e) {
+      console.error("WebSocket broadcast write failed:", e);
+    }
+  });
+}
+
+function sendRealtimeToUser(userId: string, eventType: string, extraData: any = {}) {
+  const payload = JSON.stringify({ type: eventType, timestamp: new Date().toISOString(), ...extraData });
+  sseClients.forEach(client => {
+    if (client.userId !== userId) return;
+    try {
+      client.res.write(`data: ${payload}\n\n`);
+    } catch (e) {
+      console.error("SSE targeted write failed:", e);
+    }
+  });
+  wsClients.forEach(client => {
+    if (client.userId !== userId || client.ws.readyState !== WebSocket.OPEN) return;
+    try {
+      client.ws.send(payload);
+    } catch (e) {
+      console.error("WebSocket targeted write failed:", e);
     }
   });
 }
@@ -351,7 +402,7 @@ const canManagePhoto = (
 // --- MEDIA UPLOAD ---
 // Accepts an optimized base64 data URL, writes it to disk under the given
 // category folder, and returns the "/uploads/..." URL to store in the DB.
-const UPLOAD_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos"]);
+const UPLOAD_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos", "chat"]);
 
 app.post("/api/uploads", requireAuth, (req: AuthRequest, res: Response) => {
   const { dataUrl, category, subfolder } = req.body || {};
@@ -860,6 +911,12 @@ app.post("/api/auth/change-password", requireAuth, (req: AuthRequest, res: Respo
 // --- REALTIME SSE CONNECTION FOR REPLICATION ---
 
 app.get("/api/realtime", (req: Request, res: Response) => {
+  const token = String((req.query.token as string) || "").trim();
+  const userId = token ? verifyToken(token) : null;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
   res.writeHead(200, {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache",
@@ -869,12 +926,54 @@ app.get("/api/realtime", (req: Request, res: Response) => {
   // Pulse to keep alive
   res.write(`data: ${JSON.stringify({ type: "init", message: "Đã thiết lập kết nối thời gian thực" })}\n\n`);
 
-  sseClients.push(res);
+  sseClients.push({ res, userId });
 
   req.on("close", () => {
-    sseClients = sseClients.filter(client => client !== res);
+    sseClients = sseClients.filter(client => client.res !== res);
   });
 });
+
+function attachWebSocketServer(server: http.Server) {
+  const wss = new WebSocketServer({ noServer: true });
+
+  server.on("upgrade", (req, socket, head) => {
+    try {
+      const url = new URL(req.url || "", `http://${req.headers.host || "localhost"}`);
+      if (url.pathname !== "/api/ws") return;
+      const token = url.searchParams.get("token") || "";
+      const userId = verifyToken(token);
+      const user = userId ? FamilyDB.getUsers().find(u => u.id === userId && !u.isDeleted) : null;
+      if (!user) {
+        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit("connection", ws, req, user.id);
+      });
+    } catch {
+      socket.destroy();
+    }
+  });
+
+  wss.on("connection", (ws: WebSocket, _req: http.IncomingMessage, userId: string) => {
+    const client: WsClient = { ws, userId };
+    wsClients.push(client);
+    ws.send(JSON.stringify({ type: "init", transport: "websocket", message: "Đã thiết lập WebSocket realtime" }));
+
+    ws.on("message", (raw) => {
+      let msg: any;
+      try { msg = JSON.parse(String(raw)); } catch { return; }
+      if (msg?.type === "ping") {
+        ws.send(JSON.stringify({ type: "pong", timestamp: new Date().toISOString() }));
+      }
+    });
+
+    ws.on("close", () => {
+      wsClients = wsClients.filter(c => c !== client);
+    });
+  });
+}
 
 // --- TASK API ENDPOINTS ---
 
@@ -2375,6 +2474,92 @@ app.post("/api/notifications/read-all", requireAuth, (req: AuthRequest, res: Res
   res.json({ success: true });
 });
 
+// --- FAMILY CHAT ---
+
+app.get("/api/chat", requireAuth, (_req: AuthRequest, res: Response) => {
+  res.json({ messages: FamilyDB.getChatMessages(200) });
+});
+
+const CHAT_COOLDOWN_MS = 800;
+const lastChatAt = new Map<string, number>();
+
+const VALID_CALL_SIGNAL_TYPES = new Set(["invite", "accept", "decline", "offer", "answer", "ice", "end"]);
+const VALID_CALL_MODES = new Set(["audio", "video"]);
+
+function validateCallSignalPayload(body: any): { callId: string; type: string; mode: "audio" | "video"; targetUserId?: string; payload?: any } {
+  const callId = String(body?.callId || "").trim();
+  const type = String(body?.type || "").trim();
+  const mode = String(body?.mode || "").trim();
+  const targetUserId = typeof body?.targetUserId === "string" && body.targetUserId.trim() ? body.targetUserId.trim() : undefined;
+  if (!callId) throw new Error("Thiếu mã cuộc gọi.");
+  if (!VALID_CALL_SIGNAL_TYPES.has(type)) throw new Error("Loại tín hiệu call không hợp lệ.");
+  if (!VALID_CALL_MODES.has(mode)) throw new Error("Chế độ call không hợp lệ.");
+  if (targetUserId && !FamilyDB.getUsers().some(u => u.id === targetUserId)) {
+    throw new Error("Người nhận call không tồn tại.");
+  }
+  return { callId, type, mode: mode as "audio" | "video", targetUserId, payload: body?.payload };
+}
+
+app.post("/api/chat", requireAuth, (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  if (session.role === UserRole.GUEST) {
+    res.status(403).json({ error: "Tài khoản Khách chỉ xem chat, không gửi được tin nhắn." });
+    return;
+  }
+  const content = String(req.body?.content || "").trim();
+  const now = Date.now();
+  if (now - (lastChatAt.get(session.userId) || 0) < CHAT_COOLDOWN_MS) {
+    res.status(429).json({ error: "Bạn gửi hơi nhanh, chờ một nhịp rồi thử lại nhé." });
+    return;
+  }
+  lastChatAt.set(session.userId, now);
+  try {
+    validateChatAttachmentsPayload(req.body?.attachments);
+    const message = FamilyDB.addChatMessage(session.userId, content, req.body?.attachments || []);
+    broadcastSyncEvent("CHAT_UPDATE", { messageId: message.id });
+    res.json({ message });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.delete("/api/chat/:id", requireAuth, (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  const existing = FamilyDB.getChatMessages(500).find(m => m.id === req.params.id);
+  if (existing && existing.senderId !== session.userId && session.role !== UserRole.ADMIN) {
+    res.status(403).json({ error: "Bạn chỉ xóa được tin nhắn của mình." });
+    return;
+  }
+  FamilyDB.deleteChatMessage(req.params.id);
+  broadcastSyncEvent("CHAT_UPDATE", { deletedId: req.params.id });
+  res.json({ success: true });
+});
+
+app.post("/api/chat/call-signal", requireAuth, (req: AuthRequest, res: Response) => {
+  const session = req.userSession!;
+  if (session.role === UserRole.GUEST) {
+    res.status(403).json({ error: "Tài khoản Khách không dùng được call." });
+    return;
+  }
+  try {
+    const signal = validateCallSignalPayload(req.body || {});
+    const outgoingSignal = {
+      ...signal,
+      fromUserId: session.userId,
+      fromUserName: session.fullName,
+      timestamp: new Date().toISOString()
+    };
+    if (signal.targetUserId) {
+      sendRealtimeToUser(signal.targetUserId, "CHAT_CALL_SIGNAL", { signal: outgoingSignal });
+    } else {
+      broadcastSyncEvent("CHAT_CALL_SIGNAL", { signal: outgoingSignal });
+    }
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // Manual nudge: a member sends a notification (+ push) to one person or "all".
 // Gentle anti-spam: at most 1 send per 3s per sender.
 const NUDGE_COOLDOWN_MS = 3000;
@@ -2898,7 +3083,9 @@ async function startServer() {
     }
   }, 1000 * 60 * 60 * 24); // Every 24 hours
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const httpServer = http.createServer(app);
+  attachWebSocketServer(httpServer);
+  httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(`Server is running at http://0.0.0.0:${PORT}`);
   });
 }

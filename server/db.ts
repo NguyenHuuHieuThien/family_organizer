@@ -38,6 +38,8 @@ import {
   StoredDish,
   StoredMealPlan,
   MarketHistoryPoint,
+  FamilyChatMessage,
+  FamilyChatAttachment,
   MealIngredient,
   DishSlot
 } from "../src/types.js";
@@ -208,6 +210,7 @@ const initialDBState = (): FamilyOrganizerDB => {
     dishLibrary: [],
     mealPlan: null,
     marketHistory: [],
+    chatMessages: [],
     notifications: [],
     pushSubscriptions: [],
     activityLogs: [],
@@ -240,6 +243,7 @@ function normalizeDB(db: any): FamilyOrganizerDB {
   db.dishLibrary = db.dishLibrary || [];
   db.mealPlan = db.mealPlan || null;
   db.marketHistory = db.marketHistory || [];
+  db.chatMessages = db.chatMessages || [];
   db.notifications = db.notifications || [];
   db.pushSubscriptions = db.pushSubscriptions || [];
   db.activityLogs = db.activityLogs || [];
@@ -2761,6 +2765,43 @@ export class FamilyDB {
     const before = db.pushSubscriptions.length;
     db.pushSubscriptions = db.pushSubscriptions.filter(s => !dead.has(s.endpoint));
     if (db.pushSubscriptions.length !== before) this.writeRaw(db);
+  }
+
+  public static getChatMessages(limit = 200): FamilyChatMessage[] {
+    const messages = this.readRaw().chatMessages || [];
+    return messages.slice(-Math.max(1, Math.min(limit, 500)));
+  }
+
+  public static addChatMessage(userId: string, content: string, attachments: FamilyChatAttachment[] = []): FamilyChatMessage {
+    const db = this.readRaw();
+    const msg = content.trim();
+    const cleanAttachments = (attachments || []).filter(Boolean).slice(0, 6);
+    if (!msg && cleanAttachments.length === 0) throw new Error("Tin nhắn hoặc tệp đính kèm không được để trống.");
+    if (msg.length > 1000) throw new Error("Tin nhắn quá dài (tối đa 1000 ký tự).");
+    const chatMessage: FamilyChatMessage = {
+      id: `chat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      senderId: userId,
+      content: msg,
+      attachments: cleanAttachments,
+      createdAt: new Date().toISOString()
+    };
+    db.chatMessages = db.chatMessages || [];
+    db.chatMessages.push(chatMessage);
+    if (db.chatMessages.length > 500) {
+      const removed = db.chatMessages.slice(0, db.chatMessages.length - 500);
+      removed.forEach(m => (m.attachments || []).forEach(a => deleteMediaByUrl(a.url)));
+      db.chatMessages = db.chatMessages.slice(-500);
+    }
+    this.writeRaw(db);
+    return chatMessage;
+  }
+
+  public static deleteChatMessage(id: string): void {
+    const db = this.readRaw();
+    const message = (db.chatMessages || []).find(m => m.id === id);
+    if (message) (message.attachments || []).forEach(a => deleteMediaByUrl(a.url));
+    db.chatMessages = (db.chatMessages || []).filter(m => m.id !== id);
+    this.writeRaw(db);
   }
 
   // Manual person-to-person nudge: targeted in-app notification + push.

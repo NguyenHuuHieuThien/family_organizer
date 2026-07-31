@@ -851,6 +851,7 @@ const demoDB: FamilyOrganizerDB = {
   dishLibrary: [],
   mealPlan: null,
   marketHistory: [],
+  chatMessages: [],
   notifications,
   pushSubscriptions: [],
   activityLogs: [],

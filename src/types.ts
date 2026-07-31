@@ -589,6 +589,24 @@ export interface MarketHistoryPoint {
   usdVnd: number | null;
 }
 
+export interface FamilyChatMessage {
+  id: string;
+  senderId: string;
+  content: string;
+  attachments?: FamilyChatAttachment[];
+  createdAt: string;
+  editedAt?: string;
+}
+
+export interface FamilyChatAttachment {
+  id: string;
+  fileName: string;
+  url: string;
+  mimeType: string;
+  sizeKb?: number;
+  kind: "image" | "video" | "audio" | "file";
+}
+
 // Database schema container
 export interface FamilyOrganizerDB {
   users: (User & { passwordHash: string })[];
@@ -614,6 +632,7 @@ export interface FamilyOrganizerDB {
   dishLibrary: StoredDish[];
   mealPlan?: StoredMealPlan | null;
   marketHistory: MarketHistoryPoint[];
+  chatMessages: FamilyChatMessage[];
   notifications: Notification[];
   pushSubscriptions: PushSubscriptionRecord[];
   activityLogs: {

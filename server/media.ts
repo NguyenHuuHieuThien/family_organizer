@@ -19,12 +19,13 @@ export const UPLOADS_URL_PREFIX = "/uploads/";
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // Categories map to top-level folders ("tab/chủ đề" buckets).
-const ALLOWED_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos"]);
+const ALLOWED_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos", "chat"]);
 
 // Reject anything larger than this per single image (after client-side optimize).
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
-// PDF không được optimize phía client nên cho trần riêng, rộng hơn.
+// PDF/file/video không được optimize phía client nên cho trần riêng, rộng hơn.
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
+const MAX_CHAT_FILE_BYTES = 50 * 1024 * 1024;
 
 const MIME_EXT: Record<string, string> = {
   "image/png": "png",
@@ -33,10 +34,27 @@ const MIME_EXT: Record<string, string> = {
   "image/webp": "webp",
   "image/gif": "gif",
   "image/svg+xml": "svg",
-  "application/pdf": "pdf"
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/quicktime": "mov",
+  "audio/mpeg": "mp3",
+  "audio/mp3": "mp3",
+  "audio/wav": "wav",
+  "audio/ogg": "ogg",
+  "application/pdf": "pdf",
+  "text/plain": "txt",
+  "text/csv": "csv",
+  "application/zip": "zip",
+  "application/x-zip-compressed": "zip",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/vnd.ms-powerpoint": "ppt",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx"
 };
 
-const DATA_URL_RE = /^data:(image\/[a-z0-9.+-]+|application\/pdf);base64,(.+)$/i;
+const DATA_URL_RE = /^data:([a-z0-9][a-z0-9.+-]*\/[a-z0-9.+-]+);base64,(.+)$/i;
 
 function sanitizeSegment(value: unknown): string {
   return String(value || "").replace(/[^a-z0-9_-]/gi, "").slice(0, 40);
@@ -69,22 +87,28 @@ export function saveDataUrlToFile(dataUrl: unknown, category: string, subfolder?
   }
   const mime = match[1].toLowerCase();
   const ext = MIME_EXT[mime];
-  if (!ext) {
-    throw new Error("Định dạng ảnh không được hỗ trợ.");
+  const isLegacyMedia = mime.startsWith("image/") || mime === "application/pdf";
+  const isChatMedia = category === "chat" && (
+    mime.startsWith("image/") || mime.startsWith("video/") || mime.startsWith("audio/") ||
+    mime.startsWith("text/") || mime.startsWith("application/")
+  );
+  if (!isLegacyMedia && !isChatMedia) {
+    throw new Error("Định dạng tệp không được hỗ trợ.");
   }
 
   const buffer = Buffer.from(match[2], "base64");
   if (buffer.length === 0) throw new Error("Tệp rỗng hoặc hỏng.");
-  const maxBytes = ext === "pdf" ? MAX_PDF_BYTES : MAX_IMAGE_BYTES;
+  const maxBytes = category === "chat" ? MAX_CHAT_FILE_BYTES : (mime === "application/pdf" ? MAX_PDF_BYTES : MAX_IMAGE_BYTES);
   if (buffer.length > maxBytes) {
-    throw new Error(ext === "pdf" ? "PDF quá lớn (tối đa 10MB)." : "Ảnh quá lớn. Vui lòng để app tối ưu ảnh trước khi lưu.");
+    throw new Error(category === "chat" ? "Tệp chat quá lớn (tối đa 50MB)." : (mime === "application/pdf" ? "PDF quá lớn (tối đa 10MB)." : "Ảnh quá lớn. Vui lòng để app tối ưu ảnh trước khi lưu."));
   }
 
   const sub = sanitizeSegment(subfolder);
   const dir = sub ? path.join(UPLOADS_DIR, category, sub) : path.join(UPLOADS_DIR, category);
   fs.mkdirSync(dir, { recursive: true });
 
-  const fileName = `${Date.now()}_${crypto.randomBytes(8).toString("hex")}.${ext}`;
+  const fallbackExt = mime.split("/")[1]?.replace(/[^a-z0-9]/gi, "").slice(0, 8) || "bin";
+  const fileName = `${Date.now()}_${crypto.randomBytes(8).toString("hex")}.${ext || fallbackExt}`;
   fs.writeFileSync(path.join(dir, fileName), buffer);
 
   const url = sub
