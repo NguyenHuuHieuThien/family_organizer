@@ -13,6 +13,7 @@ import { useTabFab } from "./FabHost.js";
 import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { useTranslation } from "react-i18next";
+import { currentLocalDate, currentLocalTime } from "../utils/dateTime.js";
 
 interface MedicationProps {
   currentUser: User;
@@ -44,10 +45,10 @@ export function Medication({
   const [name, setName] = useState("");
   const [dosage, setDosage] = useState("");
   const [patientId, setPatientId] = useState(currentUser.id);
-  const [times, setTimes] = useState<string[]>(["08:00", "20:00"]);
-  const [timeDraft, setTimeDraft] = useState("");
-  const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
-  const [endDate, setEndDate] = useState("");
+  const [times, setTimes] = useState<string[]>([currentLocalTime()]);
+  const [timeDraft, setTimeDraft] = useState(currentLocalTime());
+  const [startDate, setStartDate] = useState(currentLocalDate());
+  const [endDate, setEndDate] = useState(currentLocalDate());
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -146,6 +147,10 @@ export function Medication({
       });
       setName("");
       setDosage("");
+      setTimes([currentLocalTime()]);
+      setTimeDraft(currentLocalTime());
+      setStartDate(currentLocalDate());
+      setEndDate(currentLocalDate());
       setNotes("");
     } catch (err: any) {
       setError(err.message || t("medication.errorSaveFailed"));
@@ -159,7 +164,7 @@ export function Medication({
     if (!times.includes(timeDraft)) {
       setTimes([...times, timeDraft].sort());
     }
-    setTimeDraft("");
+    setTimeDraft(currentLocalTime());
   };
 
   const removeTime = (idx: number) => {

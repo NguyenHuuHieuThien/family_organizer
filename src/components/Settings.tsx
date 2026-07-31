@@ -77,6 +77,7 @@ import { PushNotificationsCard } from "./PushNotificationsCard.js";
 import { ShimmerLine, Reveal } from "./Lively.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
 import { VN_LOCATIONS } from "../utils/vnLocations.js";
+import { currentLocalDate } from "../utils/dateTime.js";
 
 type SettingsTab = "profile" | "members" | "backups" | "logs";
 
@@ -143,13 +144,13 @@ export function Settings({
   const [regRelation, setRegRelation] = useState<FamilyRelation | "">("");
   const [regPassword, setRegPassword] = useState("");
   const [regAvatar, setRegAvatar] = useState("bg-indigo-500");
-  const [regDob, setRegDob] = useState("");
+  const [regDob, setRegDob] = useState(currentLocalDate());
   const [regGender, setRegGender] = useState<"male" | "female" | "">("");
   const [regPhone, setRegPhone] = useState("");
 
   // My-profile form (self-service personalization)
   const [profFullName, setProfFullName] = useState(currentUser.fullName);
-  const [profDob, setProfDob] = useState(currentUser.dateOfBirth || "");
+  const [profDob, setProfDob] = useState(currentUser.dateOfBirth || currentLocalDate());
   const [profGender, setProfGender] = useState<"male" | "female" | "">(currentUser.gender || "");
   const [profPhone, setProfPhone] = useState(currentUser.phone || "");
   const [profAvatarImage, setProfAvatarImage] = useState(currentUser.avatarImage || "");
@@ -158,7 +159,7 @@ export function Settings({
   // Keep the profile form in sync when the active account changes (e.g. account switch)
   useEffect(() => {
     setProfFullName(currentUser.fullName);
-    setProfDob(currentUser.dateOfBirth || "");
+    setProfDob(currentUser.dateOfBirth || currentLocalDate());
     setProfGender(currentUser.gender || "");
     setProfPhone(currentUser.phone || "");
     setProfAvatarImage(currentUser.avatarImage || "");
@@ -179,7 +180,7 @@ export function Settings({
   const [euFullName, setEuFullName] = useState("");
   const [euRole, setEuRole] = useState<UserRole>(UserRole.MEMBER);
   const [euRelation, setEuRelation] = useState<FamilyRelation | "">("");
-  const [euDob, setEuDob] = useState("");
+  const [euDob, setEuDob] = useState(currentLocalDate());
   const [euGender, setEuGender] = useState<"male" | "female" | "">("");
   const [euPhone, setEuPhone] = useState("");
   const [euColor, setEuColor] = useState("bg-indigo-500");
@@ -519,7 +520,7 @@ export function Settings({
       setRegUsername("");
       setRegFullName("");
       setRegPassword("");
-      setRegDob("");
+      setRegDob(currentLocalDate());
       setRegGender("");
       setRegPhone("");
       setRegRelation("");
@@ -639,7 +640,7 @@ export function Settings({
     setEuFullName(u.fullName);
     setEuRole(u.role);
     setEuRelation(u.familyRelation || "");
-    setEuDob(u.dateOfBirth || "");
+    setEuDob(u.dateOfBirth || currentLocalDate());
     setEuGender(u.gender || "");
     setEuPhone(u.phone || "");
     setEuColor(u.avatarColor || "bg-indigo-500");

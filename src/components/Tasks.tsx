@@ -40,6 +40,7 @@ import { useConfirm } from "./ConfirmDialog.js";
 import { DateInputDMY, DateTimePicker24, formatDateTimeVN, formatDateVN } from "./DateTimePicker24.js";
 import { useModalA11y } from "../hooks/useModalA11y.js";
 import { useTabFab } from "./FabHost.js";
+import { currentLocalDate, currentLocalDateTime } from "../utils/dateTime.js";
 
 // Parse "YYYY-MM-DD HH:mm" hoặc ISO về Date (null nếu không hợp lệ)
 const parseTaskDate = (value?: string | null) => {
@@ -128,13 +129,13 @@ export function Tasks({
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newPriority, setNewPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
-  const [newDueDate, setNewDueDate] = useState("");
+  const [newDueDate, setNewDueDate] = useState(currentLocalDateTime());
   const [newAssignee, setNewAssignee] = useState<string>("unassigned");
   const [newIsShared, setNewIsShared] = useState(true);
   const [newTagsStr, setNewTagsStr] = useState("");
   const [newRewardPoints, setNewRewardPoints] = useState(0);
   const [newRecurrenceType, setNewRecurrenceType] = useState<RecurrenceType>("none");
-  const [newRecurrenceEndDate, setNewRecurrenceEndDate] = useState("");
+  const [newRecurrenceEndDate, setNewRecurrenceEndDate] = useState(currentLocalDate());
   const [newRotationMemberIds, setNewRotationMemberIds] = useState<string[]>([]);
   const [manualRewardUser, setManualRewardUser] = useState("");
   const [manualRewardPoints, setManualRewardPoints] = useState(0);
@@ -216,13 +217,13 @@ export function Tasks({
     setNewTitle("");
     setNewDesc("");
     setNewPriority(TaskPriority.MEDIUM);
-    setNewDueDate("");
+    setNewDueDate(currentLocalDateTime());
     setNewAssignee("unassigned");
     setNewIsShared(true);
     setNewTagsStr("");
     setNewRewardPoints(0);
     setNewRecurrenceType("none");
-    setNewRecurrenceEndDate("");
+    setNewRecurrenceEndDate(currentLocalDate());
     setNewRotationMemberIds([]);
   };
 
@@ -246,13 +247,13 @@ export function Tasks({
     setNewTitle(task.title);
     setNewDesc(task.description || "");
     setNewPriority(task.priority);
-    setNewDueDate(task.dueDate || "");
+    setNewDueDate(task.dueDate || currentLocalDateTime());
     setNewAssignee(task.assigneeId || "unassigned");
     setNewIsShared(task.isShared);
     setNewTagsStr((task.tags || []).join(", "));
     setNewRewardPoints(task.rewardPoints || 0);
     setNewRecurrenceType(task.recurrenceType || "none");
-    setNewRecurrenceEndDate(task.recurrenceEndDate || "");
+    setNewRecurrenceEndDate(task.recurrenceEndDate || currentLocalDate());
     setNewRotationMemberIds(task.rotationMemberIds || []);
     setEditingTaskId(task.id);
     setEditingBaseUpdatedAt(task.updatedAt || "");
@@ -288,14 +289,14 @@ export function Tasks({
       title: newTitle.trim(),
       description: newDesc.trim(),
       priority: newPriority,
-      dueDate: newDueDate || new Date(Date.now() + 86450000).toISOString().slice(0, 10) + " 17:00",
+      dueDate: newDueDate || currentLocalDateTime(),
       assigneeId: newAssignee === "unassigned" ? null : newAssignee,
       isShared: newIsShared,
       tags: newTagsStr.split(",").map(t => t.trim()).filter(Boolean),
       rewardPoints: Number(newRewardPoints) || 0,
       recurrenceType: newRecurrenceType,
       recurrenceInterval: 1,
-      recurrenceEndDate: newRecurrenceEndDate || undefined,
+      recurrenceEndDate: newRecurrenceType !== "none" ? (newRecurrenceEndDate || currentLocalDate()) : undefined,
       // Chỉ gửi danh sách xoay vòng khi task có lặp lại; ngược lại xoá cấu hình cũ.
       rotationMemberIds: newRecurrenceType !== "none" ? newRotationMemberIds : []
     };

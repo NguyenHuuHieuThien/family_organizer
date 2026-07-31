@@ -12,6 +12,7 @@ import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
 import { useTranslation } from "react-i18next";
+import { currentLocalDate } from "../utils/dateTime.js";
 
 interface SavingsGoalsProps {
   currentUser: User;
@@ -58,7 +59,7 @@ export function SavingsGoals({
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [target, setTarget] = useState(0);
-  const [deadline, setDeadline] = useState("");
+  const [deadline, setDeadline] = useState(currentLocalDate());
   const [color, setColor] = useState("emerald");
   const [isShared, setIsShared] = useState(true);
   const [note, setNote] = useState("");
@@ -91,7 +92,7 @@ export function SavingsGoals({
     { value: "false", label: t("savingsGoals.scopePrivate") }
   ], [t]);
 
-  const resetForm = () => { setName(""); setTarget(0); setDeadline(""); setColor("emerald"); setIsShared(true); setNote(""); setError(""); };
+  const resetForm = () => { setName(""); setTarget(0); setDeadline(currentLocalDate()); setColor("emerald"); setIsShared(true); setNote(""); setError(""); };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +117,7 @@ export function SavingsGoals({
     if (!amount) return;
     setBusyGoal(goal.id);
     try {
-      await onContributeSavings(goal.id, amount, new Date().toISOString().slice(0, 10));
+      await onContributeSavings(goal.id, amount, currentLocalDate());
       setContribDraft(prev => ({ ...prev, [goal.id]: "" }));
     } catch (err) {
       console.error("contribution failed", err);

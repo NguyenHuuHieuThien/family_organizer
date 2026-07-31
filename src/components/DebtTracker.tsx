@@ -13,6 +13,7 @@ import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
 import { debtPaid, debtRemaining } from "../utils/debt.js";
 import { useTranslation } from "react-i18next";
+import { currentLocalDate } from "../utils/dateTime.js";
 
 interface DebtTrackerProps {
   currentUser: User;
@@ -57,8 +58,8 @@ export function DebtTracker({
   const [attachments, setAttachments] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [amount, setAmount] = useState(0);
-  const [loanDate, setLoanDate] = useState(new Date().toISOString().slice(0, 10));
-  const [dueDate, setDueDate] = useState("");
+  const [loanDate, setLoanDate] = useState(currentLocalDate());
+  const [dueDate, setDueDate] = useState(currentLocalDate());
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
@@ -83,7 +84,7 @@ export function DebtTracker({
   const resetForm = () => {
     setEditingId(null);
     setDirection("borrowed"); setCounterparty(""); setAddress(""); setPhone(""); setBankName("");
-    setAttachments([]); setAmount(0); setLoanDate(new Date().toISOString().slice(0, 10)); setDueDate(""); setNote(""); setError("");
+    setAttachments([]); setAmount(0); setLoanDate(currentLocalDate()); setDueDate(currentLocalDate()); setNote(""); setError("");
   };
 
   const toggleCreateForm = () => {
@@ -100,8 +101,8 @@ export function DebtTracker({
     setBankName(debt.bankName || "");
     setAttachments(debt.attachments || []);
     setAmount(debt.amount || 0);
-    setLoanDate(debt.loanDate || new Date().toISOString().slice(0, 10));
-    setDueDate(debt.dueDate || "");
+    setLoanDate(debt.loanDate || currentLocalDate());
+    setDueDate(debt.dueDate || currentLocalDate());
     setNote(debt.note || "");
     setError("");
     setShowForm(true);
@@ -169,7 +170,7 @@ export function DebtTracker({
     if (!amt) return;
     setBusy(debt.id);
     try {
-      await onAddDebtPayment(debt.id, amt, new Date().toISOString().slice(0, 10));
+      await onAddDebtPayment(debt.id, amt, currentLocalDate());
       setPayDraft(prev => ({ ...prev, [debt.id]: "" }));
     } catch (err) {
       console.error("payment failed", err);

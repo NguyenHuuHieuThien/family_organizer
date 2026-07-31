@@ -42,6 +42,7 @@ import { ShimmerLine, Reveal, staggerDelay } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { getVietnamHolidaysForMonth, getVietnamLunarDateForSolarDate, type VietnamHoliday, type VietnamLunarDate } from "../utils/vietnamHolidays.js";
 import { expandRecurringOccurrences } from "../utils/recurrence.js";
+import { currentLocalDateTime } from "../utils/dateTime.js";
 
 interface SchedulesProps {
   currentUser: User;
@@ -97,8 +98,8 @@ export function Schedules({
   // Form Fields
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
-  const [newStartDate, setNewStartDate] = useState("");
-  const [newEndDate, setNewEndDate] = useState("");
+  const [newStartDate, setNewStartDate] = useState(currentLocalDateTime());
+  const [newEndDate, setNewEndDate] = useState(currentLocalDateTime());
   const [newIsRecurring, setNewIsRecurring] = useState(false);
   const [newRecurrenceType, setNewRecurrenceType] = useState<"none" | "daily" | "weekly" | "monthly" | "yearly">("none");
   const [newRecurrenceWeekdays, setNewRecurrenceWeekdays] = useState<number[]>([]);
@@ -113,8 +114,8 @@ export function Schedules({
   const resetPlanForm = () => {
     setNewTitle("");
     setNewDesc("");
-    setNewStartDate("");
-    setNewEndDate("");
+    setNewStartDate(currentLocalDateTime());
+    setNewEndDate(currentLocalDateTime());
     setNewIsRecurring(false);
     setNewRecurrenceType("none");
     setNewRecurrenceWeekdays([]);
@@ -173,10 +174,10 @@ export function Schedules({
 
     setNewTitle(plan.title);
     setNewDesc(plan.description || "");
-    setNewStartDate(plan.startDate || "");
+    setNewStartDate(plan.startDate || currentLocalDateTime());
     // Giữ nguyên endDate đã lưu (rỗng = lặp vô hạn) — KHÔNG fallback về ngày bắt đầu,
     // nếu không sự kiện lặp vô hạn sẽ bị vô tình đặt mốc kết thúc khi mở ra sửa.
-    setNewEndDate(plan.endDate || "");
+    setNewEndDate(plan.endDate || currentLocalDateTime());
     setNewIsRecurring(plan.isRecurring);
     setNewRecurrenceType(plan.recurrenceType || "none");
     setNewRecurrenceWeekdays(plan.recurrenceWeekdays || []);

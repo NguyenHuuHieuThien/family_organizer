@@ -16,6 +16,7 @@ import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
 import { useTranslation } from "react-i18next";
+import { currentLocalDate } from "../utils/dateTime.js";
 
 interface DocumentsProps {
   currentUser: User;
@@ -52,8 +53,8 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const [ownerId, setOwnerId] = useState("");
   const [documentNumber, setDocumentNumber] = useState("");
   const [issuer, setIssuer] = useState("");
-  const [issueDate, setIssueDate] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
+  const [issueDate, setIssueDate] = useState(currentLocalDate());
+  const [expiryDate, setExpiryDate] = useState(currentLocalDate());
   const [notes, setNotes] = useState("");
   const [isShared, setIsShared] = useState(false);
   const [files, setFiles] = useState<DocumentFile[]>([]);
@@ -112,7 +113,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
 
   const resetForm = () => {
     setType("cccd"); setTitle(""); setTitleManual(false); setOwnerId(""); setDocumentNumber("");
-    setIssuer(""); setIssueDate(""); setExpiryDate(""); setNotes("");
+    setIssuer(""); setIssueDate(currentLocalDate()); setExpiryDate(currentLocalDate()); setNotes("");
     setIsShared(false); setFiles([]); setEditingId(null); setEditingBaseUpdatedAt(""); setError("");
   };
 
@@ -124,8 +125,8 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
     setOwnerId(doc.ownerId || "");
     setDocumentNumber(doc.documentNumber || "");
     setIssuer(doc.issuer || "");
-    setIssueDate(doc.issueDate || "");
-    setExpiryDate(doc.expiryDate || "");
+    setIssueDate(doc.issueDate || currentLocalDate());
+    setExpiryDate(doc.expiryDate || currentLocalDate());
     setNotes(doc.notes || "");
     setIsShared(doc.isShared);
     setFiles(doc.files || []);

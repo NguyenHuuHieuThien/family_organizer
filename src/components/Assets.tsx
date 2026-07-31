@@ -49,6 +49,7 @@ import { useTabFab } from "./FabHost.js";
 import { ShimmerLine, Reveal, staggerDelay } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { DateInputDMY } from "./DateTimePicker24.js";
+import { currentLocalDate } from "../utils/dateTime.js";
 import {
   GOLD_PURITY_OPTIONS,
   MarketPrices,
@@ -134,7 +135,7 @@ export function Assets({
   const [sellPrice, setSellPrice] = useState<number>(0);
   const [sellEstimate, setSellEstimate] = useState<number>(0);
   const [sellAccount, setSellAccount] = useState<AccountType>(AccountType.BANK);
-  const [sellDate, setSellDate] = useState(new Date().toISOString().slice(0, 10));
+  const [sellDate, setSellDate] = useState(currentLocalDate());
   const [sellNote, setSellNote] = useState("");
   const [sellError, setSellError] = useState("");
   const [selling, setSelling] = useState(false);
@@ -147,7 +148,7 @@ export function Assets({
   const [formEstimatedValue, setFormEstimatedValue] = useState<number>(0);
   const [formPurchaseValue, setFormPurchaseValue] = useState<number>(0);
   const [formCurrency, setFormCurrency] = useState<"VND" | "USD">("VND");
-  const [formPurchaseDate, setFormPurchaseDate] = useState("");
+  const [formPurchaseDate, setFormPurchaseDate] = useState(currentLocalDate());
   const [formLocation, setFormLocation] = useState("");
   const [formNotes, setFormNotes] = useState("");
   const [formPhotos, setFormPhotos] = useState<AssetPhoto[]>([]);
@@ -294,7 +295,7 @@ export function Assets({
     setFormEstimatedValue(0);
     setFormPurchaseValue(0);
     setFormCurrency("VND");
-    setFormPurchaseDate("");
+    setFormPurchaseDate(currentLocalDate());
     setFormLocation("");
     setFormNotes("");
     setFormPhotos([]);
@@ -334,7 +335,7 @@ export function Assets({
     setFormEstimatedValue(Number(asset.estimatedValue || 0));
     setFormPurchaseValue(Number(asset.purchaseValue || 0));
     setFormCurrency(asset.currency || "VND");
-    setFormPurchaseDate(asset.purchaseDate || "");
+    setFormPurchaseDate(asset.purchaseDate || currentLocalDate());
     setFormLocation(asset.location || "");
     setFormNotes(asset.notes || "");
     setFormPhotos(asset.photos || []);
@@ -532,7 +533,7 @@ export function Assets({
     setSellMode("estimate");
     setSellPrice(estimate);
     setSellAccount(AccountType.BANK);
-    setSellDate(new Date().toISOString().slice(0, 10));
+    setSellDate(currentLocalDate());
     setSellNote("");
     setSellError("");
   };

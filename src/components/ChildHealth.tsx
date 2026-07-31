@@ -15,6 +15,7 @@ import { ShimmerLine, Reveal, IconChip, staggerDelay } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
 import { useTranslation } from "react-i18next";
+import { currentLocalDate } from "../utils/dateTime.js";
 
 type HealthSection = "growth" | "vaccination" | "medication" | "emergency";
 
@@ -187,12 +188,12 @@ export function ChildHealth({
   // Vaccination form
   const [vName, setVName] = useState("");
   const [vDose, setVDose] = useState("");
-  const [vScheduled, setVScheduled] = useState("");
+  const [vScheduled, setVScheduled] = useState(currentLocalDate());
   const [vNote, setVNote] = useState("");
   const [vError, setVError] = useState("");
 
   // Growth form
-  const [gDate, setGDate] = useState(new Date().toISOString().slice(0, 10));
+  const [gDate, setGDate] = useState(currentLocalDate());
   const [gHeight, setGHeight] = useState("");
   const [gWeight, setGWeight] = useState("");
   const [gError, setGError] = useState("");
@@ -255,7 +256,7 @@ export function ChildHealth({
       if ((h != null && h !== prev.height) || (w != null && w !== prev.weight)) {
         await onSaveGrowth({
           childId: epEditingId,
-          date: new Date().toISOString().slice(0, 10),
+          date: currentLocalDate(),
           heightCm: h,
           weightKg: w
         });
@@ -355,7 +356,7 @@ export function ChildHealth({
     if (!vName.trim()) { setVError(t("childHealth.errorVaccineNoName")); return; }
     try {
       await onSaveVaccination({ childId: formMemberId, name: vName.trim(), doseLabel: vDose.trim() || undefined, scheduledDate: vScheduled || undefined, status: "scheduled", note: vNote.trim() || undefined });
-      setVName(""); setVDose(""); setVScheduled(""); setVNote("");
+      setVName(""); setVDose(""); setVScheduled(currentLocalDate()); setVNote("");
     } catch (err: any) {
       setVError(err.message || t("childHealth.errorSaveFailed"));
     }
@@ -366,7 +367,7 @@ export function ChildHealth({
     await onSaveVaccination({
       id: v.id, childId: v.childId, name: v.name, doseLabel: v.doseLabel, scheduledDate: v.scheduledDate,
       status: done ? "scheduled" : "done",
-      doneDate: done ? undefined : new Date().toISOString().slice(0, 10),
+      doneDate: done ? undefined : currentLocalDate(),
       note: v.note
     });
   };
@@ -388,6 +389,7 @@ export function ChildHealth({
     }
     try {
       await onSaveGrowth({ childId: formMemberId, date: gDate, heightCm: height, weightKg: weight });
+      setGDate(currentLocalDate());
       setGHeight(""); setGWeight("");
     } catch (err: any) {
       setGError(err.message || t("childHealth.errorSaveFailed"));

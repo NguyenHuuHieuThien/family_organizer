@@ -61,6 +61,7 @@ import { useTabFab } from "./FabHost.js";
 import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
 import { useTranslation } from "react-i18next";
 import i18n from "../i18n/index.js";
+import { currentLocalDate } from "../utils/dateTime.js";
 
 // Rút gọn số tiền cho nhãn trục/tooltip biểu đồ: 12tr, 1,5 tỷ, 500k.
 const fmtShortMoney = (n: number): string => {
@@ -452,7 +453,7 @@ export function Finance({
   const [formCategory, setFormCategory] = useState<ExpenseCategory | string>(ExpenseCategory.FOOD);
   const [formAccount, setFormAccount] = useState<AccountType>(AccountType.BANK);
   const [formDesc, setFormDesc] = useState("");
-  const [formDate, setFormDate] = useState(new Date().toISOString().slice(0, 10));
+  const [formDate, setFormDate] = useState(currentLocalDate());
   const [formReceiptBase64, setFormReceiptBase64] = useState<string>("");
   const [receiptProcessing, setReceiptProcessing] = useState(false);
   const [budgetCategory, setBudgetCategory] = useState<string>(ExpenseCategory.FOOD);
@@ -463,7 +464,7 @@ export function Finance({
   const [editingBudgetLimit, setEditingBudgetLimit] = useState<number>(0);
   const [billTitle, setBillTitle] = useState("");
   const [billAmount, setBillAmount] = useState<number>(0);
-  const [billDueDate, setBillDueDate] = useState(new Date().toISOString().slice(0, 10));
+  const [billDueDate, setBillDueDate] = useState(currentLocalDate());
   const [billCategory, setBillCategory] = useState<string>(ExpenseCategory.UTILITIES);
   const [billFrequency, setBillFrequency] = useState<RecurringBill["frequency"]>("monthly");
   const [billError, setBillError] = useState("");
@@ -472,7 +473,7 @@ export function Finance({
   const [editAmount, setEditAmount] = useState<number>(0);
   const [editCategory, setEditCategory] = useState<string>(BILL_CATEGORIES[0].value);
   const [editFrequency, setEditFrequency] = useState<RecurringBill["frequency"]>("monthly");
-  const [editDueDate, setEditDueDate] = useState("");
+  const [editDueDate, setEditDueDate] = useState(currentLocalDate());
   const [editError, setEditError] = useState("");
 
   // Escape-to-close + scroll lock + focus trap for the form, receipt viewer & bill editor
@@ -494,7 +495,7 @@ export function Finance({
     setFormAccount(AccountType.BANK);
     setFormAmount(0);
     setFormDesc("");
-    setFormDate(new Date().toISOString().slice(0, 10));
+    setFormDate(currentLocalDate());
     setFormReceiptBase64("");
     setFormError("");
     setIsFormOpen(true);
@@ -508,7 +509,7 @@ export function Finance({
     setFormCategory(tx.category);
     setFormAccount(tx.account);
     setFormDesc(tx.description);
-    setFormDate(tx.date);
+    setFormDate(tx.date || currentLocalDate());
     setFormReceiptBase64(tx.receiptImage || "");
     setFormError("");
     setIsFormOpen(true);
@@ -788,7 +789,7 @@ export function Finance({
       setFormAmount(0);
       setFormDesc("");
       setFormReceiptBase64("");
-      setFormDate(new Date().toISOString().slice(0, 10));
+      setFormDate(currentLocalDate());
       setEditingTx(null);
       setIsFormOpen(false);
     } catch (err: any) {
@@ -845,6 +846,7 @@ export function Finance({
       });
       setBillTitle("");
       setBillAmount(0);
+      setBillDueDate(currentLocalDate());
     } catch (err: any) {
       setBillError(err.message || t("finance.errSaveBill"));
     }
@@ -856,7 +858,7 @@ export function Finance({
     setEditAmount(b.amount);
     setEditCategory(b.category);
     setEditFrequency(b.frequency);
-    setEditDueDate(b.nextDueDate);
+    setEditDueDate(b.nextDueDate || currentLocalDate());
     setEditError("");
   };
 
@@ -875,7 +877,7 @@ export function Finance({
         amount: Number(editAmount),
         category: editCategory,
         frequency: editFrequency,
-        nextDueDate: editDueDate,
+        nextDueDate: editDueDate || currentLocalDate(),
       });
       setEditingBill(null);
     } catch (err: any) {
