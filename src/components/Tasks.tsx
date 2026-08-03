@@ -61,6 +61,12 @@ const isTaskOverdue = (task: Task) => {
 const effectiveStatus = (task: Task): TaskStatus =>
   isTaskOverdue(task) ? TaskStatus.OVERDUE : task.status;
 
+const getTaskAssigneeIds = (task: Task) => {
+  const multi = Array.isArray(task.assigneeIds) ? task.assigneeIds.map(id => String(id || "").trim()).filter(Boolean) : [];
+  if (multi.length > 0) return multi;
+  return task.assigneeId ? [task.assigneeId] : [];
+};
+
 interface TasksProps {
   currentUser: User;
   users: User[];
@@ -131,7 +137,7 @@ export function Tasks({
   const [newDesc, setNewDesc] = useState("");
   const [newPriority, setNewPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [newDueDate, setNewDueDate] = useState(currentLocalDateTime());
-  const [newAssignee, setNewAssignee] = useState<string>("unassigned");
+  const [newAssigneeIds, setNewAssigneeIds] = useState<string[]>([]);
   const [newIsShared, setNewIsShared] = useState(true);
   const [newTagsStr, setNewTagsStr] = useState("");
   const [newRewardPoints, setNewRewardPoints] = useState(0);
@@ -174,8 +180,9 @@ export function Tasks({
 
       // 3. Assignee
       if (assigneeFilter !== "all") {
-        if (assigneeFilter === "unassigned" && task.assigneeId !== null) return false;
-        if (assigneeFilter !== "unassigned" && task.assigneeId !== assigneeFilter) return false;
+        const assigneeIds = getTaskAssigneeIds(task);
+        if (assigneeFilter === "unassigned" && assigneeIds.length > 0) return false;
+        if (assigneeFilter !== "unassigned" && !assigneeIds.includes(assigneeFilter)) return false;
       }
 
       // 4. Priority
@@ -186,12 +193,12 @@ export function Tasks({
       if (scopeFilter === "personal") {
         if (task.isShared) return false;
         // Personal tasks should only be visible if created by or assigned to me
-        if (task.creatorId !== currentUser.id && task.assigneeId !== currentUser.id) return false;
+        if (task.creatorId !== currentUser.id && !getTaskAssigneeIds(task).includes(currentUser.id)) return false;
       }
 
       // Limited viewers (Child & Guest) only see shared tasks AND tasks they created or are assigned to
       if (isLimitedViewer(currentUser.role)) {
-        if (!task.isShared && task.creatorId !== currentUser.id && task.assigneeId !== currentUser.id) {
+        if (!task.isShared && task.creatorId !== currentUser.id && !getTaskAssigneeIds(task).includes(currentUser.id)) {
           return false;
         }
       }
@@ -207,11 +214,23 @@ export function Tasks({
   }, [tasks, selectedTask]);
 
   const childUsers = useMemo(() => users.filter(u => !u.isDeleted && u.role === UserRole.CHILD), [users]);
+  const activeUsers = useMemo(() => users.filter(u => !u.isDeleted), [users]);
+
+  const taskAssigneeIds = useCallback(getTaskAssigneeIds, []);
+
+  const taskAssigneeLabel = useCallback((task: Task) => {
+    const assigneeNames = taskAssigneeIds(task)
+      .map(id => users.find(u => u.id === id)?.fullName)
+      .filter(Boolean) as string[];
+    if (assigneeNames.length === 0) return t("tasks.unassigned");
+    if (assigneeNames.length === 1) return assigneeNames[0];
+    return `${assigneeNames[0]} +${assigneeNames.length - 1}`;
+  }, [taskAssigneeIds, users, t]);
 
   // Adults manage any task; a Child may edit only tasks they created or are assigned to. Only adults can delete.
   const canEditTask = (task: Task) =>
     isAdultRole(currentUser.role) ||
-    (currentUser.role === UserRole.CHILD && (task.creatorId === currentUser.id || task.assigneeId === currentUser.id));
+    (currentUser.role === UserRole.CHILD && (task.creatorId === currentUser.id || taskAssigneeIds(task).includes(currentUser.id)));
   const canDeleteTask = (_task: Task) => isAdultRole(currentUser.role);
 
   const resetTaskForm = () => {
@@ -219,7 +238,7 @@ export function Tasks({
     setNewDesc("");
     setNewPriority(TaskPriority.MEDIUM);
     setNewDueDate(currentLocalDateTime());
-    setNewAssignee("unassigned");
+    setNewAssigneeIds([]);
     setNewIsShared(true);
     setNewTagsStr("");
     setNewRewardPoints(0);
@@ -249,7 +268,7 @@ export function Tasks({
     setNewDesc(task.description || "");
     setNewPriority(task.priority);
     setNewDueDate(task.dueDate || currentLocalDateTime());
-    setNewAssignee(task.assigneeId || "unassigned");
+    setNewAssigneeIds(taskAssigneeIds(task));
     setNewIsShared(task.isShared);
     setNewTagsStr((task.tags || []).join(", "));
     setNewRewardPoints(task.rewardPoints || 0);
@@ -294,7 +313,8 @@ export function Tasks({
       description: newDesc.trim(),
       priority: newPriority,
       dueDate: newDueDate || currentLocalDateTime(),
-      assigneeId: newAssignee === "unassigned" ? null : newAssignee,
+      assigneeIds: newAssigneeIds,
+      assigneeId: newAssigneeIds[0] || null,
       isShared: newIsShared,
       tags: newTagsStr.split(",").map(t => t.trim()).filter(Boolean),
       rewardPoints: Number(newRewardPoints) || 0,
@@ -343,7 +363,7 @@ export function Tasks({
   // Trẻ hoàn thành việc có điểm > ngưỡng → phải "báo xong" và chờ ba mẹ duyệt.
   const childNeedsApproval = (task: Task) =>
     isChildViewer && (task.rewardPoints || 0) > (rewardApprovalThreshold || 0) &&
-    (task.assigneeId === currentUser.id || task.creatorId === currentUser.id);
+    (taskAssigneeIds(task).includes(currentUser.id) || task.creatorId === currentUser.id);
 
   // Modal "Con làm xong" (đính ảnh/ghi chú bằng chứng — tùy chọn)
   const [submitTaskTarget, setSubmitTaskTarget] = useState<Task | null>(null);
@@ -675,9 +695,9 @@ export function Tasks({
       total: boardTasks.length,
       active: active.length,
       high: active.filter(t => t.priority === TaskPriority.HIGH).length,
-      unassigned: boardTasks.filter(t => !t.assigneeId).length
+      unassigned: boardTasks.filter(t => taskAssigneeIds(t).length === 0).length
     };
-  }, [boardTasks]);
+  }, [boardTasks, taskAssigneeIds]);
 
   const kanbanColumns = [
     {
@@ -1182,7 +1202,10 @@ export function Tasks({
                       ) : (
                         <AnimatePresence initial={false}>
                           {columnTasks.map(task => {
-                            const assignee = users.find(u => u.id === task.assigneeId);
+                            const assigneeIds = taskAssigneeIds(task);
+                            const assigneeNames = assigneeIds
+                              .map(id => users.find(u => u.id === id)?.fullName)
+                              .filter(Boolean) as string[];
                             const creator = users.find(u => u.id === task.creatorId);
                             const next = quickNextStatus(task);
                             const dueDate = task.dueDate ? formatDateVN(task.dueDate) : t("tasks.noDueDate");
@@ -1254,10 +1277,12 @@ export function Tasks({
                                 <div className="space-y-2">
                                   <div className="flex items-center justify-between gap-2 text-[11px]">
                                     <div className="flex items-center gap-2 min-w-0">
-                                      {assignee ? (
+                                      {assigneeNames.length > 0 ? (
                                         <>
-                                          <Avatar user={assignee} className="size-6 rounded-full text-[10px]" extraClass="shrink-0" />
-                                          <span className="text-slate-300 truncate">{assignee.fullName}</span>
+                                          <span className="size-6 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center shrink-0">
+                                            <UserIcon className="size-3 text-slate-500" />
+                                          </span>
+                                          <span className="text-slate-300 truncate">{assigneeNames.join(", ")}</span>
                                         </>
                                       ) : (
                                         <>
@@ -1461,7 +1486,12 @@ export function Tasks({
                 <div>
                   <span className="text-slate-500">{t("tasks.detailAssigneeLbl")}</span>
                   <p className="text-slate-200 mt-0.5 font-medium">
-                    {users.find(u => u.id === activeTaskDetails.assigneeId)?.fullName || t("tasks.detailAssigneeNone")}
+                    {(() => {
+                      const assigneeNames = taskAssigneeIds(activeTaskDetails)
+                        .map(id => users.find(u => u.id === id)?.fullName)
+                        .filter(Boolean) as string[];
+                      return assigneeNames.length > 0 ? assigneeNames.join(", ") : t("tasks.detailAssigneeNone");
+                    })()}
                   </p>
                 </div>
                 <div>
@@ -1632,13 +1662,21 @@ export function Tasks({
                 <div className="space-y-1 min-w-0">
                   <label className="text-slate-400 block font-semibold">{t("tasks.formAssigneeLabel")}</label>
                   <FancySelect
-                    value={newAssignee}
-                    onChange={setNewAssignee}
+                    value={newAssigneeIds[0] || "unassigned"}
+                    values={newAssigneeIds.length === 0 ? ["unassigned"] : newAssigneeIds}
+                    onValuesChange={(next) => {
+                      if (next.includes("unassigned")) {
+                        setNewAssigneeIds([]);
+                        return;
+                      }
+                      setNewAssigneeIds(next.filter(v => v !== "unassigned"));
+                    }}
                     mode="checkbox"
+                    exclusiveValues={["unassigned"]}
                     ariaLabel={t("tasks.formAssigneeLabel")}
                     options={[
                       { value: "unassigned", label: t("tasks.formAssigneeShared") },
-                      ...users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))
+                      ...activeUsers.map(u => ({ value: u.id, label: u.fullName }))
                     ]}
                   />
                 </div>

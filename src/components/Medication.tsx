@@ -190,20 +190,25 @@ export function Medication({
         </div>
 
         {canManageMedication(currentUser.role) && (
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
-            <Input ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("medication.namePlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
-            <Input value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder={t("medication.dosagePlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
-            <div className="md:col-span-2">
-              <FancySelect
-                value={patientId}
-                onChange={setPatientId}
-                ariaLabel={t("medication.patientAriaLabel")}
-                options={users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))}
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+          <div className="space-y-1">
+            <label className="text-slate-500 text-[10px] block">{t("medication.patientAriaLabel")}</label>
+            <FancySelect
+              value={patientId}
+              onChange={setPatientId}
+              ariaLabel={t("medication.patientAriaLabel")}
+              className="grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
+              options={users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+            <Input ref={nameInputRef} value={name} onChange={(e) => setName(e.target.value)} placeholder={t("medication.namePlaceholder")} className="lg:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <Input value={dosage} onChange={(e) => setDosage(e.target.value)} placeholder={t("medication.dosagePlaceholder")} className="lg:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <div className="hidden lg:block lg:col-span-2" aria-hidden="true" />
 
             {/* Giờ uống - chip pickers */}
-            <div className="md:col-span-6 bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
+            <div className="lg:col-span-6 bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
               <label className="text-slate-400 font-semibold flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-rose-400" /> {t("medication.timesLabel")}</label>
               <div className="flex flex-wrap items-center gap-2">
                 {times.map((tm, i) => (
@@ -221,20 +226,21 @@ export function Medication({
               </div>
             </div>
 
-            <div className="md:col-span-3 space-y-1">
+            <div className="space-y-1 lg:col-span-3">
               <label className="text-slate-500 text-[10px] block">{t("medication.startDate")}</label>
               <DateInputDMY value={startDate} onChange={setStartDate} className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500 font-mono" />
             </div>
-            <div className="md:col-span-3 space-y-1">
+            <div className="space-y-1 lg:col-span-3">
               <label className="text-slate-500 text-[10px] block">{t("medication.endDateOptional")}</label>
               <DateInputDMY value={endDate} onChange={setEndDate} className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500 font-mono" />
             </div>
 
-            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("medication.notesPlaceholder")} className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
-            <Button disabled={saving} type="submit" className="md:col-span-2 bg-rose-500 hover:bg-rose-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("medication.notesPlaceholder")} className="lg:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-rose-500" />
+            <Button disabled={saving} type="submit" className="lg:col-span-2 bg-rose-500 hover:bg-rose-400 disabled:opacity-60 text-slate-950 rounded-xl px-3 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
               <Plus className="w-4 h-4" /> {t("medication.addSchedule")}
             </Button>
-          </form>
+          </div>
+        </form>
         )}
         {error && <p className="text-[11px] text-rose-400">{error}</p>}
       </Reveal>

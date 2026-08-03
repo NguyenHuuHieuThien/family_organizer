@@ -44,6 +44,21 @@ import { getVietnamHolidaysForMonth, getVietnamLunarDateForSolarDate, type Vietn
 import { expandRecurringOccurrences } from "../utils/recurrence.js";
 import { currentLocalDateTime } from "../utils/dateTime.js";
 
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+const addOneDayToDateTime = (value: string) => {
+  const d = new Date(String(value).replace(" ", "T"));
+  if (isNaN(d.getTime())) return value;
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+};
+
+const isEndAfterStart = (start: string, end: string) => {
+  const s = new Date(String(start).replace(" ", "T"));
+  const e = new Date(String(end).replace(" ", "T"));
+  return !isNaN(s.getTime()) && !isNaN(e.getTime()) && e.getTime() > s.getTime();
+};
+
 interface SchedulesProps {
   currentUser: User;
   users: User[];
@@ -99,7 +114,7 @@ export function Schedules({
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newStartDate, setNewStartDate] = useState(currentLocalDateTime());
-  const [newEndDate, setNewEndDate] = useState(currentLocalDateTime());
+  const [newEndDate, setNewEndDate] = useState(addOneDayToDateTime(currentLocalDateTime()));
   const [newIsRecurring, setNewIsRecurring] = useState(false);
   const [newRecurrenceType, setNewRecurrenceType] = useState<"none" | "daily" | "weekly" | "monthly" | "yearly">("none");
   const [newRecurrenceWeekdays, setNewRecurrenceWeekdays] = useState<number[]>([]);
@@ -115,7 +130,7 @@ export function Schedules({
     setNewTitle("");
     setNewDesc("");
     setNewStartDate(currentLocalDateTime());
-    setNewEndDate(currentLocalDateTime());
+    setNewEndDate(addOneDayToDateTime(currentLocalDateTime()));
     setNewIsRecurring(false);
     setNewRecurrenceType("none");
     setNewRecurrenceWeekdays([]);
@@ -177,7 +192,7 @@ export function Schedules({
     setNewStartDate(plan.startDate || currentLocalDateTime());
     // Giữ nguyên endDate đã lưu (rỗng = lặp vô hạn) — KHÔNG fallback về ngày bắt đầu,
     // nếu không sự kiện lặp vô hạn sẽ bị vô tình đặt mốc kết thúc khi mở ra sửa.
-    setNewEndDate(plan.endDate || currentLocalDateTime());
+    setNewEndDate(plan.endDate || addOneDayToDateTime(plan.startDate || currentLocalDateTime()));
     setNewIsRecurring(plan.isRecurring);
     setNewRecurrenceType(plan.recurrenceType || "none");
     setNewRecurrenceWeekdays(plan.recurrenceWeekdays || []);
@@ -1325,7 +1340,14 @@ export function Schedules({
 
               <div className="space-y-1 min-w-0">
                 <label className="text-slate-400 block font-semibold">{t("schedules.formStartLabel")} <span className="text-rose-400">*</span></label>
-                <DateTimePicker24 value={newStartDate} onChange={setNewStartDate} required />
+                <DateTimePicker24
+                  value={newStartDate}
+                  onChange={(value) => {
+                    setNewStartDate(value);
+                    setNewEndDate((prev) => (isEndAfterStart(value, prev) ? prev : addOneDayToDateTime(value)));
+                  }}
+                  required
+                />
               </div>
 
               <div className="space-y-1 min-w-0">
@@ -1333,7 +1355,10 @@ export function Schedules({
                   {newIsRecurring ? t("schedules.formEndLabelRecur") : t("schedules.formEndLabel")}
                   {newIsRecurring && <span className="text-slate-500 font-normal"> {t("schedules.formEndHint")}</span>}
                 </label>
-                <DateTimePicker24 value={newEndDate} onChange={setNewEndDate} />
+                <DateTimePicker24
+                  value={newEndDate}
+                  onChange={(value) => setNewEndDate(value)}
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-800/80">

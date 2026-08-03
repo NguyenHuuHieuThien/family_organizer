@@ -34,7 +34,8 @@ import {
   Calendar,
   Copy,
   Languages,
-  Cloud
+  Cloud,
+  FolderOpen
 } from "lucide-react";
 import { User, UserRole, FamilyRelation, FAMILY_RELATION_LABELS, ROLE_LABELS } from "../types.js";
 import { useModalA11y } from "../hooks/useModalA11y.js";
@@ -67,6 +68,16 @@ const RELATION_SELECT_OPTIONS = [{ value: "", label: "— Không đặt —" }, 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("family_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+async function readJsonSafe(res: Response) {
+  const text = await res.text();
+  if (!text.trim()) return {};
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: res.ok ? "Phản hồi máy chủ không hợp lệ." : text.slice(0, 180) };
+  }
 }
 import { motion } from "motion/react";
 import { useConfirm } from "./ConfirmDialog.js";
@@ -107,6 +118,8 @@ interface SettingsProps {
   rewardApprovalThreshold: number;
   onSetRewardApprovalThreshold: (threshold: number) => Promise<void>;
 }
+
+type GooglePickerConfig = { configured: boolean; clientId: string; developerKey: string; appId: string; scope: string };
 
 export function Settings({
   currentUser,
@@ -268,11 +281,16 @@ export function Settings({
     connectedAt: string;
     lastError: string;
     scope: string;
+    uploadEnabled: boolean;
+    folderId: string;
+    folderName: string;
   }
   const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
+  const [pickerConfig, setPickerConfig] = useState<GooglePickerConfig | null>(null);
   const [driveBusy, setDriveBusy] = useState(false);
   const [driveMsg, setDriveMsg] = useState("");
   const [driveErr, setDriveErr] = useState("");
+  const [pickerBusy, setPickerBusy] = useState(false);
 
   // Escape-to-close + scroll lock + focus trap for the edit-user & reset-password modals
   const editTargetRef = useRef<HTMLDivElement | null>(null);
@@ -327,9 +345,13 @@ export function Settings({
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (d) { setTgStatus(d); setTgChatId(d.chatId || ""); } })
       .catch(() => {});
-    fetch("/api/integrations/google-drive", { headers: authHeaders() })
+    fetch("/api/google/status", { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (d) setDriveStatus(d); })
+      .catch(() => {});
+    fetch("/api/google/picker-config", { headers: authHeaders() })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d) setPickerConfig(d); })
       .catch(() => {});
   }, []);
 
@@ -352,10 +374,10 @@ export function Settings({
   const connectDrive = async () => {
     setDriveBusy(true); setDriveMsg(""); setDriveErr("");
     try {
-      const res = await fetch("/api/integrations/google-drive/connect", {
+      const res = await fetch("/api/google/connect", {
         headers: authHeaders()
       });
-      const data = await res.json();
+      const data = await readJsonSafe(res);
       if (!res.ok) throw new Error(data.error || "Lưu Google Drive thất bại.");
       window.location.href = data.url;
     } catch (err: any) {
@@ -368,12 +390,12 @@ export function Settings({
   const toggleDriveEnabled = async (enabled: boolean) => {
     setDriveBusy(true); setDriveMsg(""); setDriveErr("");
     try {
-      const res = await fetch("/api/integrations/google-drive", {
+      const res = await fetch("/api/google", {
         method: "POST",
         headers: { ...authHeaders(), "Content-Type": "application/json" },
         body: JSON.stringify({ enabled })
       });
-      const data = await res.json();
+      const data = await readJsonSafe(res);
       if (!res.ok) throw new Error(data.error || "Lưu Google Drive thất bại.");
       setDriveStatus(data);
       setDriveMsg(data.message || "Đã cập nhật trạng thái Google Drive.");
@@ -384,14 +406,115 @@ export function Settings({
     }
   };
 
+  const toggleDriveUpload = async (enabled: boolean) => {
+    setDriveBusy(true); setDriveMsg(""); setDriveErr("");
+    try {
+      const res = await fetch("/api/google/upload-toggle", {
+        method: "POST",
+        headers: { ...authHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled })
+      });
+      const data = await readJsonSafe(res);
+      if (!res.ok) throw new Error(data.error || "Không đổi được trạng thái lưu Google Drive.");
+      setDriveStatus(data);
+      setDriveMsg(data.message || "Đã lưu thiết lập Google Drive.");
+    } catch (err: any) {
+      setDriveErr(err.message || "Không đổi được trạng thái lưu Google Drive.");
+    } finally {
+      setDriveBusy(false);
+    }
+  };
+
+  const loadScript = (src: string) => new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`) as HTMLScriptElement | null;
+    if (existing) {
+      if (existing.dataset.loaded === "1") { resolve(); return; }
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Không tải được Google Picker.")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => { script.dataset.loaded = "1"; resolve(); };
+    script.onerror = () => reject(new Error("Không tải được Google Picker."));
+    document.head.appendChild(script);
+  });
+
+  const loadGooglePickerApi = async () => {
+    await loadScript("https://apis.google.com/js/api.js");
+    const gapi = (window as any).gapi;
+    if (!gapi?.load) throw new Error("Google Picker chưa tải xong. Vui lòng thử lại.");
+    await new Promise<void>((resolve, reject) => {
+      gapi.load("picker", {
+        callback: resolve,
+        onerror: () => reject(new Error("Không tải được Google Picker API.")),
+        timeout: 10000,
+        ontimeout: () => reject(new Error("Google Picker API phản hồi quá lâu."))
+      });
+    });
+    const google = (window as any).google;
+    if (!google?.picker?.PickerBuilder || !google?.picker?.DocsView) {
+      throw new Error("Google Picker chưa sẵn sàng. Kiểm tra Google API Key và Picker API trong Google Cloud.");
+    }
+    return google;
+  };
+
+  const openPicker = async () => {
+    if (!pickerConfig?.configured || !driveStatus?.connected) {
+      setDriveErr("Google Drive chưa kết nối hoặc Picker chưa sẵn sàng.");
+      return;
+    }
+    setPickerBusy(true);
+    setDriveMsg("");
+    setDriveErr("");
+    try {
+      const tokenRes = await fetch("/api/google/picker-token", { headers: authHeaders() });
+      const tokenData = await readJsonSafe(tokenRes);
+      if (!tokenRes.ok) throw new Error(tokenData.error || "Không lấy được token Google Drive.");
+      const google = await loadGooglePickerApi();
+      const picker = new google.picker.PickerBuilder()
+        .setDeveloperKey(pickerConfig.developerKey)
+        .setOAuthToken(tokenData.accessToken)
+        .setAppId(pickerConfig.appId)
+        .addView(new google.picker.DocsView(google.picker.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true))
+        .setTitle("Chọn thư mục Google Drive")
+        .setCallback(async (data: any) => {
+          if (data.action === google.picker.Action.ERROR) {
+            setDriveErr("Google Picker không mở được: API developer key không hợp lệ. Kiểm tra GOOGLE_API_KEY trong Google Cloud, bật Picker API/Drive API và thêm domain hiện tại vào HTTP referrers.");
+            return;
+          }
+          if (data.action === google.picker.Action.PICKED && data.docs?.length) {
+            const folder = data.docs[0];
+            const res = await fetch("/api/google/folder", {
+              method: "POST",
+              headers: { ...authHeaders(), "Content-Type": "application/json" },
+              body: JSON.stringify({ folderId: folder.id || "", folderName: folder.name || "" })
+            });
+            const saved = await readJsonSafe(res);
+            if (!res.ok) throw new Error(saved.error || "Không lưu được thư mục Google Drive.");
+            setDriveStatus(saved);
+            setDriveMsg(`Đã chọn thư mục ${folder.name || "Google Drive"}.`);
+          }
+        })
+        .build();
+      picker.setVisible(true);
+    } catch (err: any) {
+      setDriveErr(err.message || "Không mở được Google Picker.");
+    } finally {
+      setPickerBusy(false);
+    }
+  };
+
   const disconnectDrive = async () => {
     setDriveBusy(true); setDriveMsg(""); setDriveErr("");
     try {
-      const res = await fetch("/api/integrations/google-drive/disconnect", {
+      const res = await fetch("/api/google/disconnect", {
         method: "POST",
         headers: authHeaders()
       });
-      const data = await res.json();
+      const data = await readJsonSafe(res);
       if (!res.ok) throw new Error(data.error || "Ngắt kết nối Google Drive thất bại.");
       setDriveStatus(data);
       setDriveMsg(data.message || "Đã ngắt kết nối Google Drive.");
@@ -405,11 +528,11 @@ export function Settings({
   const syncDrive = async () => {
     setDriveBusy(true); setDriveMsg(""); setDriveErr("");
     try {
-      const res = await fetch("/api/integrations/google-drive/sync", {
+      const res = await fetch("/api/google/sync", {
         method: "POST",
         headers: authHeaders()
       });
-      const data = await res.json();
+      const data = await readJsonSafe(res);
       if (!res.ok) throw new Error(data.error || "Đồng bộ Google Drive thất bại.");
       setDriveStatus(data);
       setDriveMsg(data.message || "Đã đồng bộ Google Drive.");
@@ -1912,7 +2035,7 @@ export function Settings({
                 {!driveStatus?.configured
                   ? "Google Drive chưa sẵn sàng trên máy chủ. Vui lòng báo quản trị viên kiểm tra cấu hình kết nối."
                   : driveStatusLabel === "Đã kết nối"
-                  ? `Đã kết nối ${driveStatus.displayName || driveStatus.accountEmail || "tài khoản Google"}. Khi thêm giấy tờ hoặc hình ảnh, người dùng có thể chọn lưu thêm bản sao lên Drive.`
+                  ? `Đã kết nối ${driveStatus.displayName || driveStatus.accountEmail || "tài khoản Google"}. Giấy tờ và hình ảnh sẽ lưu vào Drive theo thiết lập bên dưới.`
                   : driveStatusLabel === "Đã hủy kết nối"
                   ? "Người dùng đã từ chối cấp quyền. Bấm kết nối lại để thử lần nữa."
                   : driveStatusLabel === "Phiên kết nối hết hạn"
@@ -1944,9 +2067,54 @@ export function Settings({
               Kết nối lúc: <span className="font-mono text-slate-300">{driveStatus?.connectedAt || "-"}</span>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-400">
-              Scope: <span className="font-mono text-slate-300">{driveStatus?.scope || "-"}</span>
+              Thư mục: <span className="font-semibold text-slate-300">{driveStatus?.folderName || "Drive gốc"}</span>
             </div>
           </div>
+          {driveStatus?.connected && (
+            <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+              <div className={`rounded-xl border px-3 py-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between ${driveStatus.folderId ? "border-emerald-500/30 bg-emerald-500/10" : "border-amber-500/30 bg-amber-500/10"}`}>
+                <div className="min-w-0">
+                  <p className={`text-xs font-bold ${driveStatus.folderId ? "text-emerald-200" : "text-amber-200"}`}>
+                    {driveStatus.folderId ? "Đã chọn thư mục lưu" : "Chưa chọn thư mục lưu"}
+                  </p>
+                  <p className="text-[11px] text-slate-400 truncate">
+                    {driveStatus.folderId
+                      ? `File sẽ được lưu vào: ${driveStatus.folderName || driveStatus.folderId}`
+                      : "Nếu chưa chọn thư mục, file sẽ lưu vào Drive gốc."}
+                  </p>
+                </div>
+                {driveStatus.folderId && (
+                  <span className="shrink-0 rounded-lg border border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[10px] font-bold text-emerald-200">
+                    {driveStatus.folderName || "Thư mục đã chọn"}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-bold text-slate-200">Lưu tự động vào Google Drive</p>
+                  <p className="text-[11px] text-slate-500">Áp dụng chung cho giấy tờ và hình ảnh. Không cần chọn lại ở từng màn hình.</p>
+                </div>
+                <Button
+                  type="button"
+                  onClick={() => void toggleDriveUpload(!driveStatus.uploadEnabled)}
+                  disabled={driveBusy}
+                  className={`w-full sm:w-auto shrink-0 text-[10px] font-bold px-3 py-2 rounded-xl border cursor-pointer transition-all disabled:opacity-50 ${driveStatus.uploadEnabled ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" : "bg-slate-950 text-slate-500 border-slate-800"}`}
+                >
+                  {driveStatus.uploadEnabled ? "ĐANG LƯU" : "ĐANG TẮT"}
+                </Button>
+              </div>
+              <div className="space-y-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs font-bold text-slate-200">Chọn thư mục lưu</p>
+                  <Button type="button" onClick={() => void openPicker()} disabled={pickerBusy || !pickerConfig?.configured} className="w-full sm:w-auto bg-slate-950 hover:bg-slate-800 disabled:opacity-50 text-slate-300 text-[11px] font-bold px-3 py-2 rounded-xl border border-slate-800 flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    {pickerBusy ? "Đang mở..." : "Chọn thư mục"}
+                  </Button>
+                </div>
+                <p className="text-[11px] text-slate-500">Mở Google Picker để chọn thư mục. Chọn lại bất cứ lúc nào nếu muốn đổi thư mục lưu mặc định.</p>
+              </div>
+            </div>
+          )}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <Button type="button" onClick={() => void connectDrive()} disabled={driveBusy || !driveStatus?.configured} className="w-full sm:w-auto bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all">
               {driveBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}

@@ -39,8 +39,6 @@ export function Photos({ currentUser, users, photos, onSavePhoto, onDeletePhoto 
   const [error, setError] = useState("");
   const [viewer, setViewer] = useState<{ index: number; list: FamilyPhoto[] } | null>(null);
   const [busyIds, setBusyIds] = useState<Record<string, boolean>>({});
-  const [savePickedToDrive, setSavePickedToDrive] = useState(false);
-  const [driveConnected, setDriveConnected] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
@@ -68,18 +66,6 @@ export function Photos({ currentUser, users, photos, onSavePhoto, onDeletePhoto 
     return () => window.removeEventListener("keydown", onKey);
   }, [viewer]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("family_token");
-    fetch("/api/settings/google-drive/status", { headers: token ? { Authorization: `Bearer ${token}` } : {} })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => setDriveConnected(Boolean(d?.connected)))
-      .catch(() => setDriveConnected(false));
-  }, []);
-
-  useEffect(() => {
-    if (!driveConnected) setSavePickedToDrive(false);
-  }, [driveConnected]);
-
   useTabFab({ id: "photos", color: "sky", title: "Thêm ảnh", icon: ImagePlus, onClick: () => fileInputRef.current?.click() });
 
   const uploadFiles = async (files: File[]) => {
@@ -101,7 +87,7 @@ export function Photos({ currentUser, users, photos, onSavePhoto, onDeletePhoto 
           maxSizes: [1800, 1440, 1200, 900],
           qualities: [0.88, 0.8, 0.7, 0.6],
           backgroundColor: "#ffffff"
-        }, undefined, { saveToDrive: driveConnected && savePickedToDrive, fileName: file.name });
+        }, undefined, { fileName: file.name });
         const key = `${Date.now()}_${i}`;
         setBusyIds(prev => ({ ...prev, [key]: true }));
         try {
@@ -171,12 +157,6 @@ export function Photos({ currentUser, users, photos, onSavePhoto, onDeletePhoto 
             Chọn hoặc dán ảnh. Tên sẽ tự chạy <span className="font-mono text-slate-200">FAMILY01</span>, <span className="font-mono text-slate-200">FAMILY02</span>...
           </div>
           <div className="flex w-full flex-col gap-2 sm:max-w-xs">
-            {driveConnected && (
-              <label className={`flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[11px] font-bold transition-all ${savePickedToDrive ? "border-sky-500/35 bg-sky-500/12 text-sky-200" : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"}`}>
-                <span>Lưu vào Google Drive</span>
-                <Input type="checkbox" checked={savePickedToDrive} onChange={(e) => setSavePickedToDrive(e.target.checked)} className="size-3.5 shrink-0 accent-sky-500" />
-              </label>
-            )}
             <Button type="button" onClick={() => fileInputRef.current?.click()} className="w-full bg-sky-500 hover:bg-sky-600 text-white rounded-xl px-3 py-2 justify-center">
               <Upload className="w-4 h-4" /> {uploading ? "Đang tải..." : "Chọn ảnh"}
             </Button>

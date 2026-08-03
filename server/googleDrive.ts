@@ -26,11 +26,19 @@ export interface DriveStatus {
   connectedAt: string;
   lastError: string;
   scope: string;
+  uploadEnabled: boolean;
+  folderId: string;
+  folderName: string;
 }
 
 export interface DriveUploadResult {
   id: string;
   webViewLink: string;
+  name: string;
+}
+
+export interface DriveFolder {
+  id: string;
   name: string;
 }
 
@@ -53,8 +61,21 @@ interface GoogleUserInfo {
 
 function oauthClient() {
   return {
-    clientId: String(process.env.GOOGLE_DRIVE_CLIENT_ID || "").trim(),
-    clientSecret: String(process.env.GOOGLE_DRIVE_CLIENT_SECRET || "").trim()
+    clientId: String(process.env.GOOGLE_CLIENT_ID || process.env.GOOGLE_DRIVE_CLIENT_ID || "").trim(),
+    clientSecret: String(process.env.GOOGLE_CLIENT_SECRET || process.env.GOOGLE_DRIVE_CLIENT_SECRET || "").trim()
+  };
+}
+
+export function googlePickerConfig() {
+  const { clientId } = oauthClient();
+  const developerKey = String(process.env.GOOGLE_API_KEY || process.env.GOOGLE_PICKER_API_KEY || "").trim();
+  const appId = String(process.env.GOOGLE_APP_ID || process.env.GOOGLE_PICKER_APP_ID || clientId.split("-")[0] || "").trim();
+  return {
+    configured: Boolean(clientId && developerKey),
+    clientId,
+    developerKey,
+    appId,
+    scope: "https://www.googleapis.com/auth/drive.file"
   };
 }
 
@@ -135,7 +156,10 @@ export function googleDriveStatus(): DriveStatus {
     picture: readStored("googleDrivePicture"),
     connectedAt: readStored("googleDriveConnectedAt"),
     lastError: readStored("googleDriveLastError"),
-    scope: readStored("googleDriveScope") || SCOPES.join(" ")
+    scope: readStored("googleDriveScope") || SCOPES.join(" "),
+    uploadEnabled: readStored("googleDriveUploadEnabled") === "1" && connected,
+    folderId: readStored("googleDriveFolderId"),
+    folderName: readStored("googleDriveFolderName")
   };
 }
 
@@ -227,6 +251,7 @@ export async function exchangeGoogleDriveCode(code: string, redirectUri: string)
   setAppSetting("googleDrivePicture", user.picture);
   setAppSetting("googleDriveScope", data.scope || SCOPES.join(" "));
   setAppSetting("googleDriveEnabled", "1");
+  setAppSetting("googleDriveUploadEnabled", readStored("googleDriveUploadEnabled") || "1");
   setAppSetting("googleDriveConnectedAt", new Date().toISOString());
   setAppSetting("googleDriveStatus", "connected");
   setAppSetting("googleDriveOAuthState", null);
@@ -244,6 +269,9 @@ export function disconnectGoogleDrive(): DriveStatus {
   setAppSetting("googleDrivePicture", null);
   setAppSetting("googleDriveScope", null);
   setAppSetting("googleDriveEnabled", null);
+  setAppSetting("googleDriveUploadEnabled", null);
+  setAppSetting("googleDriveFolderId", null);
+  setAppSetting("googleDriveFolderName", null);
   setAppSetting("googleDriveConnectedAt", null);
   setAppSetting("googleDriveOAuthState", null);
   setAppSetting("googleDriveOAuthStateCreatedAt", null);
@@ -260,6 +288,45 @@ export async function syncGoogleDriveAccount(): Promise<DriveStatus> {
   setAppSetting("googleDrivePicture", user.picture);
   clearLastError();
   return googleDriveStatus();
+}
+
+export async function googleDrivePickerToken(): Promise<string> {
+  const status = googleDriveStatus();
+  if (!status.configured || !status.connected) throw new Error("Google Drive chưa được kết nối.");
+  return await getValidAccessToken();
+}
+
+export function setGoogleDriveUploadEnabled(enabled: boolean): DriveStatus {
+  const status = googleDriveStatus();
+  if (!status.connected) throw new Error("Google Drive chưa được kết nối.");
+  setAppSetting("googleDriveUploadEnabled", enabled ? "1" : "0");
+  return googleDriveStatus();
+}
+
+export function setGoogleDriveFolder(folderId: string, folderName: string): DriveStatus {
+  const status = googleDriveStatus();
+  if (!status.connected) throw new Error("Google Drive chưa được kết nối.");
+  setAppSetting("googleDriveFolderId", String(folderId || "").trim() || null);
+  setAppSetting("googleDriveFolderName", String(folderName || "").trim() || null);
+  return googleDriveStatus();
+}
+
+export async function listGoogleDriveFolders(): Promise<DriveFolder[]> {
+  const status = googleDriveStatus();
+  if (!status.configured || !status.connected) return [];
+  const token = await getValidAccessToken();
+  const params = new URLSearchParams({
+    q: "mimeType='application/vnd.google-apps.folder' and trashed=false",
+    fields: "files(id,name)",
+    orderBy: "name",
+    pageSize: "100"
+  });
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const data: any = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error?.message || "Không đọc được danh sách thư mục Google Drive.");
+  return Array.isArray(data.files) ? data.files.map((f: any) => ({ id: String(f.id || ""), name: String(f.name || "") })).filter((f: DriveFolder) => f.id && f.name) : [];
 }
 
 async function getValidAccessToken(): Promise<string> {
@@ -292,7 +359,8 @@ export async function uploadDataUrlToGoogleDrive(dataUrl: string, fileName: stri
   const mime = match[1];
   const buffer = Buffer.from(match[2], "base64");
   const token = await getValidAccessToken();
-  const metadata = { name: fileName || `family-organizer-${Date.now()}` };
+  const metadata: { name: string; parents?: string[] } = { name: fileName || `family-organizer-${Date.now()}` };
+  if (status.folderId) metadata.parents = [status.folderId];
   const boundary = `family_organizer_${Date.now()}_${crypto.randomBytes(6).toString("hex")}`;
   const body = Buffer.concat([
     Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`),

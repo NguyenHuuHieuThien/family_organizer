@@ -6,14 +6,12 @@
 import "dotenv/config";
 import express, { Request, Response, NextFunction } from "express";
 import path from "path";
-import os from "os";
 import fsp from "fs/promises";
 import crypto from "crypto";
 import http from "http";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
 import { FamilyDB, verifyPassword, getSessionSecret, getAppSettings, setAppSetting, initFamilyStorage } from "./server/db.js";
-import { mongooseAppendServerMetric, mongooseGetServerMetrics } from "./server/mongoose.js";
 import { UserRole, isLimitedViewer, DishSlot, MealIngredient, DOCUMENT_TYPE_LABELS } from "./src/types.js";
 import { buildPlanFromLibrary, dedupeAndAnnotateGroceries } from "./src/utils/mealPlan.js";
 import { normalizeSearchText, matchesQuery, excerptAround } from "./src/utils/searchText.js";
@@ -29,7 +27,12 @@ import {
   disconnectGoogleDrive,
   exchangeGoogleDriveCode,
   googleDriveStatus,
+  googleDrivePickerToken,
+  googlePickerConfig,
+  listGoogleDriveFolders,
+  setGoogleDriveFolder,
   setGoogleDriveIntegrationError,
+  setGoogleDriveUploadEnabled,
   syncGoogleDriveAccount,
   uploadDataUrlToGoogleDrive,
   validateGoogleDriveOAuthState
@@ -416,14 +419,17 @@ const canManagePhoto = (
 const UPLOAD_CATEGORIES = new Set(["avatars", "assets", "receipts", "documents", "debts", "notes", "photos", "chat"]);
 
 app.post("/api/uploads", requireAuth, async (req: AuthRequest, res: Response) => {
-  const { dataUrl, category, subfolder, saveToDrive, fileName } = req.body || {};
+  const { dataUrl, category, subfolder, fileName } = req.body || {};
   if (!UPLOAD_CATEGORIES.has(category)) {
     res.status(400).json({ error: "Loại ảnh tải lên không hợp lệ." });
     return;
   }
   try {
     const saved = saveDataUrlToFile(dataUrl, category, subfolder);
-    const drive = saveToDrive ? await uploadDataUrlToGoogleDrive(dataUrl, String(fileName || "")) : null;
+    const driveCategories = new Set(["documents", "photos"]);
+    const driveStatus = googleDriveStatus();
+    const shouldSaveToDrive = driveCategories.has(category) && driveStatus.uploadEnabled;
+    const drive = shouldSaveToDrive ? await uploadDataUrlToGoogleDrive(dataUrl, String(fileName || "")) : null;
     res.json(drive ? { ...saved, driveFileId: drive.id, driveUrl: drive.webViewLink } : saved);
   } catch (err: any) {
     res.status(400).json({ error: err.message || "Tải ảnh lên thất bại." });
@@ -499,267 +505,7 @@ app.post("/api/update", requireAuth, requireRole([UserRole.ADMIN]), async (_req:
   }
 });
 
-// --- SERVER MONITOR (thông số máy chủ realtime, admin only) ---
-// Chạy trong Docker trên Pi: /proc & /sys phản ánh máy chủ thật nên CPU/RAM/nhiệt độ
-// là số liệu của cả con Pi, không phải riêng container.
-
-let lastCpuSample: { idle: number; total: number; at: number } | null = null;
-
-const readCpuTimes = () => {
-  let idle = 0;
-  let total = 0;
-  for (const cpu of os.cpus()) {
-    idle += cpu.times.idle;
-    total += cpu.times.user + cpu.times.nice + cpu.times.sys + cpu.times.idle + cpu.times.irq;
-  }
-  return { idle, total, at: Date.now() };
-};
-
-// % CPU trung bình giữa 2 lần gọi (client poll ~2s nên delta rất mượt).
-// Lần đầu (hoặc mẫu quá cũ) thì tự lấy 2 mẫu cách nhau 300ms.
-const readCpuPercent = async (): Promise<number | null> => {
-  let prev = lastCpuSample;
-  if (!prev || Date.now() - prev.at > 30000) {
-    prev = readCpuTimes();
-    await new Promise(r => setTimeout(r, 300));
-  }
-  const cur = readCpuTimes();
-  lastCpuSample = cur;
-  const dTotal = cur.total - prev.total;
-  const dIdle = cur.idle - prev.idle;
-  if (dTotal <= 0) return null;
-  return Math.min(100, Math.max(0, (1 - dIdle / dTotal) * 100));
-};
-
-// Nhiệt độ CPU từ thermal zone (Pi/Linux, giá trị millidegree); nơi khác trả null.
-// Ưu tiên zone có type cpu/soc (Pi 5 = "cpu-thermal"), nếu không thì lấy zone đầu tiên đọc được.
-const readCpuTempC = async (): Promise<number | null> => {
-  try {
-    const base = "/sys/class/thermal";
-    let fallback: number | null = null;
-    for (const zone of await fsp.readdir(base)) {
-      if (!zone.startsWith("thermal_zone")) continue;
-      try {
-        const raw = await fsp.readFile(path.join(base, zone, "temp"), "utf8");
-        const value = Number(raw.trim());
-        if (!Number.isFinite(value) || value <= 0) continue;
-        const celsius = value >= 1000 ? value / 1000 : value;
-        let type = "";
-        try { type = (await fsp.readFile(path.join(base, zone, "type"), "utf8")).trim().toLowerCase(); } catch { /* zone không có type */ }
-        if (/cpu|soc|core|x86/.test(type)) return celsius;
-        if (fallback === null) fallback = celsius;
-      } catch { /* zone không đọc được → thử zone kế */ }
-    }
-    return fallback;
-  } catch { /* không phải Linux hoặc /sys bị ẩn */ }
-  return null;
-};
-
-// Nhiệt độ SSD NVMe qua hwmon (Pi 5 + SSD có cảm biến: name = "nvme",
-// temp1_input thường là "Composite" — nhiệt độ tổng của ổ, đơn vị millidegree).
-const readSsdTempC = async (): Promise<number | null> => {
-  try {
-    const base = "/sys/class/hwmon";
-    for (const dev of await fsp.readdir(base)) {
-      try {
-        const name = (await fsp.readFile(path.join(base, dev, "name"), "utf8")).trim().toLowerCase();
-        if (!name.includes("nvme")) continue;
-        for (const file of ["temp1_input", "temp2_input", "temp3_input"]) {
-          try {
-            const raw = await fsp.readFile(path.join(base, dev, file), "utf8");
-            const value = Number(raw.trim());
-            if (Number.isFinite(value) && value > 0) return value >= 1000 ? value / 1000 : value;
-          } catch { /* sensor này không có → thử sensor kế */ }
-        }
-      } catch { /* hwmon không đọc được → thử cái kế */ }
-    }
-  } catch { /* không phải Linux hoặc /sys bị ẩn */ }
-  return null;
-};
-
-// RAM: ưu tiên MemAvailable trong /proc/meminfo (sát thực tế hơn os.freemem trên Linux).
-const readMemory = async () => {
-  const totalBytes = os.totalmem();
-  let availableBytes = os.freemem();
-  try {
-    const info = await fsp.readFile("/proc/meminfo", "utf8");
-    const m = info.match(/MemAvailable:\s+(\d+)\s*kB/);
-    if (m) availableBytes = Number(m[1]) * 1024;
-  } catch { /* Windows/macOS: dùng os.freemem() */ }
-  return { totalBytes, usedBytes: Math.max(0, totalBytes - availableBytes), availableBytes };
-};
-
-// Dung lượng phân vùng chứa app (trong container = ổ đĩa thật của máy chủ).
-const readDisk = async () => {
-  try {
-    if (typeof fsp.statfs !== "function") return null; // Node < 18.15
-    const st = await fsp.statfs(process.cwd());
-    const totalBytes = Number(st.blocks) * Number(st.bsize);
-    const freeBytes = Number(st.bavail) * Number(st.bsize);
-    if (!Number.isFinite(totalBytes) || totalBytes <= 0) return null;
-    return { totalBytes, usedBytes: totalBytes - freeBytes, freeBytes };
-  } catch {
-    return null;
-  }
-};
-
-// Ghi telemetry vào MongoDB 1 phút/lần (24/7) để biểu đồ giữ được lịch sử
-// 24h/7 ngày qua các lần reload trang — client không cần poll dày.
-async function recordServerMetric() {
-  try {
-    const [cpuPercent, tempC, ssdTempC, memory, disk] = await Promise.all([
-      readCpuPercent(),
-      readCpuTempC(),
-      readSsdTempC(),
-      readMemory(),
-      readDisk()
-    ]);
-    mongooseAppendServerMetric({
-      t: Date.now(),
-      cpu: cpuPercent,
-      ram: memory ? (memory.usedBytes / memory.totalBytes) * 100 : null,
-      temp: tempC,
-      ssd: ssdTempC,
-      disk: disk ? (disk.usedBytes / disk.totalBytes) * 100 : null
-    });
-  } catch (e) {
-    console.error("Không ghi được telemetry máy chủ:", e);
-  }
-}
-setTimeout(recordServerMetric, 10 * 1000);
-setInterval(recordServerMetric, 60 * 1000);
-
-// Danh sách shortcut dịch vụ homelab (Immich, Portainer…) lưu trong app_settings.
-// Admin quản lý (GET xem, PUT ghi toàn bộ mảng).
-interface HomelabLink { id: string; emoji: string; name: string; url: string; desc?: string }
-const parseHomelabLinks = (): HomelabLink[] => {
-  try { return JSON.parse(getAppSettings().homelabLinks || "[]"); } catch { return []; }
-};
-app.get("/api/server/homelab-links", requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
-  res.json({ links: parseHomelabLinks() });
-});
-app.put("/api/server/homelab-links", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
-  const links = req.body?.links;
-  if (!Array.isArray(links)) { res.status(400).json({ error: "links phải là mảng" }); return; }
-  const clean: HomelabLink[] = links.map((l: any) => ({
-    id: String(l.id || `hl_${Date.now()}_${Math.random().toString(36).slice(2,6)}`),
-    emoji: String(l.emoji || "🔗").trim().slice(0, 8),
-    name: String(l.name || "").trim().slice(0, 60),
-    url: String(l.url || "").trim().slice(0, 500),
-    desc: l.desc ? String(l.desc).trim().slice(0, 120) : undefined
-  })).filter(l => l.name && l.url);
-  setAppSetting("homelabLinks", JSON.stringify(clean));
-  res.json({ links: clean });
-});
-
-// Lịch sử telemetry cho biểu đồ: 24h (mặc định) hoặc 7 ngày, downsample ≤320 điểm.
-app.get("/api/server/history", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
-  const range = req.query.range === "7d" ? "7d" : "24h";
-  const sinceMs = Date.now() - (range === "7d" ? 7 * 24 : 24) * 3600 * 1000;
-  const all = mongooseGetServerMetrics(sinceMs);
-  const MAX_POINTS = 320;
-  const step = Math.ceil(all.length / MAX_POINTS);
-  const points = step > 1 ? all.filter((_, i) => i % step === 0 || i === all.length - 1) : all;
-  res.json({ range, points });
-});
-
-// Các địa chỉ IPv4 của máy (không tính loopback). Gắn nhãn Tailscale theo dải
-// CGNAT 100.64.0.0/10 hoặc tên card "tailscale*"; dải 172.16–31 trong container
-// thường là mạng bridge của Docker.
-const listNetworkAddrs = () => {
-  const out: { name: string; address: string; kind: "tailscale" | "docker" | "lan" }[] = [];
-  const isTailscaleIp = (ip: string) => {
-    const m = ip.match(/^100\.(\d+)\./);
-    return !!m && Number(m[1]) >= 64 && Number(m[1]) <= 127;
-  };
-  for (const [name, addrs] of Object.entries(os.networkInterfaces())) {
-    for (const a of addrs || []) {
-      if (a.internal || a.family !== "IPv4") continue;
-      const kind = (isTailscaleIp(a.address) || name.startsWith("tailscale")) ? "tailscale"
-        : /^172\.(1[6-9]|2\d|3[01])\./.test(a.address) ? "docker"
-        : "lan";
-      out.push({ name, address: a.address, kind });
-    }
-  }
-  return out;
-};
-
-// IP của client đang gọi (qua reverse proxy thì lấy hop đầu của x-forwarded-for).
-const readClientIp = (req: Request): string => {
-  const fwd = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
-  const raw = fwd || req.socket.remoteAddress || "";
-  return raw.replace(/^::ffff:/, "");
-};
-
-// Dung lượng dữ liệu app: thư mục MongoDB local/Docker + uploads.
-// Walk đệ quy nhưng cache uploads 5 phút (có thể nhiều file media).
-let uploadsSizeCache: { at: number; bytes: number } | null = null;
-async function readDataSizes(): Promise<{ dbBytes: number; uploadsBytes: number }> {
-  const dirSize = async (dir: string): Promise<number> => {
-    let bytes = 0;
-    const walk = async (current: string) => {
-      let entries;
-      try { entries = await fsp.readdir(current, { withFileTypes: true }); } catch { return; }
-      for (const e of entries) {
-        const p = path.join(current, e.name);
-        if (e.isDirectory()) await walk(p);
-        else { try { bytes += (await fsp.stat(p)).size; } catch { /* file vừa bị xóa */ } }
-      }
-    };
-    await walk(dir);
-    return bytes;
-  };
-  const dbBytes = await dirSize(path.join(process.cwd(), "mongo-data"));
-  if (!uploadsSizeCache || Date.now() - uploadsSizeCache.at > 5 * 60 * 1000) {
-    const bytes = await dirSize(UPLOADS_DIR);
-    uploadsSizeCache = { at: Date.now(), bytes };
-  }
-  return { dbBytes, uploadsBytes: uploadsSizeCache.bytes };
-}
-
-app.get("/api/server/stats", requireAuth, requireRole([UserRole.ADMIN]), async (req: AuthRequest, res: Response) => {
-  try {
-    const [cpuPercent, tempC, ssdTempC, memory, disk, dataSizes] = await Promise.all([
-      readCpuPercent(),
-      readCpuTempC(),
-      readSsdTempC(),
-      readMemory(),
-      readDisk(),
-      readDataSizes()
-    ]);
-    const cpus = os.cpus();
-    res.json({
-      at: new Date().toISOString(),
-      hostname: os.hostname(),
-      platform: `${os.type()} ${os.arch()}`,
-      uptimeSec: Math.round(os.uptime()),
-      loadAvg: os.loadavg(),
-      cpu: { percent: cpuPercent, cores: cpus.length, model: cpus[0]?.model || "" },
-      tempC,
-      ssdTempC,
-      memory,
-      disk,
-      // Mạng & truy cập
-      network: { interfaces: listNetworkAddrs(), clientIp: readClientIp(req) },
-      // Ứng dụng & dữ liệu
-      app: {
-        version: APP_VERSION,
-        commit: GIT_SHA ? GIT_SHA.slice(0, 7) : "",
-        nodeVersion: process.version,
-        processUptimeSec: Math.round(process.uptime()),
-        rssBytes: process.memoryUsage.rss()
-      },
-      data: {
-        ...dataSizes,
-        pushDevices: FamilyDB.getPushSubscriptions().length,
-        sseClients: sseClients.length,
-        users: FamilyDB.getUsers().length
-      }
-    });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message || "Không đọc được thông số máy chủ." });
-  }
-});
+// Server monitor UI and telemetry were removed; Settings keeps only app-level tools.
 
 // --- AI SETTINGS (Gemini API key, admin only) ---
 
@@ -791,7 +537,7 @@ app.post("/api/settings/ai", requireAuth, requireRole([UserRole.ADMIN]), async (
 // --- GOOGLE DRIVE INTEGRATION (admin only) ---
 
 function googleDriveRedirectUri(req: Request, callbackPath = "/api/integrations/google-drive/callback"): string {
-  const explicit = String(process.env.GOOGLE_DRIVE_REDIRECT_URI || "").trim();
+  const explicit = String(process.env.GOOGLE_REDIRECT_URI || process.env.GOOGLE_DRIVE_REDIRECT_URI || "").trim();
   if (explicit) return explicit;
   const appUrl = String(process.env.APP_URL || "").trim().replace(/\/$/, "");
   if (appUrl && !/your-domain-or-tailscale-url/i.test(appUrl)) return `${appUrl}${callbackPath}`;
@@ -875,10 +621,107 @@ function registerGoogleDriveIntegrationRoutes(prefix: string) {
       res.status(400).json({ error: err.message || "Đồng bộ Google Drive thất bại." });
     }
   });
+
+  app.get(`${prefix}/folders`, requireAuth, requireRole([UserRole.ADMIN]), async (_req: AuthRequest, res: Response) => {
+    try {
+      const folders = await listGoogleDriveFolders();
+      res.json({ folders });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || "Không đọc được danh sách thư mục Google Drive." });
+    }
+  });
+
+  app.post(`${prefix}/folder`, requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+    try {
+      const folderId = String(req.body?.folderId || "").trim();
+      const folderName = String(req.body?.folderName || "").trim();
+      const status = setGoogleDriveFolder(folderId, folderName);
+      res.json({ ...status, message: folderId ? "Đã chọn thư mục lưu Google Drive." : "Đã bỏ chọn thư mục lưu." });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || "Không lưu được thư mục Google Drive." });
+    }
+  });
+
+  app.post(`${prefix}/upload-toggle`, requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+    try {
+      const enabled = Boolean(req.body?.enabled);
+      const status = setGoogleDriveUploadEnabled(enabled);
+      res.json({ ...status, message: enabled ? "Đã bật lưu tự động vào Google Drive." : "Đã tắt lưu tự động vào Google Drive." });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || "Không đổi được trạng thái lưu Google Drive." });
+    }
+  });
 }
 
 registerGoogleDriveIntegrationRoutes("/api/integrations/google-drive");
 registerGoogleDriveIntegrationRoutes("/api/settings/google-drive");
+
+app.get("/api/google/connect", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+  try {
+    const state = createGoogleDriveOAuthState();
+    res.json({ url: buildGoogleDriveAuthUrl(googleDriveRedirectUri(req, "/api/google/callback"), state) });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Không tạo được liên kết Google Drive." });
+  }
+});
+
+app.get("/api/google/status", requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
+  res.json(googleDriveStatus());
+});
+
+app.post("/api/google", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+  const { enabled } = req.body || {};
+  const status = googleDriveStatus();
+  if (!status.connected) {
+    res.status(400).json({ error: "Google Drive chưa được kết nối." });
+    return;
+  }
+  setAppSetting("googleDriveEnabled", enabled ? "1" : "0");
+  res.json({ ...googleDriveStatus(), message: "Đã cập nhật trạng thái Google Drive." });
+});
+
+app.post("/api/google/upload-toggle", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+  try {
+    const enabled = Boolean(req.body?.enabled);
+    const status = setGoogleDriveUploadEnabled(enabled);
+    res.json({ ...status, message: enabled ? "Đã bật lưu tự động vào Google Drive." : "Đã tắt lưu tự động vào Google Drive." });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Không đổi được trạng thái lưu Google Drive." });
+  }
+});
+
+app.post("/api/google/folder", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+  try {
+    const folderId = String(req.body?.folderId || "").trim();
+    const folderName = String(req.body?.folderName || "").trim();
+    const status = setGoogleDriveFolder(folderId, folderName);
+    res.json({ ...status, message: folderId ? "Đã chọn thư mục lưu Google Drive." : "Đã bỏ chọn thư mục lưu." });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Không lưu được thư mục Google Drive." });
+  }
+});
+
+app.post("/api/google/disconnect", requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
+  try {
+    res.json({ ...disconnectGoogleDrive(), message: "Đã ngắt kết nối Google Drive." });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Ngắt kết nối Google Drive thất bại." });
+  }
+});
+
+app.post("/api/google/sync", requireAuth, requireRole([UserRole.ADMIN]), async (_req: AuthRequest, res: Response) => {
+  try {
+    const status = await syncGoogleDriveAccount();
+    res.json({ ...status, message: "Đã đồng bộ thông tin tài khoản Google Drive." });
+  } catch (err: any) {
+    setGoogleDriveIntegrationError(String(err.message || "Đồng bộ Google Drive thất bại."));
+    res.status(400).json({ error: err.message || "Đồng bộ Google Drive thất bại." });
+  }
+});
+
+app.get("/api/google/callback", async (req: Request, res: Response) => {
+  await handleGoogleDriveCallback(req, res, "/api/google/callback");
+});
 
 app.get("/api/auth/google/callback", async (req: Request, res: Response) => {
   await handleGoogleDriveCallback(req, res, "/api/auth/google/callback");
@@ -890,6 +733,19 @@ app.get("/api/settings/google-drive/connect-url", requireAuth, requireRole([User
     res.json({ url: buildGoogleDriveAuthUrl(googleDriveRedirectUri(req, "/api/settings/google-drive/callback"), state) });
   } catch (err: any) {
     res.status(400).json({ error: err.message || "Không tạo được liên kết Google Drive." });
+  }
+});
+
+app.get("/api/google/picker-config", requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
+  res.json(googlePickerConfig());
+});
+
+app.get("/api/google/picker-token", requireAuth, requireRole([UserRole.ADMIN]), async (_req: AuthRequest, res: Response) => {
+  try {
+    const accessToken = await googleDrivePickerToken();
+    res.json({ accessToken });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message || "Không lấy được token Google Drive." });
   }
 });
 
@@ -1105,7 +961,10 @@ app.post("/api/tasks", requireAuth, (req: AuthRequest, res: Response) => {
   // Guard write permissions - Child/Guest can only edit tasks they created or are assigned to.
   if (isLimitedViewer(session.role) && req.body.id && !req.body.comments) {
     const existing = FamilyDB.getTasks().find(t => t.id === req.body.id);
-    if (existing && existing.creatorId !== session.userId && existing.assigneeId !== session.userId) {
+    const assigneeIds = Array.isArray((existing as any)?.assigneeIds) && (existing as any).assigneeIds.length > 0
+      ? (existing as any).assigneeIds
+      : existing?.assigneeId ? [existing.assigneeId] : [];
+    if (existing && existing.creatorId !== session.userId && !assigneeIds.includes(session.userId)) {
       res.status(403).json({ error: "Bạn chỉ được sửa đổi công việc do mình tạo hoặc được giao!" });
       return;
     }
@@ -1329,6 +1188,25 @@ interface SearchResultItem {
 
 const SEARCH_LIMIT_PER_KIND = 6;
 
+const TRANSACTION_CATEGORY_LABELS: Record<string, string> = {
+  food: "Ăn uống",
+  education2: "Học tập",
+  utilities: "Điện nước",
+  shopping: "Mua sắm",
+  medical: "Y tế",
+  transport: "Đi lại",
+  funeral: "Ma chay",
+  ceremony: "Hiếu hỉ",
+  rent: "Thuê nhà",
+  internet: "Cước Internet",
+  phone: "Điện thoại",
+  insurance: "Bảo hiểm",
+  loan: "Trả nợ",
+  debt_bank: "Trả nợ ngân hàng",
+  debt_personal: "Trả nợ cá nhân",
+  other: "Khác"
+};
+
 app.get("/api/search", requireAuth, (req: AuthRequest, res: Response) => {
   const session = req.userSession!;
   const q = normalizeSearchText(String(req.query.q || ""));
@@ -1343,7 +1221,16 @@ app.get("/api/search", requireAuth, (req: AuthRequest, res: Response) => {
 
   // Công việc — title/description/tags (route GET gốc trả tất cả cho mọi role)
   take(
-    FamilyDB.getTasks().filter(t => matchesQuery(q, t.title, t.description, t.tags)),
+    FamilyDB.getTasks().filter(t => matchesQuery(
+      q,
+      "Công việc",
+      "Nhiệm vụ",
+      t.title,
+      t.description,
+      t.status,
+      t.priority,
+      t.tags
+    )),
     t => ({
       kind: "task", id: t.id, title: t.title,
       snippet: excerptAround(t.description, q) || "Công việc",
@@ -1353,7 +1240,7 @@ app.get("/api/search", requireAuth, (req: AuthRequest, res: Response) => {
 
   // Lịch / sự kiện — title/description
   take(
-    FamilyDB.getPlans().filter(p => matchesQuery(q, p.title, p.description)),
+    FamilyDB.getPlans().filter(p => matchesQuery(q, "Lịch", "Sự kiện", "Kế hoạch", p.title, p.description)),
     p => ({
       kind: "plan", id: p.id, title: p.title,
       snippet: excerptAround(p.description, q) || "Sự kiện",
@@ -1363,7 +1250,7 @@ app.get("/api/search", requireAuth, (req: AuthRequest, res: Response) => {
 
   // Ghi chú — title/content/tags
   take(
-    FamilyDB.getNotes().filter(n => matchesQuery(q, n.title, n.content, n.tags)),
+    FamilyDB.getNotes().filter(n => matchesQuery(q, "Ghi chú", n.title, n.content, n.tags)),
     n => ({
       kind: "note", id: n.id, title: n.title,
       snippet: excerptAround(n.content, q) || "Ghi chú",
@@ -1375,7 +1262,16 @@ app.get("/api/search", requireAuth, (req: AuthRequest, res: Response) => {
   if (session.role === UserRole.ADMIN || session.role === UserRole.MEMBER) {
     take(
       FamilyDB.getTransactions().filter(tx =>
-        matchesQuery(q, tx.description, tx.category, String(tx.amount))
+        matchesQuery(
+          q,
+          "Thu chi",
+          "Tài chính",
+          tx.type === "income" ? "Khoản thu Thu nhập" : "Khoản chi Chi tiêu",
+          tx.description,
+          tx.category,
+          TRANSACTION_CATEGORY_LABELS[String(tx.category)] || tx.category,
+          String(tx.amount)
+        )
       ),
       tx => ({
         kind: "transaction", id: tx.id,
@@ -1388,7 +1284,17 @@ app.get("/api/search", requireAuth, (req: AuthRequest, res: Response) => {
     take(
       FamilyDB.getDocuments()
         .filter(doc => canViewDocument(doc, session))
-        .filter(doc => matchesQuery(q, doc.title, doc.documentNumber, doc.issuer, doc.notes)),
+        .filter(doc => matchesQuery(
+          q,
+          "Giấy tờ",
+          "Tài liệu",
+          "Hồ sơ",
+          DOCUMENT_TYPE_LABELS[doc.type] || doc.type,
+          doc.title,
+          doc.documentNumber,
+          doc.issuer,
+          doc.notes
+        )),
       doc => ({
         kind: "document", id: doc.id, title: doc.title,
         snippet: [DOCUMENT_TYPE_LABELS[doc.type] || "Giấy tờ", doc.documentNumber].filter(Boolean).join(" • "),
@@ -2278,6 +2184,7 @@ app.post("/api/assistant/chat", requireAuth, async (req: AuthRequest, res: Respo
       priority: t.priority,
       dueDate: t.dueDate,
       assigneeId: t.assigneeId,
+      assigneeIds: (t as any).assigneeIds,
       rewardPoints: t.rewardPoints
     }));
     const plans = FamilyDB.getPlans().slice(-30).map(p => ({

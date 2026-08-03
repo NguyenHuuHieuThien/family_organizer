@@ -18,8 +18,9 @@ import {
   LineChart,
   MapPin,
   Pencil,
+  Pin,
+  PinOff,
   Plus,
-  RefreshCw,
   Search,
   Trash2,
   TrendingDown,
@@ -35,6 +36,7 @@ import {
   AccountType,
   AssetPhoto,
   AssetType,
+  BuiltInAssetType,
   FamilyAsset,
   FinancialTransaction,
   TransactionType,
@@ -76,6 +78,25 @@ const ASSET_SALE_CATEGORY = "Bán tài sản";
 
 const MAX_ASSET_PHOTOS = 8;
 
+const CUSTOM_ASSET_PREFIX = "custom:";
+
+function isBuiltInAssetType(type: AssetType): type is BuiltInAssetType {
+  return type === "crypto" || type === "land" || type === "gold_bar" || type === "gold_ring" || type === "gold_jewelry" || type === "gold_other" || type === "vehicle" || type === "stock" || type === "other";
+}
+
+function isCustomAssetType(type: AssetType) {
+  return type.startsWith(CUSTOM_ASSET_PREFIX);
+}
+
+function customAssetTypeLabel(type: AssetType) {
+  return isCustomAssetType(type) ? type.slice(CUSTOM_ASSET_PREFIX.length).replace(/-/g, " ").trim() : "";
+}
+
+function makeCustomAssetType(label: string) {
+  const slug = label.trim().toLowerCase().replace(/[^a-z0-9\u00C0-\u024F]+/gi, "-").replace(/^-+|-+$/g, "");
+  return `${CUSTOM_ASSET_PREFIX}${slug || "loai-moi"}` as AssetType;
+}
+
 function defaultUnitForType(type: AssetType) {
   if (type === "crypto") return "coin";
   if (type === "land") return "m2";
@@ -91,6 +112,7 @@ function typeClass(type: AssetType) {
   if (isGoldType(type)) return "text-amber-400 bg-amber-500/10 border-amber-500/20";
   if (type === "vehicle") return "text-orange-400 bg-orange-500/10 border-orange-500/20";
   if (type === "stock") return "text-violet-400 bg-violet-500/10 border-violet-500/20";
+  if (isCustomAssetType(type)) return "text-cyan-400 bg-cyan-500/10 border-cyan-500/20";
   return "text-slate-400 bg-slate-800 border-slate-700";
 }
 
@@ -141,6 +163,7 @@ export function Assets({
   const [selling, setSelling] = useState(false);
 
   const [formType, setFormType] = useState<AssetType>("gold_bar");
+  const [formCustomTypeName, setFormCustomTypeName] = useState("");
   const [formName, setFormName] = useState("");
   const [formOwnerId, setFormOwnerId] = useState("");
   const [formQuantity, setFormQuantity] = useState<number>(1);
@@ -182,9 +205,24 @@ export function Assets({
     { value: "other" as AssetType, label: t("assets.typeOtherLabel"), short: t("assets.typeOtherShort") }
   ], [t]);
 
+  const formTypeOptions = useMemo(() => [
+    ...ASSET_TYPES,
+    { value: makeCustomAssetType(formCustomTypeName || "Loại khác"), label: formCustomTypeName.trim() || t("assets.typeCustomLabel"), short: formCustomTypeName.trim() || t("assets.typeCustomShort") }
+  ], [ASSET_TYPES, formCustomTypeName, t]);
+
   const assetTypeLabel = useCallback((type: AssetType) => {
+    if (isCustomAssetType(type)) {
+      return customAssetTypeLabel(type) || t("assets.typeCustomShort");
+    }
     return ASSET_TYPES.find(at => at.value === type)?.short || t("assets.typeOtherShort");
   }, [ASSET_TYPES, t]);
+
+  const assetTypeFilterOptions = useMemo(() => {
+    const customTypes = Array.from(new Set(assets.map(asset => asset.type).filter(isCustomAssetType)))
+      .sort((a, b) => assetTypeLabel(a).localeCompare(assetTypeLabel(b), "vi"))
+      .map(type => ({ value: type, label: assetTypeLabel(type) }));
+    return [{ value: "all", label: t("assets.typeFilterAll") }, ...ASSET_TYPES, ...customTypes];
+  }, [ASSET_TYPES, assetTypeLabel, assets, t]);
 
   const widgetsOverview = widgets ?? null;
 
@@ -215,8 +253,6 @@ export function Assets({
     if (c?.ethereum) crypto["ETH"] = { usd: c.ethereum.usd ?? 0, vnd: c.ethereum.vnd ?? (c.ethereum.usd ?? 0) * usdVndRate };
     return { gold, crypto, usdVndRate, lastUpdated: new Date().toISOString() };
   }, [widgetsOverview]);
-
-  const marketPricesStatus: "loading" | "ok" = widgetsOverview ? "ok" : "loading";
 
   // Live auto-value preview inside the form (recalculates as user types weight/quantity/symbol)
   const formAutoValue = useMemo(() => {
@@ -256,6 +292,7 @@ export function Assets({
         asset.name,
         asset.notes,
         asset.location,
+        assetTypeLabel(asset.type),
         asset.symbol,
         asset.network,
         asset.address,
@@ -264,7 +301,11 @@ export function Assets({
         asset.serialNo
       ].some(value => String(value || "").toLowerCase().includes(text));
     }).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  }, [assets, searchTerm, typeFilter, ownerFilter]);
+  }, [assets, searchTerm, typeFilter, ownerFilter, assetTypeLabel]);
+
+  const pinnedAssets = useMemo(() => {
+    return assets.filter(asset => asset.isPinned).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  }, [assets]);
 
   // Totals are kept per-currency — VND and USD must never be summed together.
   // Uses effective values: live market price → manual estimatedValue → purchaseValue fallback.
@@ -288,6 +329,7 @@ export function Assets({
 
   const resetForm = () => {
     setFormType("gold_bar");
+    setFormCustomTypeName("");
     setFormName("");
     setFormOwnerId("");
     setFormQuantity(1);
@@ -322,6 +364,7 @@ export function Assets({
   const openEditForm = (asset: FamilyAsset) => {
     setEditingAsset(asset);
     setFormType(asset.type);
+    setFormCustomTypeName(isCustomAssetType(asset.type) ? customAssetTypeLabel(asset.type) : "");
     setFormName(asset.name);
     setFormOwnerId(asset.ownerId || "");
     // Với vàng, gộp trọng lượng cũ (field weight) vào ô Số lượng/Đơn vị.
@@ -392,6 +435,13 @@ export function Assets({
   const handleTypeChange = (type: AssetType) => {
     setFormType(type);
     setFormUnit(defaultUnitForType(type));
+    if (isBuiltInAssetType(type)) setFormCustomTypeName("");
+  };
+
+  const handleCustomTypeNameChange = (name: string) => {
+    setFormCustomTypeName(name);
+    setFormType(makeCustomAssetType(name));
+    setFormUnit(defaultUnitForType(makeCustomAssetType(name)));
   };
 
   const addPhotoFiles = async (files: File[]) => {
@@ -421,8 +471,8 @@ export function Assets({
         });
         // Persist as files on disk (organized under uploads/assets/<type>) and keep only the URLs.
         const [fullUrl, thumbUrl] = await Promise.all([
-          uploadDataUrl(full.dataUrl, "assets", formType),
-          uploadDataUrl(thumb.dataUrl, "assets", formType)
+          uploadDataUrl(full.dataUrl, "assets", isCustomAssetType(formType) ? "other" : formType),
+          uploadDataUrl(thumb.dataUrl, "assets", isCustomAssetType(formType) ? "other" : formType)
         ]);
         optimizedPhotos.push({
           id: `photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
@@ -475,14 +525,16 @@ export function Assets({
       return;
     }
 
+    const saveType = isCustomAssetType(formType) ? makeCustomAssetType(formCustomTypeName || customAssetTypeLabel(formType)) : formType;
+
     try {
       await onSaveAsset({
         id: editingAsset?.id,
-        type: formType,
+        type: saveType,
         name: formName.trim(),
         ownerId: formOwnerId || undefined,
         quantity: Number(formQuantity) || 0,
-        unit: formUnit.trim() || defaultUnitForType(formType),
+        unit: formUnit.trim() || defaultUnitForType(saveType),
         estimatedValue: Number(formEstimatedValue) || 0,
         purchaseValue: Number(formPurchaseValue) || undefined,
         currency: formCurrency,
@@ -500,8 +552,8 @@ export function Assets({
         parcelNo: formParcelNo.trim(),
         goldPurity: formGoldPurity.trim(),
         // Vàng: trọng lượng lưu từ Số lượng/Đơn vị (gộp, tránh nhập 2 lần).
-        weight: isGoldType(formType) ? (Number(formQuantity) || undefined) : undefined,
-        weightUnit: isGoldType(formType) ? formUnit.trim() : "",
+        weight: isGoldType(saveType) ? (Number(formQuantity) || undefined) : undefined,
+        weightUnit: isGoldType(saveType) ? formUnit.trim() : "",
         brand: formBrand.trim(),
         serialNo: formSerialNo.trim()
       });
@@ -523,6 +575,13 @@ export function Assets({
     });
     if (!ok) return;
     await onDeleteAsset(asset.id);
+  };
+
+  const handleTogglePin = async (asset: FamilyAsset) => {
+    await onSaveAsset({
+      ...asset,
+      isPinned: !asset.isPinned
+    });
   };
 
   const openSellForm = (asset: FamilyAsset) => {
@@ -578,109 +637,55 @@ export function Assets({
     }
   };
 
-  const fmtUsd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
-  const fmtVnd = (n: number) => Math.round(n).toLocaleString("vi-VN") + "đ";
-  const changeBadge = (pct: number | null | undefined) => {
-    if (pct === null || pct === undefined || isNaN(pct)) return null;
-    const up = pct >= 0;
-    return (
-      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${up ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-        {up ? "▲" : "▼"} {Math.abs(pct).toFixed(2)}%
-      </span>
-    );
-  };
-  const PriceSkeleton = () => (
-    <>
-      <span className="inline-block bg-slate-700/40 rounded-md animate-pulse align-middle h-5 w-24" />
-      <span className="inline-block bg-slate-700/40 rounded-md animate-pulse align-middle h-2.5 w-20 mt-1" />
-    </>
-  );
-
   return (
     <div className="space-y-5" id="assets-module">
-      {/* Market price widgets — BTC, ETH, Vàng, USD */}
-      <Reveal className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-        {/* Bitcoin */}
-        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-amber-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-amber-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
-          <ShimmerLine accent="amber" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-400">₿ Bitcoin</span>
-            {widgetsOverview?.crypto?.bitcoin ? changeBadge(widgetsOverview.crypto.bitcoin.usd_24h_change) : null}
+      {pinnedAssets.length > 0 && (
+        <section className="space-y-2">
+          <div className="flex items-center gap-2 text-sm font-bold text-slate-100">
+            <Pin className="size-4 text-emerald-400 fill-current" />
+            {t("assets.pinnedSectionTitle")}
           </div>
-          <div className="mt-2 flex flex-col gap-0.5">
-            {marketPrices?.crypto["BTC"] ? (
-              <>
-                <p className="text-base font-extrabold text-slate-100 tabular-nums">{fmtUsd(marketPrices.crypto["BTC"].usd)}</p>
-                <p className="text-[10px] text-slate-500 font-mono tabular-nums">{fmtVnd(marketPrices.crypto["BTC"].vnd)}</p>
-              </>
-            ) : <PriceSkeleton />}
-          </div>
-        </div>
-
-        {/* Ethereum */}
-        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-indigo-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
-          <ShimmerLine accent="indigo" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-indigo-400">Ξ Ethereum</span>
-            {widgetsOverview?.crypto?.ethereum ? changeBadge(widgetsOverview.crypto.ethereum.usd_24h_change) : null}
-          </div>
-          <div className="mt-2 flex flex-col gap-0.5">
-            {marketPrices?.crypto["ETH"] ? (
-              <>
-                <p className="text-base font-extrabold text-slate-100 tabular-nums">{fmtUsd(marketPrices.crypto["ETH"].usd)}</p>
-                <p className="text-[10px] text-slate-500 font-mono tabular-nums">{fmtVnd(marketPrices.crypto["ETH"].vnd)}</p>
-              </>
-            ) : <PriceSkeleton />}
-          </div>
-        </div>
-
-        {/* Vàng */}
-        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-yellow-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-yellow-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
-          <ShimmerLine accent="yellow" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-yellow-500">🪙 {widgetsOverview?.gold?.source || t("dashboard.market.gold")}</span>
-            {widgetsOverview?.gold ? changeBadge(widgetsOverview.gold.changePct) : null}
-          </div>
-          <div className="mt-2 flex flex-col gap-0.5">
-            {marketPrices?.gold ? (
-              <>
-                <p className="text-base font-extrabold text-slate-100 tabular-nums">{fmtVnd(Math.round(marketPrices.gold.pricePerLuongVnd))}</p>
-                <p className="text-[10px] text-slate-500">
-                  {widgetsOverview?.gold?.buy ? `${t("dashboard.market.goldBuy")} ${fmtVnd(widgetsOverview.gold.buy)} • ` : ""}{t("dashboard.market.goldSell")}
-                </p>
-              </>
-            ) : <PriceSkeleton />}
-          </div>
-        </div>
-
-        {/* USD/VND */}
-        <div className="relative overflow-hidden bg-slate-900 neu-raised hover:border-emerald-500/30 rounded-2xl p-4 shadow-md hover:shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between min-h-[88px]">
-          <ShimmerLine accent="emerald" />
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-400">💵 USD/VND</span>
-            {marketPricesStatus === "ok" && (
-              <span className="flex items-center gap-1 text-[9px] text-emerald-400/70">
-                <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
-                Live
-              </span>
-            )}
-            {marketPricesStatus === "loading" && (
-              <RefreshCw className="size-3 text-slate-500 animate-spin" />
-            )}
-          </div>
-          <div className="mt-2 flex flex-col gap-0.5">
-            {marketPrices?.usdVndRate ? (
-              <>
-                <p className="text-base font-extrabold text-slate-100 tabular-nums">{fmtVnd(marketPrices.usdVndRate)}</p>
-                <p className="text-[10px] text-slate-500">
-                  {t("dashboard.market.usdRate")}
-                  {marketPrices.lastUpdated ? ` · ${new Date(marketPrices.lastUpdated).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}` : ""}
-                </p>
-              </>
-            ) : <PriceSkeleton />}
-          </div>
-        </div>
-      </Reveal>
+          <Reveal className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 xl:gap-6">
+          {pinnedAssets.map((asset, assetIndex) => {
+            const owner = users.find(u => u.id === asset.ownerId);
+            const firstPhoto = asset.photos?.[0];
+            const Icon = asset.type === "land" ? Landmark : asset.type === "crypto" ? Coins : asset.type === "vehicle" ? Car : asset.type === "stock" ? LineChart : isGoldType(asset.type) ? Gem : Wallet;
+            const ev = getEffectiveValue(asset, marketPrices);
+            const label = assetTypeLabel(asset.type);
+            return (
+              <Reveal as="article" key={asset.id} delay={0.04 * assetIndex} hoverLift className="relative overflow-hidden bg-slate-900 neu-raised rounded-2xl p-4 shadow-lg transition-[box-shadow,border-color] duration-300 space-y-3 border border-emerald-500/15">
+                <ShimmerLine accent="emerald" />
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-emerald-400 truncate">{t("assets.pinnedBadge")}</p>
+                    <h3 className="mt-1 text-sm font-bold text-slate-100 truncate">{asset.name}</h3>
+                  </div>
+                  <Button type="button" onClick={() => handleTogglePin(asset)} aria-label={t("assets.unpinAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-emerald-400 flex items-center justify-center cursor-pointer shrink-0">
+                    <PinOff className="size-3.5" />
+                  </Button>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Button
+                    type="button"
+                    disabled={!firstPhoto}
+                    onClick={() => firstPhoto && setSelectedPhoto({ asset, photo: firstPhoto })}
+                    className="size-16 rounded-xl neu-btn bg-slate-950 overflow-hidden shrink-0 flex items-center justify-center disabled:cursor-default cursor-pointer"
+                    aria-label={firstPhoto ? t("assets.viewPhotoAriaLabel", { name: asset.name }) : t("assets.noPhotoAriaLabel", { name: asset.name })}
+                  >
+                    {firstPhoto ? <img src={firstPhoto.thumbnailDataUrl} alt={asset.name} className="size-full object-cover" /> : <Icon className="size-7 text-slate-600" />}
+                  </Button>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-lg font-extrabold text-slate-100 tabular-nums leading-tight">{ev.source === "live" ? "≈ " : ""}{formatMoney(ev.value, asset.currency)}</p>
+                    <p className="mt-1 text-[11px] text-slate-500 truncate">{label}{owner ? ` · ${owner.fullName}` : ""}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{isGoldType(asset.type) ? `${effectiveGoldWeight(asset)} ${asset.weightUnit || asset.unit}` : `${asset.quantity} ${asset.unit}`}</p>
+                  </div>
+                </div>
+              </Reveal>
+            );
+          })}
+          </Reveal>
+        </section>
+      )}
 
       <Reveal delay={0.06} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 xl:gap-6">
         <div className="bg-slate-900 neu-raised rounded-2xl p-4">
@@ -732,7 +737,7 @@ export function Assets({
               value={typeFilter}
               onChange={(v) => setTypeFilter(v as AssetType | "all")}
               ariaLabel={t("assets.typeFilterLabel")}
-              options={[{ value: "all", label: t("assets.typeFilterAll") }, ...ASSET_TYPES]}
+              options={assetTypeFilterOptions}
             />
           </div>
           <div>
@@ -765,7 +770,6 @@ export function Assets({
             const creator = users.find(u => u.id === asset.createdById);
             const firstPhoto = asset.photos?.[0];
             const Icon = asset.type === "land" ? Landmark : asset.type === "crypto" ? Coins : asset.type === "vehicle" ? Car : asset.type === "stock" ? LineChart : isGoldType(asset.type) ? Gem : Wallet;
-
             return (
               <Reveal as="article" key={asset.id} delay={0.16 + staggerDelay(assetIndex)} hoverLift className="bg-slate-900 neu-raised hover:border-emerald-500/25 rounded-2xl p-4 shadow-lg hover:shadow-emerald-500/5 transition-[box-shadow,border-color] duration-300 space-y-4">
                 <div className="flex gap-3">
@@ -790,21 +794,26 @@ export function Assets({
                         </span>
                         <h3 className="mt-1 text-sm font-bold text-slate-100 truncate">{asset.name}</h3>
                       </div>
-                      {canManageAsset(asset) && (
-                        <div className="flex items-center gap-1 shrink-0">
-                          {onSaveTransaction && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        {canManageAsset(asset) && (
+                          <>
+                            <Button type="button" onClick={() => handleTogglePin(asset)} aria-label={asset.isPinned ? t("assets.unpinAssetAriaLabel", { name: asset.name }) : t("assets.pinAssetAriaLabel", { name: asset.name })} className={`size-8 rounded-lg neu-btn flex items-center justify-center cursor-pointer ${asset.isPinned ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-950 text-slate-500 hover:text-emerald-400"}`}>
+                              <Pin className={`size-3.5 ${asset.isPinned ? "fill-current" : ""}`} />
+                            </Button>
+                            {onSaveTransaction && (
                             <Button type="button" onClick={() => openSellForm(asset)} aria-label={t("assets.sellAssetAriaLabel", { name: asset.name })} title={t("assets.sellAssetDialogTitle")} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-emerald-400 flex items-center justify-center cursor-pointer">
                               <HandCoins className="size-3.5" />
                             </Button>
-                          )}
-                          <Button type="button" onClick={() => openEditForm(asset)} aria-label={t("assets.editAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
-                            <Pencil className="size-3.5" />
-                          </Button>
-                          <Button type="button" onClick={() => handleDelete(asset)} aria-label={t("assets.deleteAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </div>
-                      )}
+                            )}
+                            <Button type="button" onClick={() => openEditForm(asset)} aria-label={t("assets.editAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-amber-400 flex items-center justify-center cursor-pointer">
+                              <Pencil className="size-3.5" />
+                            </Button>
+                            <Button type="button" onClick={() => handleDelete(asset)} aria-label={t("assets.deleteAssetAriaLabel", { name: asset.name })} className="size-8 rounded-lg bg-slate-950 neu-btn text-slate-500 hover:text-rose-400 flex items-center justify-center cursor-pointer">
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
                     </div>
                     {(() => {
                       const ev = getEffectiveValue(asset, marketPrices);
@@ -952,8 +961,16 @@ export function Assets({
                       value={formType}
                       onChange={(v) => handleTypeChange(v as AssetType)}
                       ariaLabel={t("assets.formTypeLabel")}
-                      options={ASSET_TYPES}
+                      options={formTypeOptions}
                     />
+                    {isCustomAssetType(formType) && (
+                      <Input
+                        value={formCustomTypeName}
+                        onChange={(e) => handleCustomTypeNameChange(e.target.value)}
+                        placeholder={t("assets.formCustomTypePlaceholder")}
+                        className="w-full bg-slate-950 neu-pressed-sm rounded-lg p-2.5 text-slate-200 outline-none focus:border-cyan-500"
+                      />
+                    )}
                   </div>
                   <div className="space-y-1">
                     <label className="text-slate-400 block font-semibold">{t("assets.formNameLabel")} <span className="text-rose-400">*</span></label>

@@ -1,112 +1,156 @@
-# Flow: Kết nối Google Drive với Website (OAuth 2.0)
+# Flow: Kết nối Google Drive + Chọn thư mục bằng Google Picker API
 
 ## Mục tiêu
 
-Cho phép người dùng kết nối tài khoản Google Drive của họ với website chỉ bằng vài thao tác. Người dùng không cần tạo API Key, OAuth Client, Service Account hoặc cấu hình Google Cloud. Mọi cấu hình Google Cloud đều do nhà phát triển chuẩn bị trước.
+Cho phép người dùng:
+
+* Kết nối tài khoản Google Drive chỉ một lần.
+* Tự chọn thư mục lưu dữ liệu trong Google Drive.
+* Website ghi nhớ thư mục đã chọn.
+* Mọi lần upload sau đều tự động lưu vào đúng thư mục đó.
+* Người dùng có thể đổi thư mục bất cứ lúc nào.
 
 ---
 
-## Luồng người dùng
+# Kiến trúc
 
-### Bước 1: Người dùng mở trang tích hợp
-
-Trong phần **Settings → Integrations → Google Drive**, hiển thị:
-
-* Logo Google Drive
-* Trạng thái:
-
-  * Chưa kết nối
-  * Đang kết nối
-  * Đã kết nối
-  * Lỗi kết nối
-* Nút **Connect Google Drive**
+```text
+Frontend
+    │
+    ├──────── OAuth ────────► Backend
+    │                           │
+    │                           ▼
+    │                     Google OAuth
+    │                           │
+    │◄──────── Access Token ─────┘
+    │
+    ├──────── Google Picker API
+    │
+    ▼
+Người dùng chọn thư mục
+    │
+    ▼
+Frontend nhận Folder ID
+    │
+    ▼
+Backend lưu Folder ID
+    │
+    ▼
+Google Drive API
+```
 
 ---
 
-### Bước 2: Người dùng nhấn "Connect Google Drive"
+# Bước 1 - Người dùng nhấn "Connect Google Drive"
 
-Frontend gọi API backend:
+Trang Settings hiển thị:
 
+```text
+Google Drive
+
+Chưa kết nối
+
+[ Connect Google Drive ]
 ```
-GET /api/integrations/google-drive/connect
+
+Frontend gọi:
+
+```http
+GET /api/google/connect
 ```
 
-Backend tạo OAuth URL bằng Google OAuth 2.0 với:
+---
 
-* client_id
-* redirect_uri
-* scope
+# Bước 2 - Backend tạo OAuth URL
+
+Backend đọc cấu hình:
+
+* GOOGLE_CLIENT_ID
+* GOOGLE_CLIENT_SECRET
+* GOOGLE_REDIRECT_URI
+
+Backend khai báo scope:
+
+```text
+openid
+email
+profile
+https://www.googleapis.com/auth/drive.file
+```
+
+Backend sinh:
+
 * state
-* access_type=offline
-* prompt=consent (chỉ lần đầu nếu cần refresh token)
+* PKCE (nếu áp dụng)
 
-Backend trả về:
+Tạo OAuth URL.
 
-```
+Trả về:
+
+```json
 {
-    "url": "https://accounts.google.com/..."
+    "url":"https://accounts.google.com/..."
 }
 ```
 
-Frontend chuyển hướng trình duyệt sang URL này.
-
 ---
 
-### Bước 3: Google xác thực
+# Bước 3 - Người dùng đăng nhập Google
 
-Google thực hiện:
+Google hiển thị:
 
-* Nếu chưa đăng nhập → yêu cầu đăng nhập.
-* Nếu đã đăng nhập → bỏ qua bước này.
-* Hiển thị màn hình xin quyền.
-
-Ví dụ quyền:
-
-* Xem file Google Drive
-* Upload file
-* Đọc metadata
+* Đăng nhập
+* Chọn tài khoản
+* Xin quyền
 
 Người dùng nhấn:
 
-**Allow**
+Allow
 
 ---
 
-### Bước 4: Google Redirect
+# Bước 4 - Google Callback
 
-Google redirect về:
+Google redirect:
 
+```http
+GET /api/google/callback
 ```
-GET /api/integrations/google-drive/callback?code=xxxx&state=xxxx
-```
+
+Backend nhận:
+
+* authorization code
+* state
 
 ---
 
-### Bước 5: Backend đổi Authorization Code
+# Bước 5 - Backend đổi Token
 
-Backend gửi request đến Google:
+Google trả:
 
-```
-Authorization Code
-        ↓
+```text
 Access Token
+
 Refresh Token
-Expiration Time
+
+Expires In
+
+ID Token
 ```
 
-Backend xác thực state để chống CSRF.
+Backend:
 
----
+* xác thực state
+* lưu Refresh Token (đã mã hóa)
+* lưu Access Token
+* lấy thông tin tài khoản Google
 
-### Bước 6: Lưu thông tin
+Lưu vào database:
 
-Backend lưu vào database:
-
+```text
 GoogleIntegration
 
-```
 userId
-provider = "google_drive"
 
 googleUserId
 
@@ -121,171 +165,332 @@ accessToken
 refreshToken
 
 expiresAt
-
-connectedAt
-
-status = connected
 ```
 
-Refresh Token phải được mã hóa trước khi lưu.
+Sau đó backend redirect:
 
-Không trả token về frontend.
+```text
+/settings/integrations/google-drive
+```
 
 ---
 
-### Bước 7: Đồng bộ thông tin
+# Bước 6 - Frontend hiển thị
 
-Backend có thể gọi:
+```text
+Google Drive
 
+Đã kết nối
+
+Email
+
+abc@gmail.com
+
+Chưa chọn thư mục
+
+[ Chọn thư mục ]
 ```
+
+---
+
+# Bước 7 - Người dùng nhấn "Chọn thư mục"
+
+Frontend gọi backend:
+
+```http
+GET /api/google/picker-token
+```
+
+Backend:
+
+* kiểm tra Access Token
+* nếu hết hạn
+
+↓
+
+dùng Refresh Token
+
+↓
+
+lấy Access Token mới
+
+↓
+
+trả về:
+
+```json
+{
+    "accessToken":"...",
+    "clientId":"..."
+}
+```
+
+---
+
+# Bước 8 - Mở Google Picker
+
+Frontend khởi tạo Google Picker.
+
+Picker sử dụng:
+
+* OAuth Access Token
+* Google API Key (Browser key)
+* OAuth Client ID
+
+Picker mở cửa sổ Google Drive.
+
+Người dùng có thể:
+
+* mở thư mục
+* tìm kiếm
+* tạo thư mục mới (nếu bật)
+* chọn thư mục muốn lưu
+
+---
+
+# Bước 9 - Người dùng chọn thư mục
+
+Google Picker trả về:
+
+```json
+{
+    "id":"1AbCdEfGhIjKlMn",
+    "name":"Invoices",
+    "mimeType":"application/vnd.google-apps.folder"
+}
+```
+
+Frontend gửi backend:
+
+```http
+POST /api/google/folder
+```
+
+Body:
+
+```json
+{
+    "folderId":"1AbCdEfGhIjKlMn",
+    "folderName":"Invoices"
+}
+```
+
+---
+
+# Bước 10 - Backend xác minh Folder
+
+Để tránh giả mạo Folder ID:
+
+Backend gọi:
+
 Drive API
+
+```text
+files.get(folderId)
 ```
 
-để lấy:
+Kiểm tra:
 
-* Root folder
-* Danh sách thư mục
-* Dung lượng còn lại
-* Email tài khoản
+* tồn tại
+* là Folder
+* user có quyền ghi
 
-Lưu cache nếu cần.
+Nếu hợp lệ
+
+↓
+
+lưu database.
+
+```text
+folderId
+
+folderName
+
+selectedAt
+```
 
 ---
 
-### Bước 8: Hoàn tất
+# Bước 11 - Hoàn tất
 
-Redirect người dùng về:
+Frontend hiển thị
 
+```text
+Google Drive
+
+Đã kết nối
+
+abc@gmail.com
+
+📁 Invoices
+
+Đã chọn
+
+[ Đổi thư mục ]
+
+[ Đồng bộ ]
+
+[ Ngắt kết nối ]
 ```
-Settings → Integrations
-```
-
-Hiển thị:
-
-✅ Connected
-
-Email Google
-
-Avatar
-
-Ngày kết nối
-
-Nút:
-
-* Disconnect
-* Reconnect
-* Sync Now
 
 ---
 
-# Sau khi kết nối
+# Upload File
 
-Mọi request cần Google Drive đều sử dụng token đã lưu.
-
-Nếu Access Token hết hạn:
-
-```
-Refresh Token
-        ↓
-Google OAuth
-        ↓
-New Access Token
-```
-
-Việc refresh diễn ra tự động.
-
-Người dùng không phải đăng nhập lại.
-
----
-
-# Khi người dùng ngắt kết nối
+Người dùng upload ảnh.
 
 Frontend:
 
+```http
+POST /api/upload
 ```
-Disconnect
+
+Backend:
+
+đọc
+
+```text
+folderId
+```
+
+Upload:
+
+```text
+Drive API
+
+parents:
+
+[
+    folderId
+]
 ```
 
 ↓
 
+File xuất hiện trong đúng thư mục người dùng đã chọn.
+
+---
+
+# Đổi thư mục
+
+Người dùng nhấn
+
+```text
+Đổi thư mục
+```
+
+↓
+
+Mở lại Google Picker
+
+↓
+
+Chọn thư mục mới
+
+↓
+
+Cập nhật folderId.
+
+Không cần OAuth lại.
+
+---
+
+# Ngắt kết nối
+
+Người dùng nhấn:
+
+Disconnect
+
 Backend:
 
-* Xóa Access Token
-* Xóa Refresh Token
-* Đánh dấu trạng thái disconnected
-
-Không xóa dữ liệu nội bộ nếu không được yêu cầu.
+* xóa Access Token
+* xóa Refresh Token
+* xóa Folder ID
+* trạng thái disconnected
 
 ---
 
-# Xử lý lỗi
+# Xử lý Token
 
-Nếu người dùng từ chối cấp quyền:
+Access Token hết hạn
 
+↓
+
+Backend tự động
+
+```text
+Refresh Token
+
+↓
+
+Google OAuth
+
+↓
+
+New Access Token
 ```
-Status = cancelled
+
+Frontend không biết Refresh Token.
+
+---
+
+# API Backend
+
+```text
+GET    /api/google/connect
+GET    /api/google/callback
+GET    /api/google/picker-token
+POST   /api/google/folder
+POST   /api/google/upload
+DELETE /api/google/disconnect
 ```
 
-Hiển thị:
-
-"Google Drive was not connected."
-
 ---
 
-Nếu Refresh Token hết hạn:
+# Database
 
+GoogleIntegration
+
+```text
+id
+
+userId
+
+googleUserId
+
+email
+
+displayName
+
+picture
+
+accessToken
+
+refreshToken (encrypted)
+
+expiresAt
+
+folderId
+
+folderName
+
+connected
+
+connectedAt
+
+updatedAt
 ```
-Status = expired
-```
-
-Hiển thị nút:
-
-Reconnect
-
----
-
-Nếu Google API trả lỗi:
-
-Retry theo exponential backoff.
-
----
-
-# Yêu cầu UI
-
-Trang Integration cần hiển thị:
-
-* Google Drive Card
-* Logo Google Drive
-* Trạng thái kết nối
-* Email tài khoản
-* Avatar
-* Nút Connect
-* Nút Disconnect
-* Nút Sync
-* Thời gian đồng bộ gần nhất
-* Thanh tiến trình khi đang kết nối
-
----
-
-# Yêu cầu bảo mật
-
-* Không lưu Access Token ở Local Storage.
-* Không gửi Refresh Token xuống frontend.
-* Mã hóa Refresh Token trong database.
-* Kiểm tra OAuth state để chống CSRF.
-* Chỉ yêu cầu các scope tối thiểu cần thiết.
-* Tự động refresh Access Token khi hết hạn.
-* Cho phép người dùng ngắt kết nối bất cứ lúc nào.
 
 ---
 
 # Trải nghiệm người dùng
 
-Người dùng chỉ cần:
+Người dùng chỉ cần thực hiện một lần:
 
 1. Nhấn **Connect Google Drive**.
-2. Đăng nhập Google (nếu cần).
-3. Nhấn **Allow**.
-4. Quay lại website.
+2. Đăng nhập Google và cấp quyền.
+3. Nhấn **Chọn thư mục**.
+4. Chọn thư mục mong muốn trong Google Picker.
+5. Hoàn tất.
 
-Toàn bộ quá trình cấu hình OAuth, quản lý token và làm mới phiên đều được backend xử lý tự động, giúp trải nghiệm kết nối đơn giản và gần như chỉ cần một lần cấp quyền.
+Sau đó, mọi file do website tạo sẽ tự động được lưu vào đúng thư mục đã chọn. Người dùng không cần kết nối lại hay chọn lại thư mục ở mỗi lần tải lên, nhưng vẫn có thể thay đổi thư mục bất cứ lúc nào bằng cách mở lại Google Picker.

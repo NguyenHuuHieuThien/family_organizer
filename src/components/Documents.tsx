@@ -63,8 +63,6 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const [notes, setNotes] = useState("");
   const [isShared, setIsShared] = useState(false);
   const [files, setFiles] = useState<DocumentFile[]>([]);
-  const [savePickedToDrive, setSavePickedToDrive] = useState(false);
-  const [driveConnected, setDriveConnected] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   // updatedAt của bản giấy tờ lúc mở form sửa — server so để phát hiện sửa đè nhau (409)
   const [editingBaseUpdatedAt, setEditingBaseUpdatedAt] = useState("");
@@ -87,17 +85,6 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const viewerPrev = () => setViewer(v => v ? { ...v, index: (v.index - 1 + v.files.length) % v.files.length } : v);
   const viewerNext = () => setViewer(v => v ? { ...v, index: (v.index + 1) % v.files.length } : v);
   useModalA11y(!!viewer, closeViewer, viewerRef);
-
-  useEffect(() => {
-    fetch("/api/settings/google-drive/status", { headers: authHeaders() })
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => setDriveConnected(Boolean(d?.connected)))
-      .catch(() => setDriveConnected(false));
-  }, []);
-
-  useEffect(() => {
-    if (!driveConnected) setSavePickedToDrive(false);
-  }, [driveConnected]);
 
   // Mũi tên trái/phải để chuyển ảnh trong lightbox.
   useEffect(() => {
@@ -228,7 +215,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             r.readAsDataURL(file);
           });
           if (!firstForAi) firstForAi = { dataUrl, fileName: file.name };
-          const uploaded = await uploadDataUrlDetailed(dataUrl, "documents", { saveToDrive: driveConnected && savePickedToDrive, fileName: file.name });
+          const uploaded = await uploadDataUrlDetailed(dataUrl, "documents", { fileName: file.name });
           url = uploaded.url;
           driveFileId = uploaded.driveFileId;
           driveUrl = uploaded.driveUrl;
@@ -240,7 +227,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             maxSizes: [1600, 1280, 1024, 768],
             qualities: [0.86, 0.78, 0.68, 0.58],
             backgroundColor: "#ffffff"
-          }, undefined, { saveToDrive: driveConnected && savePickedToDrive, fileName: file.name });
+          }, undefined, { fileName: file.name });
           if (!firstForAi) firstForAi = { dataUrl: up.dataUrl, fileName: file.name };
           url = up.url;
           driveFileId = up.driveFileId;
@@ -416,12 +403,6 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                 <Input type="file" accept="image/*,application/pdf,.pdf" multiple disabled={uploading || files.length >= MAX_DOC_FILES} onChange={handleFilePick} className="hidden" />
               </label>
             </div>
-            {driveConnected && (
-              <label className={`flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[11px] font-bold transition-all ${savePickedToDrive ? "border-indigo-500/35 bg-indigo-500/12 text-indigo-200" : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"}`}>
-                <span>Lưu thêm bản sao vào Google Drive khi thêm tệp mới</span>
-                <Input type="checkbox" checked={savePickedToDrive} onChange={(e) => setSavePickedToDrive(e.target.checked)} className="size-3.5 shrink-0 accent-indigo-500" />
-              </label>
-            )}
             {files.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {files.map(f => (

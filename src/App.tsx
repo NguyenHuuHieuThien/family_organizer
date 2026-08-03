@@ -28,8 +28,7 @@ import {
   ShoppingCart,
   FolderLock,
   HeartPulse,
-  Images,
-  Cpu
+  Images
 } from "lucide-react";
 import {
   User,
@@ -75,7 +74,6 @@ import { ChildHealth } from "./components/ChildHealth.js";
 import { Assistant } from "./components/Assistant.js";
 import { FabProvider } from "./components/FabHost.js";
 import { Settings } from "./components/Settings.js";
-import { ServerMonitor } from "./components/ServerMonitor.js";
 import { GlobalSearch } from "./components/GlobalSearch.js";
 import { useModalA11y } from "./hooks/useModalA11y.js";
 import { reloadOnce, scheduleReloadFallback } from "./utils/appReload.js";
@@ -217,7 +215,7 @@ export default function App() {
   // Push notifications: clear the app-icon badge when the app is opened/focused,
   // and deep-link to the right tab when a push notification is tapped.
   useEffect(() => {
-    const KNOWN_TABS = ["dashboard", "tasks", "plans", "notes", "shopping", "chat", "medications", "child-health", "finance", "documents", "photos", "server", "settings"];
+    const KNOWN_TABS = ["dashboard", "tasks", "plans", "notes", "shopping", "chat", "medications", "child-health", "finance", "documents", "photos", "settings"];
     const clearBadge = () => { try { (navigator as any).clearAppBadge?.(); } catch (e) { /* ignore */ } };
 
     // Lịch thuốc giờ nằm trong "Sức khỏe gia đình": deep-link "medications" → mở tab
@@ -354,8 +352,7 @@ export default function App() {
       setActiveTab("dashboard");
       return;
     }
-    // Tab quản lý server chỉ dành cho Admin
-    if (currentUser.role !== UserRole.ADMIN && activeTab === "server") {
+    if (activeTab === "server") {
       setActiveTab("dashboard");
       return;
     }
@@ -1820,7 +1817,6 @@ export default function App() {
     { id: "child-health", label: t("nav.childHealth"), icon: HeartPulse },
     ...(canAccessFinance(currentUser.role) ? [{ id: "documents", label: t("nav.documents"), icon: FolderLock }] : []),
     // Theo dõi sức khỏe máy chủ (CPU/RAM/nhiệt độ/ổ đĩa) — chỉ Admin thấy
-    ...(currentUser.role === UserRole.ADMIN ? [{ id: "server", label: t("nav.server"), icon: Cpu }] : []),
     { id: "settings", label: t("nav.settings"), icon: Settings2 }
   ];
 
@@ -1972,7 +1968,16 @@ export default function App() {
           <div className="flex items-center gap-3">
 
             {/* Tìm kiếm toàn cục (⌘K) — gộp tasks/lịch/ghi chú/thu chi/giấy tờ */}
-            <GlobalSearch getAuthHeader={getAuthHeader} onNavigate={tab => setActiveTab(tab)} />
+            <GlobalSearch
+              getAuthHeader={getAuthHeader}
+              onNavigate={tab => setActiveTab(tab)}
+              tasks={tasks}
+              plans={plans}
+              notes={notes}
+              transactions={canAccessFinance(currentUser.role) ? transactions : []}
+              documents={canAccessFinance(currentUser.role) ? documents : []}
+              canViewDocument={(doc) => doc.isShared || doc.creatorId === currentUser.id || doc.ownerId === currentUser.id}
+            />
 
             {/* Theme Toggle Button */}
             <Button
@@ -2226,10 +2231,6 @@ export default function App() {
                   onSendMessage={handleSendChatMessage}
                   onDeleteMessage={handleDeleteChatMessage}
                 />
-              )}
-
-              {activeTab === "server" && currentUser.role === UserRole.ADMIN && (
-                <ServerMonitor authHeaders={getAuthHeader()} currentUser={currentUser} />
               )}
 
               {activeTab === "settings" && (

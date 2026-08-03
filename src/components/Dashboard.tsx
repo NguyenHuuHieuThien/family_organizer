@@ -4,7 +4,7 @@
  */
 
 import { Button } from "./ui";
-import React, { useMemo, useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useMemo, useState, useEffect, useRef, lazy, Suspense, useCallback } from "react";
 import {
   CheckSquare,
   Calendar,
@@ -25,7 +25,7 @@ import {
   CloudRain,
   Waves
 } from "lucide-react";
-import { Task, FamilyPlan, Note, FinancialTransaction, User, TaskStatus, MarketHistoryPoint } from "../types.js";
+import { Task, FamilyPlan, Note, FinancialTransaction, User, TaskStatus } from "../types.js";
 import { motion, useReducedMotion } from "motion/react";
 import { Avatar } from "./Avatar.js";
 import { QuickNudge } from "./QuickNudge.js";
@@ -234,83 +234,6 @@ const Skeleton = ({ className = "" }: { className?: string }) => (
   <span className={`inline-block bg-slate-700/40 rounded-md animate-pulse align-middle ${className}`} />
 );
 
-// Đường cong mượt (Catmull-Rom → cubic bézier) cho sparkline — thay nối thẳng gãy khúc.
-function smoothLine(pts: { x: number; y: number }[]): string {
-  if (pts.length < 2) return "";
-  let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] || pts[i];
-    const p1 = pts[i];
-    const p2 = pts[i + 1];
-    const p3 = pts[i + 2] || p2;
-    const c1x = p1.x + (p2.x - p0.x) / 6;
-    const c1y = p1.y + (p2.y - p0.y) / 6;
-    const c2x = p2.x - (p3.x - p1.x) / 6;
-    const c2y = p2.y - (p3.y - p1.y) / 6;
-    d += ` C ${c1x.toFixed(2)} ${c1y.toFixed(2)} ${c2x.toFixed(2)} ${c2y.toFixed(2)} ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
-  }
-  return d;
-}
-
-// Sparkline + % tăng trưởng 7 ngày cho card giá (ẩn khi lịch sử chưa đủ 2 điểm).
-function TrendRow({ values }: { values: number[] }) {
-  const uid = React.useId();
-  if (values.length < 2) return null;
-  const first = values[0];
-  const last = values[values.length - 1];
-  const up = last >= first;
-  const pct = first !== 0 ? ((last - first) / first) * 100 : 0;
-  const W = 120, H = 38, pad = 5;
-  const min = Math.min(...values);
-  const range = (Math.max(...values) - min) || 1;
-  const pts = values.map((v, i) => ({
-    x: pad + (i / (values.length - 1)) * (W - 2 * pad),
-    y: H - pad - ((v - min) / range) * (H - 2 * pad),
-  }));
-  const line = smoothLine(pts);
-  const area = `${line} L ${pts[pts.length - 1].x.toFixed(2)} ${H} L ${pts[0].x.toFixed(2)} ${H} Z`;
-  const stroke = up ? "#34d399" : "#fb7185";
-  const gid = `spark-${uid}`;
-  const end = pts[pts.length - 1];
-  return (
-    <div className="space-y-0.5">
-      <div className="relative">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-7" preserveAspectRatio="none" aria-hidden>
-          <defs>
-            <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={stroke} stopOpacity="0.28" />
-              <stop offset="100%" stopColor={stroke} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={area} fill={`url(#${gid})`} />
-          <path
-            d={line}
-            fill="none"
-            stroke={stroke}
-            strokeWidth="1.75"
-            strokeLinejoin="round"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-        {/* Chấm giá hiện tại — dựng bằng div nên không méo khi SVG giãn ngang */}
-        <span
-          className="absolute w-1.5 h-1.5 rounded-full -translate-x-1/2 -translate-y-1/2"
-          style={{
-            left: `${(end.x / W) * 100}%`,
-            top: `${(end.y / H) * 100}%`,
-            backgroundColor: stroke,
-            boxShadow: `0 0 0 3px ${stroke}30`,
-          }}
-        />
-      </div>
-      <p className={`text-[9px] font-mono ${up ? "text-emerald-400" : "text-rose-400"}`}>
-        {up ? "▲" : "▼"} {pct >= 0 ? "+" : ""}{pct.toFixed(1).replace(".", ",")}% · {i18n.t("dashboard.spark7d")}
-      </p>
-    </div>
-  );
-}
-
 export function Dashboard({
   currentUser,
   users,
@@ -347,8 +270,14 @@ export function Dashboard({
         };
 
   // 1. Task calculations
+  const taskAssigneeIds = useCallback((task: Task) => {
+    const multi = Array.isArray(task.assigneeIds) ? task.assigneeIds.map(id => String(id || "").trim()).filter(Boolean) : [];
+    if (multi.length > 0) return multi;
+    return task.assigneeId ? [task.assigneeId] : [];
+  }, []);
+
   const myTasks = useMemo(() => {
-    return tasks.filter(t => t.assigneeId === currentUser.id);
+    return tasks.filter(t => taskAssigneeIds(t).includes(currentUser.id));
   }, [tasks, currentUser.id]);
 
   const urgentTasksCount = useMemo(() => {
@@ -395,6 +324,22 @@ export function Dashboard({
         pct: financialSummary.expense > 0 ? (amount / financialSummary.expense) * 100 : 0,
       }));
   }, [transactions, currentMonth, financialSummary.expense]);
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayExpense = useMemo(() => {
+    return transactions
+      .filter(t => t.type === "expense" && t.date === todayKey)
+      .reduce((sum, tx) => sum + tx.amount, 0);
+  }, [transactions, todayKey]);
+
+  const overdueTasksCount = useMemo(() => {
+    const now = Date.now();
+    return tasks.filter(task => {
+      if (task.status === TaskStatus.COMPLETED || !task.dueDate) return false;
+      const due = new Date(String(task.dueDate).replace(" ", "T"));
+      return !isNaN(due.getTime()) && due.getTime() < now;
+    }).length;
+  }, [tasks]);
 
   // 3. Sự kiện sắp diễn ra (30 ngày tới) — mở rộng cả sự kiện LẶP LẠI theo đúng
   // logic lịch (hằng ngày/tuần/tháng) và gộp thêm NGÀY LỄ, để khớp với lịch trình.
@@ -552,27 +497,6 @@ export function Dashboard({
   }, []);
   // Lời chúc gia đình đổi theo ngày (ổn định trong phiên; đổi lại khi đổi ngôn ngữ).
   const dailyGreeting = useMemo(() => greetingOfDay(), [i18n.language]);
-
-  // Chuỗi giá 7 ngày cho sparkline từng card (server chụp ~10 phút/lần).
-  const marketSeries = useMemo(() => {
-    const history: MarketHistoryPoint[] = widgets?.history || [];
-    const pick = (key: "btcUsd" | "ethUsd" | "goldSell" | "usdVnd") =>
-      history.map(p => p[key]).filter((v): v is number => typeof v === "number" && Number.isFinite(v));
-    return { btc: pick("btcUsd"), eth: pick("ethUsd"), gold: pick("goldSell"), fx: pick("usdVnd") };
-  }, [widgets?.history]);
-
-  // Widget formatting helpers
-  const fmtUsd = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
-  const fmtVnd = (n: number) => Math.round(n).toLocaleString("vi-VN") + "đ";
-  const changeBadge = (pct: number | null | undefined) => {
-    if (pct === null || pct === undefined || isNaN(pct)) return null;
-    const up = pct >= 0;
-    return (
-      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${up ? "bg-emerald-500/10 text-emerald-400" : "bg-rose-500/10 text-rose-400"}`}>
-        {up ? "▲" : "▼"} {Math.abs(pct).toFixed(2)}%
-      </span>
-    );
-  };
 
   return (
     <div className="space-y-6" id="dashboard-tab">
@@ -795,118 +719,31 @@ export function Dashboard({
           );
         })()}
 
-        {/* Chỉ số nhanh + Thị trường — 8 card cùng kích thước, cạnh thời tiết cho gọn trang */}
+        {/* Chỉ số nhanh hộ gia đình — thay cho card thị trường đầu tư */}
         <div className="lg:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-5 auto-rows-fr">
-          {/* Bitcoin */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-amber-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
-            <ShimmerLine via="via-amber-500/50" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-amber-400">₿ Bitcoin</span>
-              {widgets?.crypto?.bitcoin ? changeBadge(widgets.crypto.bitcoin.usd_24h_change) : null}
-            </div>
-            <div className="mt-3">
-              <div className="min-w-0">
-                {widgets?.crypto?.bitcoin ? (
-                  <>
-                    <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.crypto.bitcoin.usd} format={fmtUsd} /></p>
-                    <p className="text-[11px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.bitcoin.vnd} format={fmtVnd} /></p>
-                  </>
-                ) : (
-                  <>
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-2.5 w-20 mt-1.5" />
-                  </>
-                )}
-              </div>
-              <div className="w-full mt-1"><TrendRow values={marketSeries.btc} /></div>
-            </div>
-          </div>
+          <motion.div {...fadeUp(0.16)} whileHover={reduceMotion ? undefined : { y: -4 }} onClick={() => onNavigate("tasks")} className="group relative overflow-hidden bg-gradient-to-br from-rose-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-5 cursor-pointer flex flex-col justify-between">
+            <ShimmerLine via="via-rose-500/50" />
+            <div className="flex items-center justify-between gap-2"><span className="text-sm md:text-base font-bold text-rose-400 truncate">Việc quá hạn</span><AlertCircle className="w-5 h-5 text-rose-400 shrink-0" /></div>
+            <div className="mt-4"><p className="text-5xl font-black text-rose-400 tabular-nums leading-none"><AnimatedNumber value={overdueTasksCount} format={(n) => String(Math.round(n))} /></p><p className="text-xs md:text-sm text-slate-500 mt-2 truncate">Cần xử lý trước</p></div>
+          </motion.div>
 
-          {/* Ethereum */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
+          <motion.div {...fadeUp(0.18)} whileHover={reduceMotion ? undefined : { y: -4 }} onClick={() => onNavigate("finance")} className="group relative overflow-hidden bg-gradient-to-br from-orange-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-5 cursor-pointer flex flex-col justify-between">
+            <ShimmerLine via="via-orange-500/50" />
+            <div className="flex items-center justify-between gap-2"><span className="text-sm md:text-base font-bold text-orange-400 truncate">Chi hôm nay</span><Wallet className="w-5 h-5 text-orange-400 shrink-0" /></div>
+            <div className="mt-4"><p className="text-2xl md:text-3xl font-extrabold text-slate-100 tabular-nums leading-tight"><AnimatedNumber value={todayExpense} format={(n) => `${Math.round(n).toLocaleString("vi-VN")}đ`} /></p><p className="text-xs md:text-sm text-slate-500 mt-2 truncate">Theo khoản đã ghi</p></div>
+          </motion.div>
+
+          <motion.div {...fadeUp(0.2)} whileHover={reduceMotion ? undefined : { y: -4 }} onClick={() => onNavigate("child-health")} className="group relative overflow-hidden bg-gradient-to-br from-pink-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-5 cursor-pointer flex flex-col justify-between">
+            <ShimmerLine via="via-pink-500/50" />
+            <div className="flex items-center justify-between gap-2"><span className="text-sm md:text-base font-bold text-pink-400 truncate">Sinh nhật gần nhất</span><Cake className="w-5 h-5 text-pink-400 shrink-0" /></div>
+            <div className="mt-4 min-w-0">{upcomingBirthdays[0] ? <><p className="text-lg md:text-xl font-extrabold text-slate-100 truncate">{upcomingBirthdays[0].user.fullName}</p><p className="text-xs md:text-sm text-slate-500 mt-2 truncate">{upcomingBirthdays[0].daysUntil === 0 ? t("dashboard.birthdays.today") : t("dashboard.birthdays.inDays", { n: upcomingBirthdays[0].daysUntil })}</p></> : <><p className="text-lg md:text-xl font-extrabold text-slate-100 truncate">Chưa có trong 30 ngày</p><p className="text-xs md:text-sm text-slate-500 mt-2 truncate">Cập nhật ngày sinh</p></>}</div>
+          </motion.div>
+
+          <motion.div {...fadeUp(0.22)} whileHover={reduceMotion ? undefined : { y: -4 }} onClick={() => onNavigate("notes")} className="group relative overflow-hidden bg-gradient-to-br from-indigo-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-5 cursor-pointer flex flex-col justify-between">
             <ShimmerLine via="via-indigo-500/50" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-400">Ξ Ethereum</span>
-              {widgets?.crypto?.ethereum ? changeBadge(widgets.crypto.ethereum.usd_24h_change) : null}
-            </div>
-            <div className="mt-3">
-              <div className="min-w-0">
-                {widgets?.crypto?.ethereum ? (
-                  <>
-                    <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.crypto.ethereum.usd} format={fmtUsd} /></p>
-                    <p className="text-[11px] text-slate-500 font-mono truncate"><AnimatedNumber value={widgets.crypto.ethereum.vnd} format={fmtVnd} /></p>
-                  </>
-                ) : (
-                  <>
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-2.5 w-20 mt-1.5" />
-                  </>
-                )}
-              </div>
-              <div className="w-full mt-1"><TrendRow values={marketSeries.eth} /></div>
-            </div>
-          </div>
-
-          {/* Gold */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-yellow-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
-            <ShimmerLine via="via-yellow-500/50" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-yellow-500">🪙 {widgets?.gold?.source || t("dashboard.market.gold")}</span>
-              {widgets?.gold ? changeBadge(widgets.gold.changePct) : null}
-            </div>
-            <div className="mt-3">
-              <div className="min-w-0">
-                {widgets?.gold && (widgets.gold.sell || widgets.gold.vndPerTael || widgets.gold.usdPerOz) ? (
-                  widgets.gold.sell ? (
-                    <>
-                      <p className="text-lg font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.gold.sell} format={fmtVnd} /></p>
-                      <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.goldSell")}{widgets.gold.buy ? ` • ${t("dashboard.market.goldBuy")} ${fmtVnd(widgets.gold.buy)}` : ""}</p>
-                    </>
-                  ) : widgets.gold.vndPerTael ? (
-                    <>
-                      <p className="text-lg font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.gold.vndPerTael} format={fmtVnd} /></p>
-                      <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.goldTael")}</p>
-                    </>
-                  ) : (
-                    <>
-                      <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.gold.usdPerOz} format={fmtUsd} /><span className="text-[11px] text-slate-500"> /oz</span></p>
-                      <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.goldWorld")}</p>
-                    </>
-                  )
-                ) : (
-                  <>
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-2.5 w-20 mt-1.5" />
-                  </>
-                )}
-              </div>
-              <div className="w-full mt-1"><TrendRow values={marketSeries.gold} /></div>
-            </div>
-          </div>
-
-          {/* USD/VND */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-emerald-500/12 via-slate-900 to-slate-900 neu-raised rounded-2xl p-4 hover:-translate-y-0.5 transition-transform duration-300 flex flex-col justify-between">
-            <ShimmerLine via="via-emerald-500/50" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-emerald-400">💵 USD/VND</span>
-            </div>
-            <div className="mt-3">
-              <div className="min-w-0">
-                {widgets?.fx?.usdVnd ? (
-                  <>
-                    <p className="text-xl font-extrabold text-slate-100 leading-tight"><AnimatedNumber value={widgets.fx.usdVnd} format={fmtVnd} /></p>
-                    <p className="text-[11px] text-slate-500 truncate">{t("dashboard.market.usdRate")}</p>
-                  </>
-                ) : (
-                  <>
-                    <Skeleton className="h-5 w-24" />
-                    <Skeleton className="h-2.5 w-20 mt-1.5" />
-                  </>
-                )}
-              </div>
-              <div className="w-full mt-1"><TrendRow values={marketSeries.fx} /></div>
-            </div>
-          </div>
+            <div className="flex items-center justify-between gap-2"><span className="text-sm md:text-base font-bold text-indigo-400 truncate">Ghi chú ghim</span><FileText className="w-5 h-5 text-indigo-400 shrink-0" /></div>
+            <div className="mt-4"><p className="text-5xl font-black text-indigo-400 tabular-nums leading-none"><AnimatedNumber value={pinnedNotes.length} format={(n) => String(Math.round(n))} /></p><p className="text-xs md:text-sm text-slate-500 mt-2 truncate">Thông tin cần nhớ</p></div>
+          </motion.div>
 
           {/* Card 1: Cash balance this month */}
           <motion.div

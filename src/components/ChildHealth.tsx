@@ -404,6 +404,7 @@ export function ChildHealth({
         onChange={setFormMemberId}
         ariaLabel={t("childHealth.memberSelectAria")}
         className={accent}
+        inlineGrid
         options={sortedMembers.map(u => ({ value: u.id, label: u.fullName }))}
       />
     </div>
@@ -460,22 +461,29 @@ export function ChildHealth({
             <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="emerald"><Ruler className="w-4 h-4" /></IconChip> {t("childHealth.growthTitle")}
             </h4>
-            <form onSubmit={handleAddGrowth} className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              {renderMemberSelect("focus:border-emerald-500", "col-span-2 sm:col-span-4")}
-              <div className="space-y-1 col-span-2 sm:col-span-1">
-                <label className="text-slate-500 text-[10px] block">{t("childHealth.measureDateLabel")}</label>
-                <DateInputDMY value={gDate} onChange={setGDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
-              </div>
+            <form onSubmit={handleAddGrowth} className="space-y-3 text-xs">
               <div className="space-y-1">
-                <label className="text-slate-500 text-[10px] block">{t("childHealth.heightLabel")}</label>
-                <Input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder={t("childHealth.heightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                {renderMemberSelect("grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 focus:border-emerald-500", "w-full")}
               </div>
-              <div className="space-y-1">
-                <label className="text-slate-500 text-[10px] block">{t("childHealth.weightLabel")}</label>
-                <Input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder={t("childHealth.weightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+                <div className="space-y-1 sm:col-span-2 lg:col-span-2">
+                  <label className="text-slate-500 text-[10px] block">{t("childHealth.measureDateLabel")}</label>
+                  <DateInputDMY value={gDate} onChange={setGDate} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500 font-mono" />
+                </div>
+                <div className="space-y-1 lg:col-span-1">
+                  <label className="text-slate-500 text-[10px] block">{t("childHealth.heightLabel")}</label>
+                  <Input inputMode="decimal" value={gHeight} onChange={e => setGHeight(e.target.value)} placeholder={t("childHealth.heightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                </div>
+                <div className="space-y-1 lg:col-span-1">
+                  <label className="text-slate-500 text-[10px] block">{t("childHealth.weightLabel")}</label>
+                  <Input inputMode="decimal" value={gWeight} onChange={e => setGWeight(e.target.value)} placeholder={t("childHealth.weightPlaceholder")} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-emerald-500" />
+                </div>
+                <div className="flex items-end lg:col-span-2">
+                  <Button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> {t("childHealth.recordBtn")}</Button>
+                </div>
+                {gError && <p className="sm:col-span-2 lg:col-span-6 text-[11px] text-rose-400">{gError}</p>}
               </div>
-              <Button type="submit" className="col-span-2 sm:col-span-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer self-end"><Plus className="w-4 h-4" /> {t("childHealth.recordBtn")}</Button>
-              {gError && <p className="col-span-2 sm:col-span-4 text-[11px] text-rose-400">{gError}</p>}
             </form>
           </Reveal>
 
@@ -586,18 +594,21 @@ export function ChildHealth({
             <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
               <IconChip accent="sky"><Syringe className="w-4 h-4" /></IconChip> {t("childHealth.vaccinationTitle")}
             </h4>
-            <form onSubmit={handleAddVaccine} className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              {renderMemberSelect("focus:border-sky-500", "col-span-1 sm:col-span-2")}
-              <Input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder={t("childHealth.vaccineNamePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
-              <datalist id="vaccine-list">{COMMON_VACCINES.map(v => <option key={v} value={v} />)}</datalist>
-              <Input value={vDose} onChange={e => setVDose(e.target.value)} placeholder={t("childHealth.vaccineDosePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
-              <div className="space-y-1">
-                <label className="text-slate-500 text-[10px] block">{t("childHealth.vaccineDateLabel")}</label>
-                <DateInputDMY value={vScheduled} onChange={setVScheduled} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 font-mono" />
+            <form onSubmit={handleAddVaccine} className="space-y-3 text-xs">
+              {renderMemberSelect("grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 focus:border-sky-500", "w-full")}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2">
+                <Input list="vaccine-list" value={vName} onChange={e => setVName(e.target.value)} placeholder={t("childHealth.vaccineNamePlaceholder")} className="lg:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+                <datalist id="vaccine-list">{COMMON_VACCINES.map(v => <option key={v} value={v} />)}</datalist>
+                <Input value={vDose} onChange={e => setVDose(e.target.value)} placeholder={t("childHealth.vaccineDosePlaceholder")} className="lg:col-span-1 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500" />
+                <div className="space-y-1 lg:col-span-1">
+                  <label className="text-slate-500 text-[10px] block">{t("childHealth.vaccineDateLabel")}</label>
+                  <DateInputDMY value={vScheduled} onChange={setVScheduled} className="w-full bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 font-mono" />
+                </div>
+                <Input value={vNote} onChange={e => setVNote(e.target.value)} placeholder={t("childHealth.vaccineNotePlaceholder")} className="lg:col-span-2 bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
+                {vError && <p className="sm:col-span-2 lg:col-span-6 text-[11px] text-rose-400">{vError}</p>}
+                <Button type="submit" className="sm:col-span-2 lg:col-span-6 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> {t("childHealth.addVaccineBtn")}</Button>
               </div>
-              <Input value={vNote} onChange={e => setVNote(e.target.value)} placeholder={t("childHealth.vaccineNotePlaceholder")} className="bg-slate-950 neu-pressed-sm rounded-lg px-3 py-2 text-slate-200 outline-none focus:border-sky-500 self-end" />
-              {vError && <p className="sm:col-span-2 text-[11px] text-rose-400">{vError}</p>}
-              <Button type="submit" className="sm:col-span-2 bg-sky-500 hover:bg-sky-400 text-slate-950 rounded-lg px-3 py-2 font-bold flex items-center justify-center gap-1 cursor-pointer"><Plus className="w-4 h-4" /> {t("childHealth.addVaccineBtn")}</Button>
             </form>
           </Reveal>
 

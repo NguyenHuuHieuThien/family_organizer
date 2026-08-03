@@ -15,7 +15,9 @@ export interface SelectOption {
 
 interface FancySelectProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void;
+  values?: string[];
+  onValuesChange?: (values: string[]) => void;
   options: readonly SelectOption[];
   className?: string;
   placeholder?: string;
@@ -24,6 +26,7 @@ interface FancySelectProps {
   leading?: ReactNode;
   disabled?: boolean;
   mode?: "radio" | "checkbox";
+  exclusiveValues?: string[];
   wrapLabels?: boolean;
   inlineGrid?: boolean;
 }
@@ -31,6 +34,8 @@ interface FancySelectProps {
 export function FancySelect({
   value,
   onChange,
+  values,
+  onValuesChange,
   options,
   className,
   id,
@@ -38,10 +43,12 @@ export function FancySelect({
   leading,
   disabled = false,
   mode = "radio",
+  exclusiveValues = [],
   wrapLabels = false,
   inlineGrid = false,
 }: FancySelectProps) {
   const selectedValue = value || options[0]?.value || "";
+  const selectedValues = values || [];
   return (
     <div
       id={id}
@@ -55,7 +62,22 @@ export function FancySelect({
       )}
     >
       {options.map((option) => {
-        const active = option.value === selectedValue;
+        const active = mode === "checkbox" && values !== undefined
+          ? selectedValues.includes(option.value)
+          : option.value === selectedValue;
+        const handleClick = () => {
+          if (mode === "checkbox" && onValuesChange && values !== undefined) {
+            const isExclusive = exclusiveValues.includes(option.value);
+            const next = active
+              ? selectedValues.filter((v) => v !== option.value)
+              : isExclusive
+                ? [option.value]
+                : [...selectedValues.filter((v) => !exclusiveValues.includes(v)), option.value];
+            onValuesChange(next);
+            return;
+          }
+          onChange?.(option.value);
+        };
         return (
           <button
             key={option.value}
@@ -63,7 +85,7 @@ export function FancySelect({
             role={mode === "radio" ? "radio" : "checkbox"}
             aria-checked={active}
             disabled={disabled}
-            onClick={() => onChange(option.value)}
+            onClick={handleClick}
             className={cn(
               "flex min-h-9 min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left text-xs font-semibold outline-none transition-all focus-visible:ring-3 focus-visible:ring-sky-500/20",
               active

@@ -127,6 +127,7 @@ export interface Task {
   dueDate: string; // YYYY-MM-DD HH:mm
   creatorId: string;
   assigneeId: string | null; // Null means unassigned or shared
+  assigneeIds?: string[]; // Multi-assignee support; legacy assigneeId keeps first assignee for compatibility
   isShared: boolean; // True means shared with everyone in family
   tags: string[];
   rewardPoints?: number;
@@ -317,7 +318,7 @@ export interface Debt {
   updatedAt: string;
 }
 
-export type AssetType =
+export type BuiltInAssetType =
   | "crypto"
   | "land"
   | "gold_bar"
@@ -327,6 +328,10 @@ export type AssetType =
   | "vehicle"
   | "stock"
   | "other";
+
+export type CustomAssetType = `custom:${string}`;
+
+export type AssetType = BuiltInAssetType | CustomAssetType;
 
 export interface AssetPhoto {
   id: string;
@@ -343,6 +348,7 @@ export interface FamilyAsset {
   id: string;
   type: AssetType;
   name: string;
+  isPinned?: boolean;
   ownerId?: string;
   quantity: number;
   unit: string;

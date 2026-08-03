@@ -14,6 +14,9 @@ import { Search, X, CheckSquare, Calendar, FileText, Wallet, FolderLock, CornerD
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useModalA11y } from "../hooks/useModalA11y.js";
 import { useTranslation } from "react-i18next";
+import type { Task, FamilyPlan, Note, FinancialTransaction, FamilyDocument } from "../types.js";
+import { DOCUMENT_TYPE_LABELS } from "../types.js";
+import { normalizeSearchText, matchesQuery, excerptAround } from "../utils/searchText.js";
 
 interface SearchResultItem {
   kind: "task" | "plan" | "note" | "transaction" | "document";
@@ -23,6 +26,8 @@ interface SearchResultItem {
   date: string;
   tab: string;
 }
+
+type SearchResultWithScore = SearchResultItem & { score: number };
 
 const KIND_ORDER: SearchResultItem["kind"][] = ["task", "plan", "note", "transaction", "document"];
 
@@ -35,19 +40,98 @@ function fmtDate(raw: string): string {
 interface GlobalSearchProps {
   getAuthHeader: () => Record<string, string>;
   onNavigate: (tab: string) => void;
+  tasks: Task[];
+  plans: FamilyPlan[];
+  notes: Note[];
+  transactions: FinancialTransaction[];
+  documents: FamilyDocument[];
+  canViewDocument: (doc: FamilyDocument) => boolean;
 }
 
-export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNavigate }) => {
+export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNavigate, tasks, plans, notes, transactions, documents, canViewDocument }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchedFor, setSearchedFor] = useState(""); // query đã trả kết quả (phân biệt "chưa tìm" vs "không thấy")
+  const [activeIndex, setActiveIndex] = useState(0);
   const dialogRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const debounceRef = useRef<number | null>(null);
   const reducedMotion = useReducedMotion();
+
+  const rankText = (text: string, needle: string) => {
+    const norm = normalizeSearchText(text);
+    if (!needle || !norm.includes(needle)) return 0;
+    if (norm === needle) return 100;
+    if (norm.startsWith(needle)) return 90;
+    const idx = norm.indexOf(needle);
+    return Math.max(10, 80 - Math.min(idx, 60));
+  };
+
+  const dedupeAndSort = (items: SearchResultWithScore[]) => {
+    const byKey = new Map<string, SearchResultWithScore>();
+    for (const item of items) {
+      const key = `${item.kind}:${item.id}`;
+      const prev = byKey.get(key);
+      if (!prev || item.score > prev.score) byKey.set(key, item);
+    }
+    return [...byKey.values()].sort((a, b) => b.score - a.score || a.title.localeCompare(b.title));
+  };
+
+  const localResultsFor = useCallback((q: string): SearchResultItem[] => {
+    const nq = normalizeSearchText(q);
+    const results: SearchResultWithScore[] = [];
+    const push = (item: SearchResultItem, score: number) => {
+      if (score > 0) results.push({ ...item, score });
+    };
+    tasks.forEach(task => {
+      const score = Math.max(
+        rankText(task.title, nq) + 50,
+        rankText(`${task.title} ${task.description} ${(task.tags || []).join(" ")}`, nq)
+      );
+      if (score > 0) push({
+        kind: "task", id: task.id, title: task.title,
+        snippet: excerptAround(task.description, nq) || "Công việc",
+        date: task.dueDate || task.createdAt, tab: "tasks"
+      }, score);
+    });
+    plans.forEach(plan => {
+      const score = rankText(`${plan.title} ${plan.description}`, nq);
+      if (score > 0) push({
+        kind: "plan", id: plan.id, title: plan.title,
+        snippet: excerptAround(plan.description, nq) || "Sự kiện",
+        date: plan.startDate, tab: "plans"
+      }, score);
+    });
+    notes.forEach(note => {
+      const score = rankText(`${note.title} ${note.content} ${(note.tags || []).join(" ")}`, nq);
+      if (score > 0) push({
+        kind: "note", id: note.id, title: note.title,
+        snippet: excerptAround(note.content, nq) || "Ghi chú",
+        date: note.updatedAt || note.createdAt, tab: "notes"
+      }, score);
+    });
+    transactions.forEach(tx => {
+      const score = rankText(`${tx.description} ${tx.category} ${tx.amount} ${tx.type === "income" ? "thu" : "chi"}`, nq);
+      if (score > 0) push({
+        kind: "transaction", id: tx.id, title: tx.description || "(không có mô tả)",
+        snippet: `${tx.type === "income" ? "Thu" : "Chi"} ${Number(tx.amount).toLocaleString("vi-VN")} đ`,
+        date: tx.date, tab: "finance"
+      }, score);
+    });
+    documents.forEach(doc => {
+      if (!canViewDocument(doc)) return;
+      const score = rankText(`${DOCUMENT_TYPE_LABELS[doc.type] || doc.type} ${doc.title} ${doc.documentNumber} ${doc.issuer} ${doc.notes}`, nq);
+      if (score > 0) push({
+        kind: "document", id: doc.id, title: doc.title,
+        snippet: [DOCUMENT_TYPE_LABELS[doc.type] || "Giấy tờ", doc.documentNumber].filter(Boolean).join(" • "),
+        date: doc.expiryDate || doc.updatedAt || doc.createdAt, tab: "documents"
+      }, score);
+    });
+    return dedupeAndSort(results).slice(0, 24);
+  }, [tasks, plans, notes, transactions, documents, canViewDocument]);
 
   // Nhóm hiển thị: icon + nhãn + accent theo ngữ nghĩa màu của DESIGN.md
   const KIND_META = useMemo(() => ({
@@ -68,6 +152,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
     setQuery("");
     setResults([]);
     setSearchedFor("");
+    setActiveIndex(0);
     abortRef.current?.abort();
   }, []);
 
@@ -94,8 +179,11 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
       setResults([]);
       setSearchedFor("");
       setLoading(false);
+      setActiveIndex(0);
       return;
     }
+    setResults(localResultsFor(q));
+    setActiveIndex(0);
     setLoading(true);
     debounceRef.current = window.setTimeout(async () => {
       abortRef.current?.abort();
@@ -106,13 +194,22 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
           headers: getAuthHeaderRef.current(),
           signal: controller.signal
         });
-        if (!res.ok) throw new Error("search failed");
-        const data = await res.json();
-        setResults(Array.isArray(data.results) ? data.results : []);
+        let data: any = null;
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+        const apiResults: SearchResultItem[] = Array.isArray(data?.results) ? data.results : [];
+        const merged = dedupeAndSort([
+          ...localResultsFor(q).map((item, idx) => ({ ...item, score: 80 - idx })),
+          ...apiResults.map((item, idx) => ({ ...item, score: 70 - idx }))
+        ]).slice(0, 24);
+        setResults(merged);
         setSearchedFor(q);
       } catch (err: any) {
         if (err?.name !== "AbortError") {
-          setResults([]);
+          setResults(localResultsFor(q));
           setSearchedFor(q);
         }
       } finally {
@@ -120,11 +217,34 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
       }
     }, 250);
     return () => { if (debounceRef.current) window.clearTimeout(debounceRef.current); };
-  }, [query, open]);
+  }, [query, open, localResultsFor]);
 
   const pick = (item: SearchResultItem) => {
     onNavigate(item.tab);
     close();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    setActiveIndex(prev => results.length === 0 ? 0 : Math.min(prev, results.length - 1));
+  }, [open, results.length]);
+
+  const activeItem = results[activeIndex] || null;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex(prev => results.length === 0 ? 0 : (prev + 1) % results.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex(prev => results.length === 0 ? 0 : (prev - 1 + results.length) % results.length);
+    } else if (e.key === "Enter" && activeItem) {
+      e.preventDefault();
+      pick(activeItem);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
   };
 
   const grouped = KIND_ORDER
@@ -160,6 +280,7 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
               transition={{ type: "spring", stiffness: 380, damping: 30 }}
               className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl overflow-hidden"
               onClick={e => e.stopPropagation()}
+              onKeyDown={handleKeyDown}
             >
               {/* Ô nhập */}
               <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-800">
@@ -204,24 +325,29 @@ export const GlobalSearch: React.FC<GlobalSearchProps> = ({ getAuthHeader, onNav
                             <Icon className="w-3 h-3" /> {meta.label}
                             <span className="text-slate-500">({group.items.length})</span>
                           </div>
-                          {group.items.map(item => (
-                            <Button
-                              key={`${item.kind}_${item.id}`}
-                              onClick={() => pick(item)}
-                              className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left hover:bg-slate-800/40 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer group"
-                            >
-                              <div className="flex-1 min-w-0">
-                                <span className="text-xs font-bold text-slate-200 block truncate">{item.title}</span>
-                                {item.snippet && (
-                                  <span className="text-[11px] text-slate-500 block truncate">{item.snippet}</span>
+                          {group.items.map(item => {
+                            const itemIndex = results.findIndex(r => r.kind === item.kind && r.id === item.id);
+                            const isActive = itemIndex === activeIndex;
+                            return (
+                              <Button
+                                key={`${item.kind}_${item.id}`}
+                                onClick={() => pick(item)}
+                                onMouseEnter={() => setActiveIndex(itemIndex)}
+                                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-left hover:bg-slate-800/40 focus:outline-none focus:ring-2 focus:ring-sky-500/40 cursor-pointer group ${isActive ? "bg-slate-800/60 ring-1 ring-sky-500/40" : ""}`}
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <span className="text-xs font-bold text-slate-200 block truncate">{item.title}</span>
+                                  {item.snippet && (
+                                    <span className="text-[11px] text-slate-500 block truncate">{item.snippet}</span>
+                                  )}
+                                </div>
+                                {item.date && (
+                                  <span className="text-[10px] font-mono text-slate-500 shrink-0">{fmtDate(item.date)}</span>
                                 )}
-                              </div>
-                              {item.date && (
-                                <span className="text-[10px] font-mono text-slate-500 shrink-0">{fmtDate(item.date)}</span>
-                              )}
-                              <CornerDownLeft className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 shrink-0" />
-                            </Button>
-                          ))}
+                                <CornerDownLeft className={`w-3 h-3 text-slate-500 shrink-0 ${isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`} />
+                              </Button>
+                            );
+                          })}
                         </div>
                       );
                     })}

@@ -54,6 +54,11 @@ const VALID_ASSET_TYPES = new Set<string>([
   "crypto", "land", "gold_bar", "gold_ring", "gold_jewelry", "gold_other", "vehicle", "stock", "other"
 ]);
 
+function isValidAssetType(type: unknown): type is string {
+  if (typeof type !== "string") return false;
+  return VALID_ASSET_TYPES.has(type) || /^custom:[\p{L}\p{N}-]+$/u.test(type);
+}
+
 // Whitelist of valid document types (mirrors DocumentType in src/types.ts).
 const VALID_DOCUMENT_TYPES = new Set<string>([
   "cccd", "passport", "driver_license", "vehicle_registration", "vehicle_inspection",
@@ -775,6 +780,11 @@ export class FamilyDB {
     const db = this.readRaw();
     const nowStr = new Date().toISOString();
 
+    const normalizeAssigneeIds = (value: unknown, fallback: string[] = []) => {
+      const source = Array.isArray(value) ? value : fallback;
+      return source.map((id: unknown) => String(id || "").trim()).filter(Boolean);
+    };
+
     if (taskData.id) {
       // UPDATE Task
       const idx = db.tasks.findIndex(t => t.id === taskData.id);
@@ -782,6 +792,13 @@ export class FamilyDB {
 
       const oldTask = db.tasks[idx];
       const isCompleting = taskData.status === "completed" && oldTask.status !== "completed";
+      const oldAssigneeIds = normalizeAssigneeIds((oldTask as any).assigneeIds, oldTask.assigneeId ? [oldTask.assigneeId] : []);
+      const nextAssigneeIds = Object.prototype.hasOwnProperty.call(taskData, "assigneeIds")
+        ? normalizeAssigneeIds((taskData as any).assigneeIds)
+        : oldAssigneeIds;
+      const nextPrimaryAssigneeId = taskData.assigneeId !== undefined
+        ? (taskData.assigneeId || null)
+        : (nextAssigneeIds[0] || oldTask.assigneeId || null);
 
       // Gating duyệt: trẻ (CHILD) tự báo hoàn thành một task có điểm > ngưỡng tự duyệt
       // của gia đình → task vào trạng thái "chờ ba mẹ duyệt" thay vì cộng điểm ngay.
@@ -789,7 +806,7 @@ export class FamilyDB {
       const actorRole = db.users.find(u => u.id === userId)?.role;
       // Ai sẽ nhận điểm: người được giao, nếu không có thì chính người bấm hoàn thành
       // (khớp đúng logic cộng điểm bên dưới) — nên cổng duyệt cũng xét theo người này.
-      const rewardRecipientId = (taskData.assigneeId ?? oldTask.assigneeId) || userId;
+      const rewardRecipientId = nextPrimaryAssigneeId || userId;
       const recipientRole = db.users.find(u => u.id === rewardRecipientId)?.role;
       const rewardPts = Math.max(0, Number((taskData as any).rewardPoints ?? oldTask.rewardPoints ?? 0));
       const approvalThreshold = Math.max(0, Number(getAppSettings().rewardApprovalThreshold || 0));
@@ -805,9 +822,14 @@ export class FamilyDB {
       if (taskData.status && taskData.status !== oldTask.status) {
         changelog.push(`trạng thái từ '${oldTask.status}' thành '${taskData.status}'`);
       }
-      if (taskData.assigneeId !== undefined && taskData.assigneeId !== oldTask.assigneeId) {
-        const uStore = db.users.find(u => u.id === taskData.assigneeId);
-        changelog.push(`giao việc cho ${uStore ? uStore.fullName : "Chưa phân công"}`);
+      if (Object.prototype.hasOwnProperty.call(taskData, "assigneeIds") || taskData.assigneeId !== undefined) {
+        const assigneeLabel = nextAssigneeIds.length > 0
+          ? nextAssigneeIds.map(id => db.users.find(u => u.id === id)?.fullName || "?").join(", ")
+          : "Chưa phân công";
+        const oldAssigneeLabel = oldAssigneeIds.length > 0
+          ? oldAssigneeIds.map(id => db.users.find(u => u.id === id)?.fullName || "?").join(", ")
+          : "Chưa phân công";
+        if (assigneeLabel !== oldAssigneeLabel) changelog.push(`giao việc cho ${assigneeLabel}`);
       }
 
       const updatedHistory = [...(oldTask.history || [])];
@@ -841,6 +863,8 @@ export class FamilyDB {
         recurrenceEndDate: nextRecurrenceEndDate,
         rotationMemberIds: nextRotation && nextRotation.length > 0 ? nextRotation : undefined,
         sourceRecurringTaskId: (taskData as any).sourceRecurringTaskId ?? oldTask.sourceRecurringTaskId ?? null,
+        assigneeIds: nextAssigneeIds,
+        assigneeId: nextPrimaryAssigneeId,
         completedById: effectiveCompleting ? userId : (taskData.completedById ?? oldTask.completedById ?? null),
         completedAt: effectiveCompleting ? nowStr : (taskData.completedAt ?? oldTask.completedAt ?? null),
         comments: taskData.comments || oldTask.comments || [],
@@ -884,7 +908,7 @@ export class FamilyDB {
       if (effectiveCompleting && updatedTask.rewardPoints && updatedTask.rewardPoints > 0) {
         // Ưu tiên trẻ đã "báo xong" (submittedById) — để khi ba mẹ duyệt, điểm về đúng
         // trẻ đã làm chứ không phải người duyệt; nếu không có thì dùng người được giao / người bấm.
-        const awardUserId = updatedTask.submittedById || updatedTask.assigneeId || userId;
+        const awardUserId = updatedTask.submittedById || updatedTask.assigneeIds?.[0] || updatedTask.assigneeId || userId;
         const awardUser = db.users.find(u => u.id === awardUserId);
         // Mỗi lần chuyển sang "hoàn thành" là một lượt thưởng riêng (cộng dồn qua các lần
         // mở lại). Chốt effectiveCompleting = chỉ cộng đúng lúc CHUYỂN trạng thái nên không
@@ -922,12 +946,14 @@ export class FamilyDB {
             const curIdx = rotation.indexOf(updatedTask.assigneeId || "");
             nextAssignee = rotation[(curIdx + 1) % rotation.length];
           }
+          const nextAssigneeIdsForRecurring = nextAssignee ? [nextAssignee] : [];
           const nextTask: Task = {
             ...updatedTask,
             id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
             status: "todo" as any,
             dueDate: nextDueDate,
             assigneeId: nextAssignee,
+            assigneeIds: nextAssigneeIdsForRecurring,
             sourceRecurringTaskId: rootId,
             completedById: null,
             completedAt: null,
@@ -966,7 +992,8 @@ export class FamilyDB {
         priority: taskData.priority || ("medium" as any),
         dueDate: taskData.dueDate || new Date(Date.now() + 86400000).toISOString().slice(0, 10) + " 12:00",
         creatorId: userId,
-        assigneeId: taskData.assigneeId || null,
+        assigneeIds: normalizeAssigneeIds((taskData as any).assigneeIds),
+        assigneeId: taskData.assigneeId !== undefined ? taskData.assigneeId || null : (normalizeAssigneeIds((taskData as any).assigneeIds)[0] || null),
         isShared: taskData.isShared !== undefined ? taskData.isShared : true,
         tags: taskData.tags || [],
         rewardPoints: Math.max(0, Number((taskData as any).rewardPoints || 0)),
@@ -993,8 +1020,13 @@ export class FamilyDB {
       this.logActivity(userId, username, "Tạo Task", `Đã lập công việc mới "${newTask.title}".`);
 
       // Push notification to assignee
-      if (newTask.assigneeId && newTask.assigneeId !== userId) {
-        this.addNotificationInternal(db, newTask.assigneeId, "Công việc mới được giao", `Bạn vừa được giao nhiệm vụ: "${newTask.title}"`);
+      const newAssigneeIds = normalizeAssigneeIds(newTask.assigneeIds, newTask.assigneeId ? [newTask.assigneeId] : []);
+      if (newAssigneeIds.length > 0) {
+        newAssigneeIds.forEach(assigneeId => {
+          if (assigneeId !== userId) {
+            this.addNotificationInternal(db, assigneeId, "Công việc mới được giao", `Bạn vừa được giao nhiệm vụ: "${newTask.title}"`);
+          }
+        });
       } else if (newTask.isShared) {
         this.addNotificationInternal(db, "all", "Công việc gia đình mới", `Cả nhà ơi có nhiệm vụ: "${newTask.title}"`);
       }
@@ -1047,14 +1079,19 @@ export class FamilyDB {
       },
       ...(task.history || [])
     ];
-    if (task.assigneeId) {
-      this.addNotificationInternal(
-        db,
-        task.assigneeId,
-        "🔁 Cần làm lại",
-        reasonText ? `Ba mẹ trả lại việc "${task.title}": ${reasonText}` : `Ba mẹ trả lại việc "${task.title}", con làm lại nhé.`,
-        "task"
-      );
+    const assigneeIds = Array.isArray((task as any).assigneeIds) && (task as any).assigneeIds.length > 0
+      ? (task as any).assigneeIds.map((id: unknown) => String(id || "").trim()).filter(Boolean)
+      : (task.assigneeId ? [task.assigneeId] : []);
+    if (assigneeIds.length > 0) {
+      assigneeIds.forEach(assigneeId => {
+        this.addNotificationInternal(
+          db,
+          assigneeId,
+          "🔁 Cần làm lại",
+          reasonText ? `Ba mẹ trả lại việc "${task.title}": ${reasonText}` : `Ba mẹ trả lại việc "${task.title}", con làm lại nhé.`,
+          "task"
+        );
+      });
     }
     this.writeRaw(db);
     this.logActivity(approverId, approverName, "Trả lại Task", `Đã trả lại công việc "${task.title}" để làm lại.`);
@@ -2036,8 +2073,9 @@ export class FamilyDB {
       const updated = {
         ...existing,
         ...data,
-        type: data.type && VALID_ASSET_TYPES.has(data.type) ? data.type : existing.type,
+        type: isValidAssetType(data.type) ? data.type : existing.type,
         name: nextName || existing.name,
+        isPinned: typeof data.isPinned === "boolean" ? data.isPinned : existing.isPinned,
         quantity: safeQuantity,
         estimatedValue: safeEstimatedValue,
         purchaseValue: safePurchaseValue,
@@ -2058,8 +2096,9 @@ export class FamilyDB {
 
     const asset: FamilyAsset = {
       id: `asset_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      type: data.type && VALID_ASSET_TYPES.has(data.type) ? data.type : "other",
+      type: isValidAssetType(data.type) ? data.type : "other",
       name: (data.name || "Tài sản mới").trim(),
+      isPinned: typeof data.isPinned === "boolean" ? data.isPinned : false,
       ownerId: data.ownerId || undefined,
       quantity: safeQuantity,
       unit: (data.unit || "mục").trim(),
@@ -2575,7 +2614,7 @@ export class FamilyDB {
       const due = parse(t.dueDate);
       if (due === null) return;
       const diffMin = (due - now) / 60000;
-      const recipient = t.assigneeId || "all";
+      const recipient = Array.isArray((t as any).assigneeIds) && (t as any).assigneeIds.length > 0 ? (t as any).assigneeIds[0] : (t.assigneeId || "all");
       if (diffMin > 60 && diffMin <= 24 * 60) {
         ensure(`notif_taskdue1d_${t.id}`, recipient, "⏰ Sắp đến hạn công việc", `"${t.title}" đến hạn lúc ${t.dueDate}.`, "task");
       } else if (diffMin > 0 && diffMin <= 60) {

@@ -55,6 +55,16 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+function getTaskAssigneeNames(task: { assigneeId?: string | null; assigneeIds?: string[] }, userMap: Record<string, string>): string {
+  const ids = Array.isArray(task.assigneeIds) && task.assigneeIds.length > 0
+    ? task.assigneeIds
+    : task.assigneeId
+      ? [task.assigneeId]
+      : [];
+  if (ids.length === 0) return "Chung";
+  return ids.map(id => userMap[id] || "?").join(", ");
+}
+
 // ─── DỮ LIỆU BẢN TIN ────────────────────────────────────────────────────────
 
 interface DigestData {
@@ -111,7 +121,7 @@ function buildDigestData(now: Date): DigestData {
     .filter(t => t.dueDate.slice(0, 10) < todayStr)
     .map(t => ({
       title: t.title,
-      assignee: t.assigneeId ? (userMap[t.assigneeId] || "?") : "Chung",
+      assignee: getTaskAssigneeNames(t, userMap),
       daysLate: -daysDiff(t.dueDate.slice(0, 10), now)
     }))
     .slice(0, 5);
@@ -127,7 +137,7 @@ function buildDigestData(now: Date): DigestData {
       dt.setDate(now.getDate() + d);
       return {
         title: t.title,
-        assignee: t.assigneeId ? (userMap[t.assigneeId] || "?") : "Chung",
+        assignee: getTaskAssigneeNames(t, userMap),
         daysUntil: d,
         dateLabel: `${dt.getDate()}/${dt.getMonth() + 1}`
       };
