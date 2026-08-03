@@ -81,6 +81,7 @@ import { VN_LOCATIONS } from "../utils/vnLocations.js";
 import { currentLocalDate } from "../utils/dateTime.js";
 
 type SettingsTab = "profile" | "members" | "backups" | "logs";
+type DriveCallbackNotice = { result: string; message: string; seq: number };
 
 interface SettingsProps {
   currentUser: User;
@@ -95,6 +96,7 @@ interface SettingsProps {
   onAdminUpdateUser: (userId: string, data: any) => Promise<any>;
   requestedTab?: SettingsTab;
   requestedTabSeq?: number;
+  driveCallbackNotice?: DriveCallbackNotice | null;
   onCreateBackup: () => Promise<any>;
   onRestoreBackup: (id: string) => Promise<any>;
   onDeleteBackup: (id: string) => Promise<any>;
@@ -119,6 +121,7 @@ export function Settings({
   onAdminUpdateUser,
   requestedTab = "profile",
   requestedTabSeq = 0,
+  driveCallbackNotice = null,
   onCreateBackup,
   onRestoreBackup,
   onDeleteBackup,
@@ -254,10 +257,19 @@ export function Settings({
   const [tgDigestBusy, setTgDigestBusy] = useState(false);
   const [tgDigestMsg, setTgDigestMsg] = useState("");
 
-  interface DriveStatus { configured: boolean; enabled: boolean; folderId: string; serviceAccountEmail: string }
+  interface DriveStatus {
+    configured: boolean;
+    status: "disconnected" | "connecting" | "connected" | "error" | "expired" | "cancelled";
+    connected: boolean;
+    enabled: boolean;
+    accountEmail: string;
+    displayName: string;
+    picture: string;
+    connectedAt: string;
+    lastError: string;
+    scope: string;
+  }
   const [driveStatus, setDriveStatus] = useState<DriveStatus | null>(null);
-  const [driveJson, setDriveJson] = useState("");
-  const [driveFolderId, setDriveFolderId] = useState("");
   const [driveBusy, setDriveBusy] = useState(false);
   const [driveMsg, setDriveMsg] = useState("");
   const [driveErr, setDriveErr] = useState("");
@@ -315,33 +327,105 @@ export function Settings({
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (d) { setTgStatus(d); setTgChatId(d.chatId || ""); } })
       .catch(() => {});
-    fetch("/api/settings/google-drive", { headers: authHeaders() })
+    fetch("/api/integrations/google-drive", { headers: authHeaders() })
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (d) { setDriveStatus(d); setDriveFolderId(d.folderId || ""); } })
+      .then(d => { if (d) setDriveStatus(d); })
       .catch(() => {});
   }, []);
 
-  const saveDriveConfig = async (patch?: { enabled?: boolean; clear?: boolean }) => {
+  useEffect(() => {
+    if (currentUser.role !== UserRole.ADMIN || !driveCallbackNotice?.result) return;
+    const { result, message } = driveCallbackNotice;
+    setDriveMsg("");
+    setDriveErr("");
+    if (result === "connected") {
+      setDriveMsg("Đã kết nối Google Drive thành công.");
+    } else if (result === "cancelled") {
+      setDriveErr("Bạn đã hủy cấp quyền Google Drive. Kết nối chưa được lưu.");
+    } else if (result === "expired") {
+      setDriveErr("Phiên kết nối đã hết hạn. Vui lòng bấm kết nối lại.");
+    } else if (result === "error") {
+      setDriveErr(message || "Kết nối Google Drive thất bại. Vui lòng thử lại.");
+    }
+  }, [currentUser.role, driveCallbackNotice?.seq]);
+
+  const connectDrive = async () => {
     setDriveBusy(true); setDriveMsg(""); setDriveErr("");
     try {
-      const body = patch || { serviceAccountJson: driveJson.trim(), folderId: driveFolderId.trim(), enabled: true };
-      const res = await fetch("/api/settings/google-drive", {
+      const res = await fetch("/api/integrations/google-drive/connect", {
+        headers: authHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lưu Google Drive thất bại.");
+      window.location.href = data.url;
+    } catch (err: any) {
+      setDriveErr(err.message || "Không mở được trang kết nối Google Drive.");
+    } finally {
+      setDriveBusy(false);
+    }
+  };
+
+  const toggleDriveEnabled = async (enabled: boolean) => {
+    setDriveBusy(true); setDriveMsg(""); setDriveErr("");
+    try {
+      const res = await fetch("/api/integrations/google-drive", {
         method: "POST",
         headers: { ...authHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify(body)
+        body: JSON.stringify({ enabled })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Lưu Google Drive thất bại.");
       setDriveStatus(data);
-      setDriveFolderId(data.folderId || "");
-      setDriveJson("");
-      setDriveMsg(data.message || "Đã lưu kết nối Google Drive.");
+      setDriveMsg(data.message || "Đã cập nhật trạng thái Google Drive.");
     } catch (err: any) {
       setDriveErr(err.message || "Lưu Google Drive thất bại.");
     } finally {
       setDriveBusy(false);
     }
   };
+
+  const disconnectDrive = async () => {
+    setDriveBusy(true); setDriveMsg(""); setDriveErr("");
+    try {
+      const res = await fetch("/api/integrations/google-drive/disconnect", {
+        method: "POST",
+        headers: authHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Ngắt kết nối Google Drive thất bại.");
+      setDriveStatus(data);
+      setDriveMsg(data.message || "Đã ngắt kết nối Google Drive.");
+    } catch (err: any) {
+      setDriveErr(err.message || "Ngắt kết nối Google Drive thất bại.");
+    } finally {
+      setDriveBusy(false);
+    }
+  };
+
+  const syncDrive = async () => {
+    setDriveBusy(true); setDriveMsg(""); setDriveErr("");
+    try {
+      const res = await fetch("/api/integrations/google-drive/sync", {
+        method: "POST",
+        headers: authHeaders()
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Đồng bộ Google Drive thất bại.");
+      setDriveStatus(data);
+      setDriveMsg(data.message || "Đã đồng bộ Google Drive.");
+    } catch (err: any) {
+      setDriveErr(err.message || "Đồng bộ Google Drive thất bại.");
+    } finally {
+      setDriveBusy(false);
+    }
+  };
+
+  const driveStatusLabel = driveStatus?.status === "connected" ? "Đã kết nối"
+    : driveStatus?.status === "connecting" ? "Đang kết nối"
+    : driveStatus?.status === "cancelled" ? "Đã hủy kết nối"
+    : driveStatus?.status === "expired" ? "Phiên kết nối hết hạn"
+    : driveStatus?.status === "error" ? "Lỗi kết nối"
+    : "Chưa kết nối";
 
   // Lưu cấu hình Telegram (token/chat id chỉ gửi khi người dùng có nhập) hoặc bật/tắt
   const saveTgConfig = async (patch: { botToken?: string; chatId?: string; enabled?: boolean; weeklyDigestEnabled?: boolean }) => {
@@ -1744,12 +1828,13 @@ export function Settings({
             </h3>
             <p className="text-[11px] text-slate-500">{t("language.description")}</p>
           </div>
-          <div className="text-xs max-w-xs">
+          <div className="w-full max-w-2xl text-xs">
             <FancySelect
               value={(i18n.resolvedLanguage || i18n.language || "vi").split("-")[0]}
               onChange={(v) => i18n.changeLanguage(v)}
               ariaLabel={t("language.name")}
-              className="bg-slate-900"
+              className="bg-slate-900 sm:grid-cols-3"
+              wrapLabels
               options={SUPPORTED_LANGUAGES.map(l => ({ value: l.code, label: `${l.flag}  ${l.label}` }))}
             />
           </div>
@@ -1805,65 +1890,80 @@ export function Settings({
 
       {/* Google Drive — lưu thêm bản sao giấy tờ/hình ảnh khi upload */}
       {activeTab === "backups" && currentUser.role === UserRole.ADMIN && (
-        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-3">
-          <div className="flex items-start justify-between gap-3">
+        <div className="bg-slate-950 neu-pressed-sm rounded-2xl p-4.5 space-y-4">
+          {driveMsg && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-300 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 shrink-0" />
+              <span>{driveMsg}</span>
+            </div>
+          )}
+          {driveErr && (
+            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-300 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <span>{driveErr}</span>
+            </div>
+          )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-0.5 min-w-0">
               <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
                 <Cloud className="w-4 h-4 text-sky-400" /> Kết nối Google Drive
               </h3>
-              <p className="text-[11px] text-slate-500">
-                {driveStatus?.configured
-                  ? `Đã kết nối ${driveStatus.serviceAccountEmail} vào thư mục ${driveStatus.folderId}. Khi thêm giấy tờ hoặc hình ảnh, người dùng có thể chọn lưu thêm bản sao lên Drive.`
-                  : "Dán Service Account JSON và Folder ID. Hãy chia sẻ thư mục Drive cho email service account trước khi lưu."}
+              <p className="max-w-4xl text-[11px] text-slate-500 leading-relaxed">
+                {!driveStatus?.configured
+                  ? "Google Drive chưa sẵn sàng trên máy chủ. Vui lòng báo quản trị viên kiểm tra cấu hình kết nối."
+                  : driveStatusLabel === "Đã kết nối"
+                  ? `Đã kết nối ${driveStatus.displayName || driveStatus.accountEmail || "tài khoản Google"}. Khi thêm giấy tờ hoặc hình ảnh, người dùng có thể chọn lưu thêm bản sao lên Drive.`
+                  : driveStatusLabel === "Đã hủy kết nối"
+                  ? "Người dùng đã từ chối cấp quyền. Bấm kết nối lại để thử lần nữa."
+                  : driveStatusLabel === "Phiên kết nối hết hạn"
+                  ? "Phiên kết nối đã hết hạn. Bấm kết nối lại để tạo phiên mới."
+                  : driveStatusLabel === "Lỗi kết nối"
+                  ? `Đã gặp lỗi khi kết nối. ${driveStatus.lastError || "Vui lòng thử lại."}`
+                  : "Bấm kết nối để chuyển sang Google, đăng nhập nếu cần, cấp quyền và quay lại đây."}
               </p>
             </div>
-            {driveStatus?.configured && (
+            {driveStatus?.connected && (
               <Button
                 type="button"
-                onClick={() => saveDriveConfig({ enabled: !driveStatus.enabled })}
+                onClick={() => toggleDriveEnabled(!driveStatus.enabled)}
                 disabled={driveBusy}
-                className={`shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all disabled:opacity-50 ${driveStatus.enabled ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-slate-900 text-slate-500 border-slate-800"}`}
+                className={`w-full sm:w-auto shrink-0 text-[10px] font-bold px-3 py-2 rounded-xl border cursor-pointer transition-all disabled:opacity-50 ${driveStatus.enabled ? "bg-sky-500/10 text-sky-400 border-sky-500/20" : "bg-slate-900 text-slate-500 border-slate-800"}`}
               >
                 {driveStatus.enabled ? "ĐANG BẬT" : "ĐANG TẮT"}
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px_auto] gap-2">
-            <Textarea
-              value={driveJson}
-              onChange={(e) => setDriveJson(e.target.value)}
-              rows={3}
-              placeholder={driveStatus?.configured ? "Service Account JSON mới (để trống nếu chỉ đổi Folder ID)" : "Dán toàn bộ Service Account JSON"}
-              className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 font-mono min-w-0"
-            />
-            <Input
-              value={driveFolderId}
-              onChange={(e) => setDriveFolderId(e.target.value)}
-              placeholder="Google Drive Folder ID"
-              className="bg-slate-900 neu-pressed-sm rounded-xl px-3 py-2 text-xs text-slate-200 outline-none focus:border-sky-500 font-mono"
-            />
-            <Button
-              type="button"
-              onClick={() => saveDriveConfig()}
-              disabled={driveBusy || (!driveJson.trim() && !driveStatus?.configured) || !driveFolderId.trim()}
-              className="bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer shrink-0 transition-all"
-            >
-              {driveBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-              Lưu & kiểm tra
-            </Button>
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-400">
+              Trạng thái: <span className="font-semibold text-slate-200">{driveStatusLabel}</span>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-400">
+              Email: <span className="font-mono text-slate-300">{driveStatus?.accountEmail || "-"}</span>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-400">
+              Kết nối lúc: <span className="font-mono text-slate-300">{driveStatus?.connectedAt || "-"}</span>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-[11px] text-slate-400">
+              Scope: <span className="font-mono text-slate-300">{driveStatus?.scope || "-"}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <a href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" rel="noreferrer noopener" className="text-[11px] text-sky-400 hover:underline">
-              Tạo service account trên Google Cloud →
-            </a>
-            {driveStatus?.configured && (
-              <Button type="button" onClick={() => saveDriveConfig({ clear: true })} disabled={driveBusy} className="text-[11px] text-slate-400 hover:text-rose-400 ml-auto cursor-pointer">
-                Xóa kết nối Drive
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <Button type="button" onClick={() => void connectDrive()} disabled={driveBusy || !driveStatus?.configured} className="w-full sm:w-auto bg-sky-500 hover:bg-sky-400 disabled:opacity-50 text-slate-950 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all">
+              {driveBusy ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Cloud className="w-4 h-4" />}
+              {driveStatus?.connected ? "Kết nối lại Google Drive" : "Kết nối Google Drive"}
+            </Button>
+            {driveStatus?.connected && (
+              <Button type="button" onClick={() => void syncDrive()} disabled={driveBusy} className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition-all border border-slate-800">
+                <RefreshCw className="w-4 h-4" />
+                Sync Now
+              </Button>
+            )}
+            {driveStatus?.connected && (
+              <Button type="button" onClick={() => void disconnectDrive()} disabled={driveBusy} className="self-start text-[11px] text-slate-400 hover:text-rose-400 sm:self-auto cursor-pointer">
+                Ngắt kết nối Drive
               </Button>
             )}
           </div>
-          {driveErr && <p className="text-[11px] text-rose-400 flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {driveErr}</p>}
-          {driveMsg && <p className="text-[11px] text-emerald-400 flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5 shrink-0" /> {driveMsg}</p>}
         </div>
       )}
 

@@ -1859,7 +1859,7 @@ export function Finance({
               </div>
 
               {/* Categorization and Wallet */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3">
                 <div className="space-y-1 min-w-0">
                   <label className="text-slate-400 block font-semibold">{formType === TransactionType.EXPENSE ? t("finance.formCatExpenseLabel") : t("finance.formCatIncomeLabel")}</label>
                   {formType === TransactionType.EXPENSE ? (
@@ -1867,6 +1867,7 @@ export function Finance({
                       value={formCategory as string}
                       onChange={setFormCategory}
                       ariaLabel={t("finance.formCatExpenseAriaLabel")}
+                      className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                       options={expenseCategoryOptions}
                     />
                   ) : (
@@ -1875,6 +1876,7 @@ export function Finance({
                         value={isPresetIncome(formCategory as string) ? (formCategory as string) : INCOME_CUSTOM}
                         onChange={(v) => setFormCategory(v === INCOME_CUSTOM ? "" : v)}
                         ariaLabel={t("finance.formCatIncomeAriaLabel")}
+                        className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                         options={[
                           ...INCOME_CATEGORIES.map(c => ({ value: c, label: c })),
                           { value: INCOME_CUSTOM, label: t("finance.formCatOther") }
@@ -1900,6 +1902,7 @@ export function Finance({
                     value={formAccount}
                     onChange={(v) => setFormAccount(v as AccountType)}
                     ariaLabel={t("finance.formAccountAriaLabel")}
+                    className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                     options={[
                       { value: "bank",     label: t("finance.formAccountBank") },
                       { value: "cash",     label: t("finance.formAccountCash") },

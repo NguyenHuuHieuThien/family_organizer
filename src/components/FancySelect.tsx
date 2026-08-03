@@ -24,6 +24,8 @@ interface FancySelectProps {
   leading?: ReactNode;
   disabled?: boolean;
   mode?: "radio" | "checkbox";
+  wrapLabels?: boolean;
+  inlineGrid?: boolean;
 }
 
 export function FancySelect({
@@ -36,12 +38,15 @@ export function FancySelect({
   leading,
   disabled = false,
   mode = "radio",
+  wrapLabels = false,
+  inlineGrid = false,
 }: FancySelectProps) {
   const selectedValue = value || options[0]?.value || "";
   return (
     <div
       id={id}
       role={mode === "radio" ? "radiogroup" : "group"}
+      data-inline-grid={inlineGrid ? "true" : undefined}
       aria-label={ariaLabel}
       className={cn(
         "grid max-h-56 w-full gap-1.5 overflow-y-auto rounded-xl border border-slate-850 bg-slate-950/55 p-1.5 shadow-xs",
@@ -62,16 +67,16 @@ export function FancySelect({
             className={cn(
               "flex min-h-9 min-w-0 items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-left text-xs font-semibold outline-none transition-all focus-visible:ring-3 focus-visible:ring-sky-500/20",
               active
-                ? "border-sky-500/35 bg-sky-500/12 text-sky-200 shadow-[inset_0_0_0_1px_rgba(56,189,248,0.12)]"
+                ? "border-teal-400/70 bg-teal-500 text-slate-950 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.2)]"
                 : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-slate-200",
               disabled && "cursor-not-allowed opacity-50 hover:border-slate-800 hover:bg-slate-900 hover:text-slate-400",
             )}
           >
-            <span className="flex min-w-0 items-center gap-2">
+            <span className={cn("flex min-w-0 items-center gap-2", wrapLabels && "items-start") }>
               {option.leading ?? (active ? leading : null)}
-              <span className="truncate">{option.label}</span>
+              <span className={cn("min-w-0", wrapLabels ? "whitespace-normal leading-tight break-words" : "truncate")}>{option.label}</span>
             </span>
-            <span className={cn("flex size-4 shrink-0 items-center justify-center border", mode === "radio" ? "rounded-full" : "rounded", active ? "border-sky-400 bg-sky-400 text-slate-950" : "border-slate-700 text-transparent")}>
+            <span className={cn("flex size-4 shrink-0 items-center justify-center border", mode === "radio" ? "rounded-full" : "rounded", active ? "border-teal-200 bg-teal-100 text-teal-700" : "border-slate-700 text-transparent")}>
               <Check className="size-3" />
             </span>
           </button>

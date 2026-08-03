@@ -84,6 +84,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 
 type SettingsTab = "profile" | "members" | "backups" | "logs";
+type DriveCallbackNotice = { result: string; message: string; seq: number };
 
 // Notification timestamps: show a relative day prefix so older items aren't
 // ambiguous (a bare "14:30" could be today or last week).
@@ -315,6 +316,16 @@ export default function App() {
     return raw === "medications" ? "child-health" : raw;
   });
   const [settingsTabRequest, setSettingsTabRequest] = useState<{ tab: SettingsTab; seq: number }>({ tab: "profile", seq: 0 });
+  const [driveCallbackNotice] = useState<DriveCallbackNotice | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const result = params.get("drive") || "";
+      if (!result) return null;
+      return { result, message: params.get("message") || "", seq: Date.now() };
+    } catch (e) {
+      return null;
+    }
+  });
   // Sub-tab đang yêu cầu bên trong "Sức khỏe gia đình" (deep-link từ thông báo thuốc → mục Lịch thuốc)
   const [healthSectionRequest, setHealthSectionRequest] = useState<{ section: "growth" | "vaccination" | "medication"; seq: number }>({ section: "growth", seq: 0 });
   // Deep-link mở chi tiết một sự kiện lịch (bấm từ "Sự kiện sắp diễn ra" ở Tổng quan → tab Lập lịch mở popup)
@@ -998,6 +1009,25 @@ export default function App() {
       fetchBackupsAndLogs();
     }
   };
+
+  useEffect(() => {
+    if (!currentUser) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const settings = params.get("settings");
+      const driveResult = driveCallbackNotice?.result || params.get("drive");
+      if (settings === "backups" || driveResult) {
+        setSettingsTabRequest(prev => ({ tab: "backups", seq: prev.seq + 1 }));
+        setActiveTab("settings");
+        fetchBackupsAndLogs();
+        params.delete("drive");
+        params.delete("message");
+        params.delete("settings");
+        const qs = params.toString();
+        window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+      }
+    } catch (e) { /* ignore */ }
+  }, [currentUser, driveCallbackNotice?.seq]);
 
   // Mutations wrappers to connect dashboard callbacks with backend routes
   const handleSaveTask = async (taskData: Partial<Task>) => {
@@ -2216,6 +2246,7 @@ export default function App() {
                   onAdminUpdateUser={handleAdminUpdateUser}
                   requestedTab={settingsTabRequest.tab}
                   requestedTabSeq={settingsTabRequest.seq}
+                  driveCallbackNotice={driveCallbackNotice}
                   onCreateBackup={handleCreateBackup}
                   onRestoreBackup={handleRestoreBackup}
                   onDeleteBackup={handleDeleteBackup}

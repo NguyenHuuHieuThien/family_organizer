@@ -23,7 +23,17 @@ import { telegramBackupStatus, sendBackupToTelegram, runTelegramBackupTick } fro
 import { sendWeeklyDigest, runWeeklyDigestTick } from "./server/weeklyDigest.js";
 import { icsFeedToken, isValidIcsToken, buildIcsFeed } from "./server/icsFeed.js";
 import { getVapidPublicKey, isPushConfigured, sendTestPush } from "./server/push.js";
-import { googleDriveStatus, testGoogleDriveConfig, uploadDataUrlToGoogleDrive } from "./server/googleDrive.js";
+import {
+  buildGoogleDriveAuthUrl,
+  createGoogleDriveOAuthState,
+  disconnectGoogleDrive,
+  exchangeGoogleDriveCode,
+  googleDriveStatus,
+  setGoogleDriveIntegrationError,
+  syncGoogleDriveAccount,
+  uploadDataUrlToGoogleDrive,
+  validateGoogleDriveOAuthState
+} from "./server/googleDrive.js";
 
 // Accepted permission roles for write validation
 const VALID_ROLES = new Set<string>([UserRole.ADMIN, UserRole.MEMBER, UserRole.CHILD, UserRole.GUEST]);
@@ -778,34 +788,108 @@ app.post("/api/settings/ai", requireAuth, requireRole([UserRole.ADMIN]), async (
   res.json({ ...aiStatus(), message: "Đã lưu Gemini API key. Tính năng AI đã sẵn sàng." });
 });
 
-// --- GOOGLE DRIVE SETTINGS (admin only) ---
+// --- GOOGLE DRIVE INTEGRATION (admin only) ---
 
-app.get("/api/settings/google-drive", requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
-  res.json(googleDriveStatus());
+function googleDriveRedirectUri(req: Request, callbackPath = "/api/integrations/google-drive/callback"): string {
+  const explicit = String(process.env.GOOGLE_DRIVE_REDIRECT_URI || "").trim();
+  if (explicit) return explicit;
+  const appUrl = String(process.env.APP_URL || "").trim().replace(/\/$/, "");
+  if (appUrl && !/your-domain-or-tailscale-url/i.test(appUrl)) return `${appUrl}${callbackPath}`;
+  const proto = String(req.headers["x-forwarded-proto"] || req.protocol || "http").split(",")[0];
+  return `${proto}://${req.get("host")}${callbackPath}`;
+}
+
+async function handleGoogleDriveCallback(req: Request, res: Response, callbackPath: string) {
+  try {
+    const error = String(req.query.error || "");
+    if (error) {
+      if (error === "access_denied") {
+        setGoogleDriveIntegrationError("Người dùng đã từ chối cấp quyền.", "cancelled");
+        res.redirect("/?settings=backups&drive=cancelled");
+        return;
+      }
+      throw new Error(error);
+    }
+    const code = String(req.query.code || "");
+    const state = String(req.query.state || "");
+    if (!code) throw new Error("Google không trả mã xác thực.");
+    validateGoogleDriveOAuthState(state);
+    await exchangeGoogleDriveCode(code, googleDriveRedirectUri(req, callbackPath));
+    res.redirect("/?settings=backups&drive=connected");
+  } catch (err: any) {
+    const msg = encodeURIComponent(err.message || "Kết nối Google Drive thất bại.");
+    setGoogleDriveIntegrationError(String(err.message || "Kết nối Google Drive thất bại."));
+    res.redirect(`/?settings=backups&drive=error&message=${msg}`);
+  }
+}
+
+function registerGoogleDriveIntegrationRoutes(prefix: string) {
+  const callbackPath = `${prefix}/callback`;
+
+  app.get(prefix, requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
+    res.json(googleDriveStatus());
+  });
+
+  app.get(`${prefix}/status`, requireAuth, (_req: AuthRequest, res: Response) => {
+    res.json(googleDriveStatus());
+  });
+
+  app.get(`${prefix}/connect`, requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+    try {
+      const state = createGoogleDriveOAuthState();
+      res.json({ url: buildGoogleDriveAuthUrl(googleDriveRedirectUri(req, callbackPath), state) });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || "Không tạo được liên kết Google Drive." });
+    }
+  });
+
+  app.get(`${prefix}/callback`, async (req: Request, res: Response) => {
+    await handleGoogleDriveCallback(req, res, callbackPath);
+  });
+
+  app.post(prefix, requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
+    const { enabled } = req.body || {};
+    const status = googleDriveStatus();
+    if (!status.connected) {
+      res.status(400).json({ error: "Google Drive chưa được kết nối." });
+      return;
+    }
+    setAppSetting("googleDriveEnabled", enabled ? "1" : "0");
+    res.json({ ...googleDriveStatus(), message: "Đã cập nhật trạng thái Google Drive." });
+  });
+
+  app.post(`${prefix}/disconnect`, requireAuth, requireRole([UserRole.ADMIN]), (_req: AuthRequest, res: Response) => {
+    try {
+      res.json({ ...disconnectGoogleDrive(), message: "Đã ngắt kết nối Google Drive." });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message || "Ngắt kết nối Google Drive thất bại." });
+    }
+  });
+
+  app.post(`${prefix}/sync`, requireAuth, requireRole([UserRole.ADMIN]), async (_req: AuthRequest, res: Response) => {
+    try {
+      const status = await syncGoogleDriveAccount();
+      res.json({ ...status, message: "Đã đồng bộ thông tin tài khoản Google Drive." });
+    } catch (err: any) {
+      setGoogleDriveIntegrationError(String(err.message || "Đồng bộ Google Drive thất bại."));
+      res.status(400).json({ error: err.message || "Đồng bộ Google Drive thất bại." });
+    }
+  });
+}
+
+registerGoogleDriveIntegrationRoutes("/api/integrations/google-drive");
+registerGoogleDriveIntegrationRoutes("/api/settings/google-drive");
+
+app.get("/api/auth/google/callback", async (req: Request, res: Response) => {
+  await handleGoogleDriveCallback(req, res, "/api/auth/google/callback");
 });
 
-app.post("/api/settings/google-drive", requireAuth, requireRole([UserRole.ADMIN]), async (req: AuthRequest, res: Response) => {
-  const { serviceAccountJson, folderId, enabled, clear } = req.body || {};
-  if (clear) {
-    setAppSetting("googleDriveServiceAccountJson", null);
-    setAppSetting("googleDriveFolderId", null);
-    setAppSetting("googleDriveEnabled", null);
-    res.json({ ...googleDriveStatus(), message: "Đã xóa kết nối Google Drive." });
-    return;
-  }
+app.get("/api/settings/google-drive/connect-url", requireAuth, requireRole([UserRole.ADMIN]), (req: AuthRequest, res: Response) => {
   try {
-    if (serviceAccountJson !== undefined || folderId !== undefined) {
-      const nextJson = String(serviceAccountJson || getAppSettings().googleDriveServiceAccountJson || "").trim();
-      const nextFolder = String(folderId || getAppSettings().googleDriveFolderId || "").trim();
-      await testGoogleDriveConfig(nextJson, nextFolder);
-      setAppSetting("googleDriveServiceAccountJson", nextJson);
-      setAppSetting("googleDriveFolderId", nextFolder);
-      setAppSetting("googleDriveEnabled", "1");
-    }
-    if (enabled !== undefined) setAppSetting("googleDriveEnabled", enabled ? "1" : null);
-    res.json({ ...googleDriveStatus(), message: "Đã lưu kết nối Google Drive." });
+    const state = createGoogleDriveOAuthState();
+    res.json({ url: buildGoogleDriveAuthUrl(googleDriveRedirectUri(req, "/api/settings/google-drive/callback"), state) });
   } catch (err: any) {
-    res.status(400).json({ error: err.message || "Lưu Google Drive thất bại." });
+    res.status(400).json({ error: err.message || "Không tạo được liên kết Google Drive." });
   }
 });
 
@@ -1820,6 +1904,150 @@ app.post("/api/medications/logs", requireAuth, requireRole([UserRole.ADMIN, User
 });
 
 // --- KHO GIẤY TỜ API (chỉ Admin/Member) ---
+
+const AI_DOCUMENT_TYPES = new Set([
+  "cccd", "passport", "driver_license", "vehicle_registration", "vehicle_inspection",
+  "insurance", "health_insurance", "warranty", "contract", "certificate", "other"
+]);
+
+function normalizeAiDate(value: any): string {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const iso = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (iso) {
+    const y = Number(iso[1]), m = Number(iso[2]), d = Number(iso[3]);
+    const date = new Date(y, m - 1, d);
+    if (date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d) {
+      return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  const dmy = raw.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+  if (dmy) {
+    const d = Number(dmy[1]), m = Number(dmy[2]);
+    let y = Number(dmy[3]);
+    if (y < 100) y += y >= 50 ? 1900 : 2000;
+    const date = new Date(y, m - 1, d);
+    if (date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d) {
+      return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  return "";
+}
+
+function normalizeAiDocumentType(parsed: any): string {
+  const direct = String(parsed?.documentType || parsed?.type || "").trim();
+  if (AI_DOCUMENT_TYPES.has(direct)) return direct;
+  const haystack = [parsed?.title, parsed?.rawDocumentName, parsed?.notes, parsed?.documentNumber]
+    .map(v => String(v || "").toLowerCase()).join(" ");
+  if (/căn cước|can cuoc|cccd|cmnd|chứng minh|chung minh/.test(haystack)) return "cccd";
+  if (/passport|hộ chiếu|ho chieu/.test(haystack)) return "passport";
+  if (/bằng lái|bang lai|giấy phép lái|giay phep lai|driver/.test(haystack)) return "driver_license";
+  if (/đăng ký xe|dang ky xe|registration certificate/.test(haystack)) return "vehicle_registration";
+  if (/đăng kiểm|dang kiem|inspection/.test(haystack)) return "vehicle_inspection";
+  if (/bảo hiểm y tế|bao hiem y te|health insurance|bhyt/.test(haystack)) return "health_insurance";
+  if (/bảo hiểm|bao hiem|insurance/.test(haystack)) return "insurance";
+  if (/bảo hành|bao hanh|warranty/.test(haystack)) return "warranty";
+  if (/hợp đồng|hop dong|contract/.test(haystack)) return "contract";
+  if (/giấy chứng nhận|giay chung nhan|certificate|chứng nhận|chung nhan/.test(haystack)) return "certificate";
+  return "other";
+}
+
+function titleForAiDocument(type: string, parsedTitle: string, ownerName: string): string {
+  const base = cleanAssistantText(parsedTitle, 160);
+  if (base && !/^giấy tờ$/i.test(base)) return base;
+  const labels: Record<string, string> = {
+    cccd: "CCCD / CMND",
+    passport: "Hộ chiếu",
+    driver_license: "Bằng lái xe",
+    vehicle_registration: "Đăng ký xe",
+    vehicle_inspection: "Đăng kiểm xe",
+    insurance: "Bảo hiểm",
+    health_insurance: "Bảo hiểm y tế",
+    warranty: "Bảo hành",
+    contract: "Hợp đồng",
+    certificate: "Giấy chứng nhận",
+    other: "Giấy tờ"
+  };
+  return ownerName ? `${labels[type] || labels.other} của ${ownerName}` : (labels[type] || labels.other);
+}
+
+app.post("/api/documents/analyze", requireAuth, requireRole([UserRole.ADMIN, UserRole.MEMBER]), async (req: AuthRequest, res: Response) => {
+  const apiKey = getGeminiKey();
+  if (!apiKey) {
+    res.status(400).json({ error: "Chưa cấu hình Gemini API key. Vào Thiết lập để nhập key." });
+    return;
+  }
+  const dataUrl = String(req.body?.dataUrl || "");
+  const fileName = cleanAssistantText(req.body?.fileName, 160);
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/i);
+  if (!match) {
+    res.status(400).json({ error: "Tệp phân tích không hợp lệ." });
+    return;
+  }
+  try {
+    const { GoogleGenAI } = await import("@google/genai");
+    const ai = new GoogleGenAI({ apiKey });
+    const prompt = [
+      "Bạn là AI OCR chuyên đọc giấy tờ Việt Nam từ ảnh/PDF scan. Hãy đọc kỹ cả mặt trước/mặt sau nếu có trong file.",
+      "Ưu tiên dữ liệu IN TRÊN GIẤY TỜ, không suy đoán khi không thấy rõ. Nếu không chắc, để chuỗi rỗng và thêm vào missingFields.",
+      "Trả về DUY NHẤT JSON hợp lệ, không markdown, không giải thích, không thêm text ngoài JSON.",
+      "Quy tắc documentType:",
+      "- CCCD/CMND/Căn cước công dân/Identity Card -> cccd",
+      "- Hộ chiếu/Passport -> passport",
+      "- Giấy phép lái xe/Bằng lái -> driver_license",
+      "- Giấy chứng nhận đăng ký xe/Cavet xe -> vehicle_registration",
+      "- Giấy chứng nhận kiểm định/Đăng kiểm -> vehicle_inspection",
+      "- Bảo hiểm y tế/BHYT -> health_insurance",
+      "- Bảo hiểm xe/tài sản/nhân thọ... -> insurance",
+      "- Phiếu bảo hành -> warranty",
+      "- Hợp đồng -> contract",
+      "- Giấy chứng nhận/Chứng chỉ/Giấy khai sinh/kết hôn... -> certificate",
+      "- Không thuộc nhóm trên -> other",
+      "Quy tắc field:",
+      "- documentNumber: CCCD/CMND/passport/license/biển số hoặc số hợp đồng/số thẻ chính; không đưa nhiều số phụ vào đây.",
+      "- issuer: cơ quan/nơi cấp/đơn vị phát hành, ví dụ Cục CSQLHC về TTXH, Công an..., Sở GTVT..., Bảo hiểm xã hội...",
+      "- issueDate: ngày cấp/ngày hiệu lực/ngày đăng ký đầu tiên; expiryDate: có giá trị đến/hạn dùng/ngày hết hạn.",
+      "- Ngày xuất ra YYYY-MM-DD. Nếu văn bản là DD/MM/YYYY hoặc DD-MM-YYYY phải tự đổi đúng sang YYYY-MM-DD.",
+      "- notes: gom thông tin phụ hữu ích: ownerName, ngày sinh, giới tính, quốc tịch, địa chỉ, biển số, hạng bằng, số khung/số máy, quyền lợi, mã thẻ... nhưng không lặp lại documentNumber.",
+      'Schema: {"documentType":"cccd|passport|driver_license|vehicle_registration|vehicle_inspection|insurance|health_insurance|warranty|contract|certificate|other","rawDocumentName":"tên loại giấy tờ đọc được trên ảnh","title":"tên giấy tờ ngắn gọn để lưu","ownerName":"tên người/chủ giấy tờ nếu đọc được","documentNumber":"số chính của giấy tờ","issuer":"nơi cấp/cơ quan cấp/đơn vị phát hành","issueDate":"YYYY-MM-DD hoặc rỗng","expiryDate":"YYYY-MM-DD hoặc rỗng","notes":"ghi chú ngắn bằng tiếng Việt","missingFields":["field thiếu hoặc không chắc"],"confidence":0.0}',
+      fileName ? `Tên file: ${fileName}` : ""
+    ].filter(Boolean).join("\n");
+
+    const response = await geminiGenerate(ai, {
+      model: "gemini-2.5-flash",
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inlineData: { mimeType: match[1], data: match[2] } }
+        ]
+      }],
+      config: { responseMimeType: "application/json", temperature: 0.1 }
+    } as any);
+    const parsed = parseAssistantJson(response.text || "") || {};
+    const documentType = normalizeAiDocumentType(parsed);
+    const ownerName = cleanAssistantText(parsed.ownerName, 120);
+    const title = titleForAiDocument(documentType, parsed.title || parsed.rawDocumentName, ownerName);
+    const missingFields = Array.isArray(parsed.missingFields)
+      ? parsed.missingFields.map((x: any) => cleanAssistantText(x, 40)).filter(Boolean).slice(0, 8)
+      : [];
+    const confidence = Math.max(0, Math.min(1, Number(parsed.confidence) || 0));
+    res.json({
+      documentType,
+      title,
+      ownerName,
+      documentNumber: cleanAssistantText(parsed.documentNumber, 120),
+      issuer: cleanAssistantText(parsed.issuer, 160),
+      issueDate: normalizeAiDate(parsed.issueDate),
+      expiryDate: normalizeAiDate(parsed.expiryDate),
+      notes: cleanAssistantText(parsed.notes, 1000),
+      missingFields,
+      confidence
+    });
+  } catch (err: any) {
+    console.error("Document AI analyze error:", err);
+    res.status(isGeminiOverloaded(err) ? 503 : 500).json({ error: geminiErrorMessage(err) });
+  }
+});
 
 app.get("/api/documents", requireAuth, requireRole([UserRole.ADMIN, UserRole.MEMBER]), (req: AuthRequest, res: Response) => {
   const session = req.userSession!;

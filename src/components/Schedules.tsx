@@ -719,42 +719,26 @@ export function Schedules({
               )}
             </div>
 
-            {/* Month / year navigation */}
-            <div className="flex items-center gap-1.5">
+            {/* Month navigation */}
+            <div className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 p-1.5">
               <Button
                 type="button"
                 onClick={goToPrevMonth}
                 aria-label={t("schedules.prevMonth")}
-                className="p-1.5 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
+                className="size-8 bg-slate-950 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
 
-              <div className="w-[104px] text-xs">
-                <FancySelect
-                  value={String(calMonth)}
-                  onChange={(v) => setCalMonth(Number(v))}
-                  ariaLabel={t("schedules.selectMonth")}
-                  className="bg-slate-900"
-                  options={Array.from({ length: 12 }, (_, m) => ({ value: String(m), label: t("schedules.monthLabel", { n: m + 1 }) }))}
-                />
-              </div>
-
-              <div className="w-[88px] text-xs">
-                <FancySelect
-                  value={String(calYear)}
-                  onChange={(v) => setCalYear(Number(v))}
-                  ariaLabel={t("schedules.selectYear")}
-                  className="bg-slate-900 font-mono"
-                  options={yearOptions.map(y => ({ value: String(y), label: String(y) }))}
-                />
+              <div className="min-w-[150px] px-3 text-center">
+                <p className="text-sm font-extrabold text-slate-100 capitalize leading-tight">{calMonthName}</p>
               </div>
 
               <Button
                 type="button"
                 onClick={goToNextMonth}
                 aria-label={t("schedules.nextMonth")}
-                className="p-1.5 bg-slate-900 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
+                className="size-8 bg-slate-950 hover:bg-slate-800 neu-btn text-slate-400 hover:text-sky-400 rounded-lg cursor-pointer transition-colors"
               >
                 <ChevronRight className="w-4 h-4" />
               </Button>

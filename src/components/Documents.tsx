@@ -5,7 +5,7 @@
 
 import { Button, Input } from "./ui";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Plus, Trash2, Pencil, X, Calendar, User as UserIcon, Paperclip, ExternalLink, ShieldAlert, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileText, Plus, Trash2, Pencil, X, Calendar, User as UserIcon, Paperclip, ExternalLink, ShieldAlert, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { FamilyDocument, DocumentFile, DocumentType, DOCUMENT_TYPE_LABELS, User, UserRole } from "../types.js";
 import { motion, AnimatePresence } from "motion/react";
 import { optimizeAndUpload, uploadDataUrlDetailed } from "../utils/uploadImage.js";
@@ -14,7 +14,7 @@ import { useConfirm } from "./ConfirmDialog.js";
 import { useModalA11y } from "../hooks/useModalA11y.js";
 import { ShimmerLine, Reveal, IconChip } from "./Lively.js";
 import { FancySelect } from "./FancySelect.js";
-import { DateInputDMY, formatDateVN } from "./DateTimePicker24.js";
+import { formatDateVN } from "./DateTimePicker24.js";
 import { useTranslation } from "react-i18next";
 import { currentLocalDate } from "../utils/dateTime.js";
 
@@ -31,6 +31,11 @@ const DOC_TYPE_ORDER: DocumentType[] = [
   "cccd", "passport", "driver_license", "vehicle_registration", "vehicle_inspection",
   "insurance", "health_insurance", "warranty", "contract", "certificate", "other"
 ];
+
+function authHeaders(): Record<string, string> {
+  const token = localStorage.getItem("family_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 // Số ngày còn lại đến hạn (âm = đã quá hạn), theo giờ địa phương.
 function daysUntil(dateStr?: string): number | null {
@@ -59,12 +64,17 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const [isShared, setIsShared] = useState(false);
   const [files, setFiles] = useState<DocumentFile[]>([]);
   const [savePickedToDrive, setSavePickedToDrive] = useState(false);
+  const [driveConnected, setDriveConnected] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   // updatedAt của bản giấy tờ lúc mở form sửa — server so để phát hiện sửa đè nhau (409)
   const [editingBaseUpdatedAt, setEditingBaseUpdatedAt] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [aiSummary, setAiSummary] = useState("");
+  const [aiConfidence, setAiConfidence] = useState<number | null>(null);
+  const [aiMissingFields, setAiMissingFields] = useState<string[]>([]);
   const [filterType, setFilterType] = useState<string>("all");
   // Trình xem ảnh (lightbox): ảnh của một giấy tờ + vị trí đang xem.
   const [viewer, setViewer] = useState<{ files: DocumentFile[]; index: number; title: string } | null>(null);
@@ -77,6 +87,17 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const viewerPrev = () => setViewer(v => v ? { ...v, index: (v.index - 1 + v.files.length) % v.files.length } : v);
   const viewerNext = () => setViewer(v => v ? { ...v, index: (v.index + 1) % v.files.length } : v);
   useModalA11y(!!viewer, closeViewer, viewerRef);
+
+  useEffect(() => {
+    fetch("/api/settings/google-drive/status", { headers: authHeaders() })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setDriveConnected(Boolean(d?.connected)))
+      .catch(() => setDriveConnected(false));
+  }, []);
+
+  useEffect(() => {
+    if (!driveConnected) setSavePickedToDrive(false);
+  }, [driveConnected]);
 
   // Mũi tên trái/phải để chuyển ảnh trong lightbox.
   useEffect(() => {
@@ -107,6 +128,49 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
     return owner ? `${label} của ${owner.fullName}` : label;
   };
 
+  const applyAiResult = (data: any, fallbackName: string) => {
+    const nextType = DOC_TYPE_ORDER.includes(data?.documentType) ? data.documentType as DocumentType : "other";
+    setType(nextType);
+    setTitle(data?.title?.trim() || fallbackName || DOCUMENT_TYPE_LABELS[nextType]);
+    setTitleManual(true);
+    if (data?.ownerName) {
+      const matchedOwner = users.find(u => u.fullName.toLowerCase() === String(data.ownerName).trim().toLowerCase());
+      if (matchedOwner) setOwnerId(matchedOwner.id);
+    }
+    setDocumentNumber(data?.documentNumber?.trim() || "");
+    setIssuer(data?.issuer?.trim() || "");
+    setIssueDate(/^\d{4}-\d{2}-\d{2}$/.test(data?.issueDate || "") ? data.issueDate : "");
+    setExpiryDate(/^\d{4}-\d{2}-\d{2}$/.test(data?.expiryDate || "") ? data.expiryDate : "");
+    setNotes(data?.notes?.trim() || "");
+    setAiConfidence(typeof data?.confidence === "number" ? data.confidence : null);
+    setAiMissingFields(Array.isArray(data?.missingFields) ? data.missingFields : []);
+    setAiSummary("AI đã phân tích xong. Kiểm tra nhanh thông tin bên dưới rồi bấm lưu.");
+  };
+
+  const analyzeDocumentFile = async (dataUrl: string, fileName: string) => {
+    setAnalyzing(true);
+    setAiSummary("");
+    try {
+      const res = await fetch("/api/documents/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ dataUrl, fileName })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI chưa đọc được giấy tờ.");
+      applyAiResult(data, fileName.replace(/\.[^.]+$/, ""));
+    } catch (err: any) {
+      setAiSummary(err.message || "AI chưa đọc được giấy tờ. App vẫn có thể lưu tệp với tên tạm.");
+      if (!title.trim()) {
+        setType("other");
+        setTitle(fileName.replace(/\.[^.]+$/, "") || "Giấy tờ mới");
+        setTitleManual(true);
+      }
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   // Khi đổi loại/chủ sở hữu mà người dùng chưa tự gõ tên thì cập nhật tên gợi ý.
   useEffect(() => {
     if (!titleManual) setTitle(autoTitle(type, ownerId));
@@ -115,7 +179,8 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const resetForm = () => {
     setType("cccd"); setTitle(""); setTitleManual(false); setOwnerId(""); setDocumentNumber("");
     setIssuer(""); setIssueDate(currentLocalDate()); setExpiryDate(currentLocalDate()); setNotes("");
-    setIsShared(false); setFiles([]); setEditingId(null); setEditingBaseUpdatedAt(""); setError("");
+    setIsShared(false); setFiles([]); setEditingId(null); setEditingBaseUpdatedAt(""); setError(""); setAiSummary("");
+    setAiConfidence(null); setAiMissingFields([]);
   };
 
   const startEdit = (doc: FamilyDocument) => {
@@ -134,6 +199,8 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
     setEditingId(doc.id);
     setEditingBaseUpdatedAt(doc.updatedAt || ""); // chống 2 người cùng sửa đè nhau (409)
     setError("");
+    setAiSummary("Đang sửa giấy tờ đã lưu. Thêm ảnh/PDF mới nếu muốn AI đọc lại.");
+    setAiConfidence(null); setAiMissingFields([]);
     formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -148,6 +215,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
     setUploading(true);
     try {
       const added: DocumentFile[] = [];
+      let firstForAi: { dataUrl: string; fileName: string } | null = null;
       for (const file of picked) {
         const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
         let url: string; let sizeKb: number; let driveFileId: string | undefined; let driveUrl: string | undefined;
@@ -159,7 +227,8 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             r.onerror = () => reject(new Error(t("documents.errorPdfRead")));
             r.readAsDataURL(file);
           });
-          const uploaded = await uploadDataUrlDetailed(dataUrl, "documents", { saveToDrive: savePickedToDrive, fileName: file.name });
+          if (!firstForAi) firstForAi = { dataUrl, fileName: file.name };
+          const uploaded = await uploadDataUrlDetailed(dataUrl, "documents", { saveToDrive: driveConnected && savePickedToDrive, fileName: file.name });
           url = uploaded.url;
           driveFileId = uploaded.driveFileId;
           driveUrl = uploaded.driveUrl;
@@ -171,7 +240,8 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             maxSizes: [1600, 1280, 1024, 768],
             qualities: [0.86, 0.78, 0.68, 0.58],
             backgroundColor: "#ffffff"
-          }, undefined, { saveToDrive: savePickedToDrive, fileName: file.name });
+          }, undefined, { saveToDrive: driveConnected && savePickedToDrive, fileName: file.name });
+          if (!firstForAi) firstForAi = { dataUrl: up.dataUrl, fileName: file.name };
           url = up.url;
           driveFileId = up.driveFileId;
           driveUrl = up.driveUrl;
@@ -188,6 +258,7 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
         });
       }
       setFiles(prev => [...prev, ...added]);
+      if (firstForAi) void analyzeDocumentFile(firstForAi.dataUrl, firstForAi.fileName);
     } catch (err: any) {
       setError(err.message || t("documents.errorUpload"));
     } finally {
@@ -223,6 +294,10 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (files.length === 0) {
+      setError("Hãy tải lên ít nhất một ảnh/PDF giấy tờ để AI phân tích.");
+      return;
+    }
     const finalTitle = title.trim() || autoTitle(type, ownerId);
     setSaving(true);
     try {
@@ -313,72 +388,24 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
         </div>
 
         <form onSubmit={handleSubmit} onPaste={handlePaste} className="grid grid-cols-1 md:grid-cols-6 gap-2 text-xs">
-          <div className="md:col-span-2">
-            <FancySelect
-              value={type}
-              onChange={(v) => setType(v as DocumentType)}
-              ariaLabel={t("documents.docTypeLabel")}
-              options={DOC_TYPE_ORDER.map(dt => ({ value: dt, label: t(`documents.docTypes.${dt}`) }))}
-            />
-          </div>
-          <div className="md:col-span-4 relative">
-            <Input
-              value={title}
-              onChange={(e) => { setTitle(e.target.value); setTitleManual(e.target.value.trim() !== ""); }}
-              placeholder={t("documents.titlePlaceholder")}
-              className="w-full bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 pr-16 text-slate-200 outline-none focus:border-indigo-500"
-            />
-            {titleManual && (
-              <Button
-                type="button"
-                onClick={() => { setTitleManual(false); setTitle(autoTitle(type, ownerId)); }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-indigo-400 hover:text-indigo-300 bg-slate-800 rounded-md px-1.5 py-0.5 cursor-pointer"
-                title={t("documents.resetAutoTitleTooltip")}
-              >
-                {t("documents.autoTitleBtn")}
-              </Button>
-            )}
-          </div>
-
-          <div className="md:col-span-2">
-            <FancySelect
-              value={ownerId}
-              onChange={setOwnerId}
-              ariaLabel={t("documents.ownerLabel")}
-              placeholder={t("documents.ownerPlaceholder")}
-              options={[
-                { value: "", label: t("documents.ownerPlaceholder") },
-                ...users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))
-              ]}
-            />
-          </div>
-          <Input value={documentNumber} onChange={(e) => setDocumentNumber(e.target.value)} placeholder={t("documents.docNumberPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
-          <Input value={issuer} onChange={(e) => setIssuer(e.target.value)} placeholder={t("documents.issuerPlaceholder")} className="md:col-span-2 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
-
-          <div className="md:col-span-3 space-y-1">
-            <label className="text-slate-500 text-[10px] block">{t("documents.issueDateLabel")}</label>
-            <DateInputDMY value={issueDate} onChange={setIssueDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
-          </div>
-          <div className="md:col-span-3 space-y-1">
-            <label className="text-slate-500 text-[10px] block">{t("documents.expiryDateLabel")}</label>
-            <DateInputDMY value={expiryDate} onChange={setExpiryDate} className="w-full min-w-0 box-border appearance-none bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500 font-mono" />
-          </div>
-
-          <Input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("documents.notesPlaceholder")} className="md:col-span-4 bg-slate-950 neu-pressed-sm rounded-xl px-3 py-2.5 text-slate-200 outline-none focus:border-indigo-500" />
-          <div className="md:col-span-2">
-            <FancySelect
-              value={isShared ? "true" : "false"}
-              onChange={(v) => setIsShared(v === "true")}
-              ariaLabel={t("documents.shareScopeLabel")}
-              options={[
-                { value: "false", label: t("documents.sharePrivateOption") },
-                { value: "true", label: t("documents.shareSharedOption") }
-              ]}
-            />
+          <div className="md:col-span-6 rounded-2xl border border-indigo-500/20 bg-indigo-500/8 p-4 space-y-1.5">
+            <h4 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-indigo-300" /> Tải giấy tờ lên, AI tự đọc thông tin
+            </h4>
+            <p className="text-[11px] leading-relaxed text-slate-500">
+              Chọn hoặc dán ảnh/PDF scan. AI sẽ tự nhận diện loại giấy tờ, số giấy tờ, nơi cấp, ngày cấp/hết hạn và ghi chú cần lưu.
+            </p>
           </div>
 
           {/* Đính kèm ảnh/scan/PDF — hỗ trợ dán ảnh từ clipboard (Ctrl+V) vào form */}
-          <div className="md:col-span-6 bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2">
+          <div className="md:col-span-6 relative bg-slate-950/40 neu-pressed-sm rounded-xl p-3 space-y-2 overflow-hidden">
+            {analyzing && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-slate-950/85 backdrop-blur-sm text-center">
+                <Sparkles className="w-6 h-6 text-indigo-300 animate-pulse" />
+                <p className="text-xs font-bold text-slate-100">AI đang phân tích giấy tờ...</p>
+                <p className="text-[11px] text-slate-500">Đang đọc ảnh/PDF và trích xuất thông tin.</p>
+              </div>
+            )}
             <div className="flex items-center justify-between gap-2">
               <label className="text-slate-400 font-semibold flex items-center gap-1.5 min-w-0">
                 <Paperclip className="w-3.5 h-3.5 text-indigo-400 shrink-0" /> {t("documents.attachmentsLabel", { count: files.length, max: MAX_DOC_FILES })}
@@ -389,10 +416,12 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
                 <Input type="file" accept="image/*,application/pdf,.pdf" multiple disabled={uploading || files.length >= MAX_DOC_FILES} onChange={handleFilePick} className="hidden" />
               </label>
             </div>
-            <label className={`flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[11px] font-bold transition-all ${savePickedToDrive ? "border-indigo-500/35 bg-indigo-500/12 text-indigo-200" : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"}`}>
-              <span>Lưu thêm bản sao vào Google Drive khi thêm tệp mới</span>
-              <Input type="checkbox" checked={savePickedToDrive} onChange={(e) => setSavePickedToDrive(e.target.checked)} className="size-3.5 shrink-0 accent-indigo-500" />
-            </label>
+            {driveConnected && (
+              <label className={`flex w-full cursor-pointer select-none items-center justify-between gap-2 rounded-xl border px-3 py-2 text-[11px] font-bold transition-all ${savePickedToDrive ? "border-indigo-500/35 bg-indigo-500/12 text-indigo-200" : "border-slate-800 bg-slate-900 text-slate-400 hover:border-slate-700 hover:text-slate-200"}`}>
+                <span>Lưu thêm bản sao vào Google Drive khi thêm tệp mới</span>
+                <Input type="checkbox" checked={savePickedToDrive} onChange={(e) => setSavePickedToDrive(e.target.checked)} className="size-3.5 shrink-0 accent-indigo-500" />
+              </label>
+            )}
             {files.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {files.map(f => (
@@ -419,8 +448,41 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
             )}
           </div>
 
+          {(analyzing || aiSummary || files.length > 0) && (
+            <div className="md:col-span-6 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h4 className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                  <Sparkles className={`w-4 h-4 text-indigo-300 ${analyzing ? "animate-pulse" : ""}`} /> Thông tin AI nhận diện
+                </h4>
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${analyzing ? "bg-indigo-500/10 text-indigo-300 border-indigo-500/20" : "bg-emerald-500/10 text-emerald-300 border-emerald-500/20"}`}>
+                  {analyzing ? "Đang phân tích..." : "Sẵn sàng lưu"}
+                </span>
+              </div>
+              {aiSummary && <p className="text-[11px] text-slate-500">{aiSummary}</p>}
+              {!analyzing && aiConfidence !== null && (
+                <p className="text-[11px] text-slate-500">Độ tin cậy: <span className="font-semibold text-slate-200">{Math.round(aiConfidence * 100)}%</span></p>
+              )}
+              {!analyzing && aiMissingFields.length > 0 && (
+                <p className="text-[11px] text-amber-400">Thiếu/chưa chắc: {aiMissingFields.join(", ")}</p>
+              )}
+              {!analyzing && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-[11px]">
+                    <div className="rounded-xl bg-slate-900 border border-slate-800 p-2.5"><span className="block text-slate-500">Loại giấy tờ</span><b className="text-slate-100">{t(`documents.docTypes.${type}`)}</b></div>
+                    <div className="rounded-xl bg-slate-900 border border-slate-800 p-2.5"><span className="block text-slate-500">Tên giấy tờ</span><b className="text-slate-100">{title || "Chưa nhận diện"}</b></div>
+                    <div className="rounded-xl bg-slate-900 border border-slate-800 p-2.5"><span className="block text-slate-500">Số giấy tờ</span><b className="text-slate-100">{documentNumber || "-"}</b></div>
+                    <div className="rounded-xl bg-slate-900 border border-slate-800 p-2.5"><span className="block text-slate-500">Nơi cấp</span><b className="text-slate-100">{issuer || "-"}</b></div>
+                    <div className="rounded-xl bg-slate-900 border border-slate-800 p-2.5"><span className="block text-slate-500">Ngày cấp</span><b className="text-slate-100">{issueDate ? formatDateVN(issueDate) : "-"}</b></div>
+                    <div className="rounded-xl bg-slate-900 border border-slate-800 p-2.5"><span className="block text-slate-500">Ngày hết hạn</span><b className="text-slate-100">{expiryDate ? formatDateVN(expiryDate) : "-"}</b></div>
+                  </div>
+                  {notes && <div className="rounded-xl bg-slate-900 border border-slate-800 p-2.5 text-[11px]"><span className="block text-slate-500 mb-1">Ghi chú</span><p className="text-slate-200 leading-relaxed">{notes}</p></div>}
+                </>
+              )}
+            </div>
+          )}
+
           <div className="md:col-span-6 flex items-center gap-2">
-            <Button disabled={saving || uploading} type="submit" className="bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 text-white rounded-xl px-4 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <Button disabled={saving || uploading || analyzing || files.length === 0} type="submit" className="bg-indigo-500 hover:bg-indigo-400 disabled:opacity-60 text-white rounded-xl px-4 py-2.5 font-bold flex items-center justify-center gap-1.5 cursor-pointer">
               <Plus className="w-4 h-4" /> {editingId ? t("documents.saveChanges") : t("documents.addDoc")}
             </Button>
             {editingId && (
@@ -436,13 +498,15 @@ export function Documents({ currentUser, users, documents, onSaveDocument, onDel
 
       {/* Bộ lọc loại */}
       {documents.length > 0 && (
-        <div className="flex items-center gap-2 text-xs">
-          <span className="text-slate-500">{t("documents.filterLabel")}</span>
-          <div className="min-w-[150px]">
+        <div className="w-full space-y-2 text-xs">
+          <span className="block text-slate-500">{t("documents.filterLabel")}</span>
+          <div className="w-full">
             <FancySelect
               value={filterType}
               onChange={setFilterType}
               ariaLabel={t("documents.filterAriaLabel")}
+              className="grid-cols-1 lg:grid-cols-6"
+              inlineGrid
               options={[
                 { value: "all", label: t("documents.filterAll") },
                 ...DOC_TYPE_ORDER.map(dt => ({ value: dt, label: t(`documents.docTypes.${dt}`) }))

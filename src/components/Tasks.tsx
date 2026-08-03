@@ -115,6 +115,7 @@ export function Tasks({
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [scopeFilter, setScopeFilter] = useState<"all" | "shared" | "personal">("all");
   const [completedWindowDays, setCompletedWindowDays] = useState<"7" | "30" | "90" | "all">("30");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // State controls for creation modal & detail modal
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
@@ -270,10 +271,13 @@ export function Tasks({
   // Escape-to-close + scroll lock + focus trap for the two modals
   const detailRef = React.useRef<HTMLDivElement | null>(null);
   const formRef = React.useRef<HTMLDivElement | null>(null);
+  const filterRef = React.useRef<HTMLDivElement | null>(null);
   const closeDetail = useCallback(() => setSelectedTask(null), []);
   const closeForm = useCallback(() => { setIsNewTaskOpen(false); setEditingTaskId(null); }, []);
+  const closeFilter = useCallback(() => setIsFilterOpen(false), []);
   useModalA11y(!!selectedTask, closeDetail, detailRef);
   useModalA11y(isNewTaskOpen, closeForm, formRef);
+  useModalA11y(isFilterOpen, closeFilter, filterRef);
 
   // Save Task Form Handler (create or edit)
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -721,12 +725,48 @@ export function Tasks({
     return { label: t("tasks.actionComplete"), status: TaskStatus.COMPLETED };
   };
 
+  const activeFilterCount = [statusFilter !== "all", assigneeFilter !== "all", priorityFilter !== "all", scopeFilter !== "all", completedWindowDays !== "30"].filter(Boolean).length;
+  const resetFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setAssigneeFilter("all");
+    setPriorityFilter("all");
+    setScopeFilter("all");
+    setCompletedWindowDays("30");
+  };
+
+  const renderFilterChips = (
+    label: string,
+    value: string,
+    onChange: (value: string) => void,
+    options: { value: string; label: string }[]
+  ) => (
+    <div className="min-w-0 space-y-1.5">
+      <label className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</label>
+      <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-800 bg-slate-950/45 p-1.5">
+        {options.map(option => {
+          const active = option.value === value;
+          return (
+            <Button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={`h-8 min-w-0 rounded-lg border px-2.5 text-[11px] font-bold transition-all cursor-pointer ${active ? "border-teal-400/70 bg-teal-500 text-slate-950 shadow-[inset_0_0_0_1px_rgba(45,212,191,0.2)]" : "border-transparent bg-transparent text-slate-400 hover:bg-slate-900 hover:text-slate-200"}`}
+            >
+              <span className="truncate">{option.label}</span>
+            </Button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6" id="tasks-module">
       {/* Search and Quick Filters Header */}
       <Reveal className="relative overflow-hidden bg-slate-900 neu-raised p-5 rounded-2xl shadow-xl space-y-4" id="task-filter-panel">
         <ShimmerLine accent="sky" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-slate-500" />
             <Input
@@ -737,98 +777,99 @@ export function Tasks({
               className="w-full pl-10 pr-4 py-2 bg-slate-950 neu-pressed-sm focus:border-sky-500 focus:ring-1 focus:ring-sky-500 rounded-xl text-slate-200 placeholder-slate-500 text-sm focus:outline-none transition-all"
             />
           </div>
-          <Button
-            disabled={currentUser.role === UserRole.GUEST}
-            onClick={handleOpenCreate}
-            className="bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all self-start md:self-auto shrink-0 shadow-md shadow-sky-500/5 cursor-pointer"
-          >
-            <Plus className="w-4 h-4" /> {t("tasks.addBtn")}
-          </Button>
-        </div>
-
-        {/* Advanced Filters Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 pt-2 text-xs">
-          {/* Status filter */}
-          <div>
-            <label className="text-slate-500 block mb-1">{t("tasks.filterStatusLbl")}</label>
-            <FancySelect
-              value={statusFilter}
-              onChange={setStatusFilter}
-              ariaLabel={t("tasks.filterStatusLbl")}
-              options={[
-                { value: "all", label: t("tasks.filterStatusAll") },
-                { value: "todo", label: t("tasks.statusTodo") },
-                { value: "in_progress", label: t("tasks.statusInProgress") },
-                { value: "completed", label: t("tasks.statusCompleted") },
-                { value: "overdue", label: t("tasks.statusOverdue") }
-              ]}
-            />
-          </div>
-
-          {/* Assignee filter */}
-          <div>
-            <label className="text-slate-500 block mb-1">{t("tasks.filterAssigneeLbl")}</label>
-            <FancySelect
-              value={assigneeFilter}
-              onChange={setAssigneeFilter}
-              ariaLabel={t("tasks.filterAssigneeLbl")}
-              options={[
-                { value: "all", label: t("tasks.filterAssigneeAll") },
-                { value: "unassigned", label: t("tasks.filterAssigneeNone") },
-                ...users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))
-              ]}
-            />
-          </div>
-
-          {/* Priority filter */}
-          <div>
-            <label className="text-slate-500 block mb-1">{t("tasks.filterPriorityLbl")}</label>
-            <FancySelect
-              value={priorityFilter}
-              onChange={setPriorityFilter}
-              ariaLabel={t("tasks.filterPriorityLbl")}
-              options={[
-                { value: "all", label: t("tasks.filterPriorityAll") },
-                { value: "low", label: t("tasks.filterPriorityLow") },
-                { value: "medium", label: t("tasks.filterPriorityMedium") },
-                { value: "high", label: t("tasks.filterPriorityHigh") }
-              ]}
-            />
-          </div>
-
-          {/* Scope filter */}
-          <div>
-            <label className="text-slate-500 block mb-1">{t("tasks.filterScopeLbl")}</label>
-            <FancySelect
-              value={scopeFilter}
-              onChange={(v) => setScopeFilter(v as any)}
-              ariaLabel={t("tasks.filterScopeLbl")}
-              options={[
-                { value: "all", label: t("tasks.filterScopeAll") },
-                { value: "shared", label: t("tasks.filterScopeShared") },
-                { value: "personal", label: t("tasks.filterScopePersonal") }
-              ]}
-            />
-          </div>
-
-          {/* Clear Filters Button */}
-          <div className="col-span-2 md:col-span-1 flex items-end">
+          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
             <Button
-              onClick={() => {
-                setSearchTerm("");
-                setStatusFilter("all");
-                setAssigneeFilter("all");
-                setPriorityFilter("all");
-                setScopeFilter("all");
-                setCompletedWindowDays("30");
-              }}
-              className="w-full bg-slate-950 neu-btn hover:bg-slate-800 hover:text-slate-100 p-2 text-slate-400 font-semibold rounded-lg text-center transition-all cursor-pointer"
+              type="button"
+              onClick={() => setIsFilterOpen(true)}
+              className={`bg-slate-950 neu-btn hover:bg-slate-800 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${activeFilterCount > 0 ? "text-sky-300 border border-sky-500/25" : "text-slate-300"}`}
             >
-              {t("tasks.resetFilters")}
+              <Filter className="w-4 h-4" /> Bộ lọc{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </Button>
+            <Button
+              disabled={currentUser.role === UserRole.GUEST}
+              onClick={handleOpenCreate}
+              className="bg-sky-500 hover:bg-sky-400 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-slate-950 px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all shadow-md shadow-sky-500/5 cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> {t("tasks.addBtn")}
             </Button>
           </div>
         </div>
       </Reveal>
+
+      {isFilterOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center z-50 p-4" id="task-filter-modal">
+          <motion.div
+            ref={filterRef}
+            tabIndex={-1}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Bộ lọc công việc"
+            className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden outline-none"
+          >
+            <div className="px-5 py-4 border-b border-slate-800 bg-slate-950 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2"><Filter className="w-4 h-4 text-sky-400" /> Bộ lọc công việc</h3>
+                <p className="text-[11px] text-slate-500">Đang hiển thị {filteredTasks.length}/{tasks.length} công việc{activeFilterCount > 0 ? ` với ${activeFilterCount} bộ lọc` : ""}.</p>
+              </div>
+              <Button type="button" onClick={closeFilter} className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-slate-200"><X className="w-4 h-4" /></Button>
+            </div>
+            <div className="p-5 space-y-4 overflow-y-auto text-xs">
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3.5 space-y-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  <CheckSquare className="w-3.5 h-3.5 text-sky-400" /> Trạng thái
+                </div>
+                {renderFilterChips(t("tasks.filterStatusLbl"), statusFilter, setStatusFilter, [
+                  { value: "all", label: t("tasks.filterStatusAll") },
+                  { value: "todo", label: t("tasks.statusTodo") },
+                  { value: "in_progress", label: t("tasks.statusInProgress") },
+                  { value: "completed", label: t("tasks.statusCompleted") },
+                  { value: "overdue", label: t("tasks.statusOverdue") }
+                ])}
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3.5 space-y-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  <AlertCircle className="w-3.5 h-3.5 text-amber-400" /> Mức độ ưu tiên
+                </div>
+                {renderFilterChips(t("tasks.filterPriorityLbl"), priorityFilter, setPriorityFilter, [
+                  { value: "all", label: t("tasks.filterPriorityAll") },
+                  { value: "low", label: t("tasks.filterPriorityLow") },
+                  { value: "medium", label: t("tasks.filterPriorityMedium") },
+                  { value: "high", label: t("tasks.filterPriorityHigh") }
+                ])}
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3.5 space-y-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  <UserIcon className="w-3.5 h-3.5 text-emerald-400" /> Người phụ trách
+                </div>
+                {renderFilterChips(t("tasks.filterAssigneeLbl"), assigneeFilter, setAssigneeFilter, [
+                  { value: "all", label: t("tasks.filterAssigneeAll") },
+                  { value: "unassigned", label: t("tasks.filterAssigneeNone") },
+                  ...users.filter(u => !u.isDeleted).map(u => ({ value: u.id, label: u.fullName }))
+                ])}
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/40 p-3.5 space-y-3">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                  <Share2 className="w-3.5 h-3.5 text-indigo-400" /> Hiển thị
+                </div>
+                {renderFilterChips(t("tasks.filterScopeLbl"), scopeFilter, (v) => setScopeFilter(v as any), [
+                  { value: "all", label: t("tasks.filterScopeAll") },
+                  { value: "shared", label: t("tasks.filterScopeShared") },
+                  { value: "personal", label: t("tasks.filterScopePersonal") }
+                ])}
+              </div>
+            </div>
+            <div className="px-5 py-4 border-t border-slate-800 bg-slate-950 flex flex-col sm:flex-row gap-2 sm:justify-end">
+              <Button type="button" onClick={resetFilters} className="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 hover:text-slate-200 font-bold cursor-pointer">{t("tasks.resetFilters")}</Button>
+              <Button type="button" onClick={closeFilter} className="px-4 py-2 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold cursor-pointer">Áp dụng</Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Tính năng bật nhưng chưa có tài khoản Trẻ → gợi ý thêm thành viên */}
       {rewardsEnabled && childUsers.length === 0 && (

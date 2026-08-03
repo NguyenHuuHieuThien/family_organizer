@@ -58,8 +58,8 @@
 }
 
 /* Radio/checkbox button fields must own their row inside form grids. */
-.grid > :has(> [role="radiogroup"]),
-.grid > :has(> [role="group"]),
+.grid > :has(> [role="radiogroup"]:not([data-inline-grid="true"])),
+.grid > :has(> [role="group"]:not([data-inline-grid="true"])),
 .grid > [role="radiogroup"],
 .grid > [role="group"] {
   grid-column: 1 / -1;
