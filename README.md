@@ -426,11 +426,14 @@ Các biến đặt trong file `.env` ở thư mục gốc (được `docker-comp
 
 ```text
 ./data/
-├── family.db          # Database chính (SQLite)
 ├── app_settings.json  # API keys & cấu hình Telegram (không vào backup)
 ├── backups/           # Backup tự động 24h và thủ công
 └── uploads/           # Ảnh hóa đơn, avatar, tài sản, giấy tờ (file, không base64)
+./mongo-data/
+└── ...                # Database MongoDB chính, lưu theo nhiều collection domain
 ```
+
+MongoDB mặc định dùng chế độ `DB_STORAGE=collections`, tách dữ liệu thành các collection như `users`, `tasks`, `transactions`, `documents`, `notifications`, `chat_messages`. Nếu cần rollback tạm thời về document legacy `family_state.data`, đặt `DB_STORAGE=legacy` rồi khởi động lại server.
 
 ---
 
@@ -451,7 +454,7 @@ Settings → Thành viên & Phân quyền → Tạo mới hoặc chỉnh sửa v
 
 ```bash
 docker compose down
-rm data/family.db
+rm -rf mongo-data
 docker compose up -d
 ```
 
@@ -464,7 +467,7 @@ docker compose up -d
 | **Frontend** | React 19, TypeScript 5.8, Vite 6, Tailwind CSS 4 |
 | **Animation** | Motion 12 (Framer Motion successor) |
 | **Markdown** | react-markdown 10 + remark-gfm |
-| **Backend** | Express 4, Better-SQLite3 11, Node.js 22 |
+| **Backend** | Express 4, Mongoose 9 / MongoDB 8, Node.js 22 |
 | **AI** | Google GenAI SDK 2 (Gemini 2.5 Flash) |
 | **Notifications** | Web Push / VAPID, SSE |
 | **Export** | pdfmake 0.3 (báo cáo tài chính), archiver 8 (ZIP backup) |

@@ -42,6 +42,7 @@ services:
       - NODE_ENV=production
       - PORT=3002
       - MONGO_URI=mongodb://mongo:27017/family_organizer
+      - DB_STORAGE=${DB_STORAGE:-collections}
       - TZ=Asia/Ho_Chi_Minh
       # Compose auto-reads ./.env for ${VAR} substitution; ":-" => empty if missing
       # (gitignored, never baked into the image). Used by the AI assistant.
